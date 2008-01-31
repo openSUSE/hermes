@@ -1,0 +1,23 @@
+To post messages, please send GET requests like this:
+<pre>
+  http://<TMPL_VAR NAME=urlbase>/index.cgi?rm=post&\
+                                          type=Type&\
+                                          subject=subject&\
+                                          body=body&\
+                                          to=freitag@suse.de&\
+                                          to=hermes@suse.de&\
+                                          from=hermes@suse.de&\
+                                          delay=HOURLY;
+</pre>
+
+<p>Message posting is not yet restricted. Beware of SPAM!</p>
+<p>The <b>rm=post</b> parameter must be preserved to post a message</p>
+<p>The <b>type</b> is the key on which the messages are grouped for 
+digesting.</p>
+<p>For <b>delay</b>  valid values are <tt>HOURLY</tt>, <tt>DAILY</tt>, <tt>WEEKLY</tt>
+and <tt>MONTHLY</tt>, skipping the value sends it immediately.</p>
+
+<p>To prepare messages for proper digesting, make sure to prepare the 
+message with <tt>&lt;BODY&gt;</tt> and <tt>&lt;/BODY&gt;</tt> tags.
+Everything inside these tags is inserted into the digest. Contents
+outside of these tags is lost in the digest message.
