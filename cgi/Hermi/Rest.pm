@@ -24,7 +24,7 @@ package Hermi::Rest;
 use strict;
 use base 'CGI::Application';
 # use CGI::Application::Plugin::ActionDispatch;
-use SUSE::Log;
+use Hermes::Log;
 use Hermes::Message qw(:DEFAULT /^SEND_/);
 
 
