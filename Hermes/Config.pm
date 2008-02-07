@@ -52,22 +52,18 @@ $DB{ 'default' } = { 'type'	=>  'mysql',
 
 my $cfg = "/etc/inttools.conf";
 
-my $return = do $cfg;
+if( -r $cfg ) {
+  my $return = do $cfg;
 
-unless( $return )
-{
-    if( $@ )
-    {
-	warn( "Cannot compile $cfg: $@" );
-    }
-    elsif( $! )
-    {
+  unless( $return ) {
+    if( $@ ) {
+      warn( "Cannot compile $cfg: $@" );
+    } elsif( $! ) {
 	warn( "Cannot read $cfg: $!" );
-    }
-    else
-    {
+    } else {
 	warn( "Cannot find $cfg" );
     }
+  }
 }
 
 #---------------------------------------------------------------------------

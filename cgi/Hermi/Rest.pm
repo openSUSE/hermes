@@ -112,7 +112,9 @@ sub postMessage {
     $delay = SEND_MONTHLY;
   }
 
-  newMessage( $subject, $body, $type, $delay, @to, @cc, @bcc, $from );
+  my $id = newMessage( $subject, $body, $type, $delay, @to, @cc, @bcc, $from );
+
+  return "<html><body>$id</body></html>";
 }
 
 1;
