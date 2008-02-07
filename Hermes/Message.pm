@@ -210,11 +210,14 @@ sub newMessage($$$$\@;\@\@$$)
     if(!defined($from)){
     	$from = 'hermes@opensuse.org';
     }
+
+    my $typeId = createMsgType( $type );
+
     # Add the new message to the database.
-    my $sql = 'INSERT INTO MailMessages( MsgType, MsgFrom, MsgSubject, ' .
-      'MsgBody, MsgDelay, MsgCreated, MsgSent) ' .
-	'values (?, ?, ?, ?, ?, NOW(), 0)';
-    $dbh->do( $sql, undef, ($type, $from, $subject, $text, $delay) );
+    my $sql = 'INSERT INTO messages( msg_type_id, sender, subject, ' .
+      'body, delay, created, sent) ' .
+	'VALUES (?, ?, ?, ?, ?, NOW(), 0)';
+    $dbh->do( $sql, undef, ( $typeId, $from, $subject, $text, $delay ) );
 
     # Grab the message's ID.
     my $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
@@ -225,8 +228,10 @@ sub newMessage($$$$\@;\@\@$$)
     # MailAddresses table.
     my %addresses;
 
-    foreach my $address (@$to) {
-      $addresses{$address} = 'to';
+    foreach my $address (@$bcc) {
+      unless (defined $addresses{$address}) {
+	$addresses{$address} = 'bcc';
+      }
     }
 
     foreach my $address (@$cc) {
@@ -235,24 +240,26 @@ sub newMessage($$$$\@;\@\@$$)
       }
     }
 
-    foreach my $address (@$bcc) {
-      unless (defined $addresses{$address}) {
-	$addresses{$address} = 'bcc';
-      }
+    foreach my $address (@$to) {
+      $addresses{$address} = 'to';
     }
-
 
     if( $replyTo ) {
       $addresses{ $replyTo } = 'reply-to';
     }
 
     # Set up the SQL insertion template for the mail addresses.
-    my $sth = $dbh->prepare( "INSERT INTO MailAddresses( MsgID, Receipient, Header) "
+    my $sth = $dbh->prepare( "INSERT INTO addresses( msg_id, person_id, header) "
                             ."VALUES ($id, ?, ? )");
 
     # Adds the addresses to the MailAddresses table.
-    foreach my $person_id (keys %addresses) {
-      $sth->execute( ($person_id, $addresses{$person_id}) );
+    foreach my $person (keys %addresses) {
+      my $person_id = emailToPersonID( $person );
+      if( $person_id ) {
+	$sth->execute( ($person_id, $addresses{$person}) );
+      } else {
+	log( 'error', "Unknown or invalid person, can not store message!" );
+      }
     }
 
     # Should we send this message immediately?
@@ -443,13 +450,15 @@ sub sendMessageDigest($;$$$)
 
   if ( $type ) {
     log('notice', "Fetching messages with type '$type'.");
-    $sql = 'SELECT MsgID, MsgType FROM MailMessages WHERE MsgSent = 0 ' .
-      "AND MsgType = ? AND MsgDelay = ? ORDER BY MsgType";
+    $sql = "SELECT msg.id, types.msgtype FROM messages msg, msg_types types WHERE ";
+    $sql .= "msg.sent=0 AND types.msgtype=? AND msg.delay=?";
+
     $sth = $dbh->prepare( $sql );
     $sth->execute( $type, $delay );
   } else {
-    $sql = 'SELECT MsgID, MsgType FROM MailMessages WHERE MsgSent = 0 ' .
-      "AND MsgDelay = ? ORDER BY MsgType";
+    $sql = "SELECT msg.id, types.msgtype FROM messages msg, msg_types types WHERE ";
+    $sql .= "msg.sent=0 AND msg.delay=?";
+
     $sth = $dbh->prepare( $sql );
     $sth->execute( $delay );
   }
@@ -553,10 +562,12 @@ sub fetchAddresses($\@\@\@\$)
 {
     my ($msg_id, $to, $cc, $bcc, $replyTo) = @_;
 
+    return 0 unless( 0+$msg_id );
+
     # Retrieve all of the addresses associated with this message ID.
-    my $sql = "SELECT Receipient, Header FROM MailAddresses WHERE MsgID = $msg_id";
+    my $sql = "SELECT p.email, a.header FROM addresses a, persons p WHERE a.person_id=p.id AND a.msg_id=?";
     my $sth = $dbh->prepare($sql);
-    $sth->execute();
+    $sth->execute( $msg_id );
 
     # use some hashes to assemble the addresses uniquely
     my %toh;
@@ -607,9 +618,9 @@ sub fetchMessage($)
 
   # Retrieve the message's contents.
   log('info', "Retrieving message $msg_id.");
-  my $sql = "SELECT MsgFrom, MsgSubject, MsgBody from MailMessages where MsgId = $msg_id";
+  my $sql = "SELECT sender, subject, body FROM messages where id= ?";
   my $sth = $dbh->prepare( $sql );
-  $sth->execute();
+  $sth->execute( $msg_id );
   return $sth->fetchrow_array;
 }
 
@@ -721,7 +732,7 @@ sub markSent($)
 {
     my ($msg_id) = @_;
     log( 'info', "SCALAR: " . ref( $msg_id ));
-    my $sth = $dbh->prepare( 'UPDATE LOW_PRIORITY MailMessages SET MsgSent = NOW() WHERE MsgID = ?' );
+    my $sth = $dbh->prepare( 'UPDATE LOW_PRIORITY messages SET sent = NOW() WHERE id = ?' );
 
     my $res = 0;
 
@@ -736,6 +747,47 @@ sub markSent($)
     }
  
     return ($res > 0);
+}
+
+sub createMsgType( $ ) 
+{
+  my ($msgType) = @_;
+
+  my $sth = $dbh->prepare( 'SELECT id FROM msg_types WHERE msgtype=?' );
+  $sth->execute( $msgType );
+
+  my ($id) = $sth->fetchrow_array();
+
+  unless( $id ) {
+    my $sth1 = $dbh->prepare( 'INSERT INTO msg_types (msgtype) VALUES (?)' );
+    $sth1->execute( $msgType );
+    $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+  }
+  log( 'info', "Returning id <$id> for msg_type <$msgType>" );
+  return $id;
+}
+
+#
+# Note: this sub identifies the persons with their email address - which 
+# is to fix as soon as we use a common user base throughout all openSUSE
+# systems, FIXME
+#
+sub emailToPersonID( $ )
+{
+  my ( $email ) = @_;
+
+  my $sth = $dbh->prepare( 'SELECT id FROM persons WHERE email=?' );
+  $sth->execute( $email );
+
+  my ($id) = $sth->fetchrow_array();
+
+  unless( $id ) {
+    my $sth1 = $dbh->prepare( 'INSERT INTO persons (email) VALUES (?)' );
+    $sth1->execute( $email);
+    $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+  }
+  log( 'info', "Returning id <$id> for msg_type <$email>" );
+  return $id;
 }
 
 

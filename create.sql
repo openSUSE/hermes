@@ -22,8 +22,8 @@ CREATE TABLE `addresses` (
 DROP TABLE IF EXISTS `messages`;
 CREATE TABLE `messages` (
   `id` int NOT NULL auto_increment,
-  `msg_type_id` varchar(64) default NULL,
-  `from` varchar(255) default NULL,
+  `msg_type_id` int NOT NULL,
+  `sender` varchar(255) default NULL,
   `subject` varchar(128) default NULL,
   `body` mediumtext,
   `delay` tinyint(4) NOT NULL default '0',
@@ -34,7 +34,7 @@ CREATE TABLE `messages` (
 
   PRIMARY KEY  (`id`),
 
-  INDEX( `from`),
+  INDEX( `sender`),
   INDEX( `delay`),
   INDEX( `created`, `sent`)
 
