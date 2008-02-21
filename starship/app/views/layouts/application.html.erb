@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title> Hermes Messaging</title>
+
+<%= stylesheet_link_tag 'hermes', :media => 'all' %>
+<%= javascript_include_tag 'tableruler' %>
+
+<script type="text/javascript">
+  window.onload=function(){tableruler();} 
+</script>
+
+</head>
+
+<body>
+<ul id="Navigation">
+  <li><a href="index.cgi">Hermes</a></li>
+  <li><a href="index.cgi?rm=doc">Documentation</a></li>
+</ul>
+
+<div id="Content">
+   <%= yield %>
+</div>
+
+</body>
+</html>

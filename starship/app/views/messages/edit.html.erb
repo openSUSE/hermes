@@ -1,0 +1,37 @@
+<h1>Editing message</h1>
+
+<%= error_messages_for :message %>
+
+<% form_for(@message) do |f| %>
+  <p>
+    <b>Msgtype</b><br />
+    <%= f.text_field :msgtype %>
+  </p>
+
+  <p>
+    <b>From</b><br />
+    <%= f.text_field :from %>
+  </p>
+
+  <p>
+    <b>Subject</b><br />
+    <%= f.text_field :subject %>
+  </p>
+
+  <p>
+    <b>Body</b><br />
+    <%= f.text_field :body %>
+  </p>
+
+  <p>
+    <b>Delay</b><br />
+    <%= f.text_field :delay %>
+  </p>
+
+  <p>
+    <%= f.submit "Update" %>
+  </p>
+<% end %>
+
+<%= link_to 'Show', @message %> |
+<%= link_to 'Back', messages_path %>
