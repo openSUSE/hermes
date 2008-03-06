@@ -249,7 +249,7 @@ sub newMessage($$$$\@;\@\@$$)
     }
 
     # Set up the SQL insertion template for the mail addresses.
-    my $sth = $dbh->prepare( "INSERT INTO addresses( msg_id, person_id, header) "
+    my $sth = $dbh->prepare( "INSERT INTO messages_people( message_id, person_id, header) "
                             ."VALUES ($id, ?, ? )");
 
     # Adds the addresses to the MailAddresses table.
@@ -449,14 +449,18 @@ sub sendMessageDigest($;$$$)
   my $sth;
 
   if ( $type ) {
-    log('notice', "Fetching messages with type '$type'.");
+    log('notice', "Fetching messages with type '$type' and delay $delay");
     $sql = "SELECT msg.id, types.msgtype FROM messages msg, msg_types types WHERE ";
+    $sql .= "msg.msg_type_id = types.id AND ";
     $sql .= "msg.sent=0 AND types.msgtype=? AND msg.delay=?";
 
     $sth = $dbh->prepare( $sql );
     $sth->execute( $type, $delay );
   } else {
+    log('notice', "Fetching messages without type and delay $delay");
+
     $sql = "SELECT msg.id, types.msgtype FROM messages msg, msg_types types WHERE ";
+    $sql .= "msg.msg_type_id = types.id AND ";
     $sql .= "msg.sent=0 AND msg.delay=?";
 
     $sth = $dbh->prepare( $sql );
@@ -524,8 +528,6 @@ sub sendMessageDigest($;$$$)
       my ($body_cont) = getSnippets('BODY', $content, 1);
       $body_cont = $content if (!$body_cont);
       $body .= $body_cont . "\n";
-
-
     }
 
     # Add the message contents (data) to the MIME message.
@@ -565,7 +567,7 @@ sub fetchAddresses($\@\@\@\$)
     return 0 unless( 0+$msg_id );
 
     # Retrieve all of the addresses associated with this message ID.
-    my $sql = "SELECT p.email, a.header FROM addresses a, persons p WHERE a.person_id=p.id AND a.msg_id=?";
+    my $sql = "SELECT p.email, a.header FROM messages_people a, persons p WHERE a.person_id=p.id AND a.message_id=?";
     my $sth = $dbh->prepare($sql);
     $sth->execute( $msg_id );
 
