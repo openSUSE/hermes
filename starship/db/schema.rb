@@ -9,15 +9,20 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define() do
+ActiveRecord::Schema.define(:version => 0) do
 
-  create_table "addresses", :force => true do |t|
-    t.integer "msg_id",                                   :null => false
-    t.integer "person_id",                                :null => false
-    t.string  "header",    :limit => 0, :default => "to", :null => false
+  create_table "delays", :force => true do |t|
+    t.string  "name",    :limit => 64
+    t.integer "seconds"
   end
 
-  add_index "addresses", ["msg_id", "person_id", "header"], :name => "msg_id"
+  add_index "delays", ["name"], :name => "name"
+
+  create_table "deliveries", :force => true do |t|
+    t.string "name", :limit => 64, :default => "", :null => false
+  end
+
+  add_index "deliveries", ["name"], :name => "name"
 
   create_table "messages", :force => true do |t|
     t.integer   "msg_type_id",                               :null => false
@@ -34,12 +39,29 @@ ActiveRecord::Schema.define() do
   add_index "messages", ["delay"], :name => "delay"
   add_index "messages", ["created", "sent"], :name => "created"
 
+  create_table "messages_people", :force => true do |t|
+    t.integer "message_id"
+    t.integer "person_id",                                 :null => false
+    t.string  "header",     :limit => 0, :default => "to", :null => false
+  end
+
+  add_index "messages_people", ["message_id", "person_id", "header"], :name => "msg_id"
+
   create_table "msg_types", :force => true do |t|
     t.string    "msgtype", :limit => 64
     t.timestamp "added",                 :null => false
   end
 
   add_index "msg_types", ["msgtype"], :name => "msgtype"
+
+  create_table "msg_types_people", :force => true do |t|
+    t.integer "msg_type_id", :null => false
+    t.integer "person_id",   :null => false
+    t.integer "delay_id"
+    t.integer "delivery_id"
+  end
+
+  add_index "msg_types_people", ["person_id", "msg_type_id"], :name => "person_id"
 
   create_table "persons", :force => true do |t|
     t.string "email"
