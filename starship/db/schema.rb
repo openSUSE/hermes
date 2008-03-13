@@ -25,24 +25,23 @@ ActiveRecord::Schema.define(:version => 0) do
   add_index "deliveries", ["name"], :name => "name"
 
   create_table "messages", :force => true do |t|
-    t.integer   "msg_type_id",                               :null => false
+    t.integer   "msg_type_id",                :null => false
     t.string    "sender"
     t.string    "subject",     :limit => 128
     t.text      "body"
-    t.integer   "delay",       :limit => 4,   :default => 0, :null => false
-    t.timestamp "created",                                   :null => false
-    t.timestamp "sent",                                      :null => false
+    t.timestamp "created",                    :null => false
   end
 
   add_index "messages", ["msg_type_id"], :name => "fk_messages_msgtype"
   add_index "messages", ["sender"], :name => "sender"
-  add_index "messages", ["delay"], :name => "delay"
-  add_index "messages", ["created", "sent"], :name => "created"
+  add_index "messages", ["created"], :name => "created"
 
   create_table "messages_people", :force => true do |t|
-    t.integer "message_id"
-    t.integer "person_id",                                 :null => false
-    t.string  "header",     :limit => 0, :default => "to", :null => false
+    t.integer   "message_id"
+    t.integer   "person_id",                                 :null => false
+    t.string    "header",     :limit => 0, :default => "to", :null => false
+    t.integer   "delay",      :limit => 4, :default => 0
+    t.timestamp "sent",                                      :null => false
   end
 
   add_index "messages_people", ["message_id", "person_id", "header"], :name => "msg_id"
