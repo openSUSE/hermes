@@ -25,7 +25,7 @@ use strict;
 use base 'CGI::Application';
 # use CGI::Application::Plugin::ActionDispatch;
 use Hermes::Log;
-use Hermes::Message qw(:DEFAULT /^SEND_/);
+use Hermes::Message;
 
 
 
@@ -101,15 +101,15 @@ sub postMessage {
   }
 
   # Check the delay
-  my $delay = SEND_NOW;
+  my $delay = SendNow;
   if( $delayStr eq "HOURLY" ) {
-    $delay = SEND_HOURLY;
+    $delay = SendHourly;
   } elsif( $delayStr eq "DAILY" ) {
-    $delay = SEND_DAILY;
+    $delay = SendDaily;
   } elsif( $delayStr eq "WEEKLY" ) {
-    $delay = SEND_WEEKLY; 
+    $delay = SendWeekly;
   } elsif( $delayStr eq "MONTHLY" ) {
-    $delay = SEND_MONTHLY;
+    $delay = SendMonthly;
   }
 
   my $id = newMessage( $subject, $body, $type, $delay, @to, @cc, @bcc, $from );
