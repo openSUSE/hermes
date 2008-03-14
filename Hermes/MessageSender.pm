@@ -144,7 +144,7 @@ sub sendMessageDigest($;$$$)
       log('info', "Adding message $msg_id to digest.");
 
       # Fetch and store this message's address lists.
-      fetchAddresses( $msg_id, \@{$addresses{'to'}}, \@{$addresses{'cc'}},
+      fetchAddresses( $msg_id, Delay(), \@{$addresses{'to'}}, \@{$addresses{'cc'}},
 		     \@{$addresses{'bcc'}}, \$addresses{'replyTo'} );
 
       # Fetch the message.

@@ -58,7 +58,7 @@ sub expandFromMsgType( $$ )
 
   my $re;
   $re->{type}    = $type;
-  $re->{delay}   = 'default'; # replace by system default
+  $re->{delay}   = 0; # replace by system default
   $re->{subject} = "Subject for message type <$type>";
 
   $re->{cc}      = undef;

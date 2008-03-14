@@ -252,36 +252,21 @@ sub newMessage($$$$\@;\@\@$$)
 
     # Adds the addresses to the MailAddresses table.
     foreach my $person (keys %addresses) {
-      
       my $person_id = $person; # assume the person id is numeric
       if( $person_id =~ /^\S+@\S+\.\S{2,}?$/ ) {
 	$person_id = emailToPersonID( $person );
       }
       if( $person_id =~ /^\d+$/ ) {
 	my ($delayID, $deliveryID) = userTypeSettings( $typeId, $person_id );
-
+	log( 'info', "User delay id <$delayID> for type <$typeId> for person <$person_id>" );
 	$sth->execute( ($person_id, $addresses{$person}, $delayID ) );
       } else {
 	log( 'error', "Unknown or invalid person, can not store message!" );
       }
     }
 
-    # Should we send this message immediately?
-    my $cnt = $delay+0;
-    log( 'info', "Delay is set to <$delay>" );
-    log( 'info', "Delay is set to <$cnt>" );
-
-    if ( $delay == SendNow() ) {
-    	log('info', 'Sending message immediately.');
-	unless (sendMessage($id)) {
-	    return -1;
-	}
-    } elsif ( $delay == HERMES_DEBUG) {
-    	log('info', 'Debug: Faking message delivery.');
-	unless (sendMessage($id, 1)) {
-	    return -1;
-	}
-    }
+    # some of the receipients might want the message immediately.
+    sendMessage( $id );
 
     return $id;
 }
@@ -303,8 +288,9 @@ sub sendNotification( $$ )
     if( $msgHash->{error} ) {
       log( 'error', "Could not expand message: $msgHash->{error}\n" );
     } else {
+      # FIXME: Delay(SendNow) configurable
       my $id = newMessage( $msgHash->{subject},   $msgHash->{body}, $msgHash->{type},
-			   $msgHash->{delay},   @{$msgHash->{to}},  @{$msgHash->{cc}},
+			   SendNow(),   @{$msgHash->{to}},  @{$msgHash->{cc}},
 			   @{$msgHash->{bcc}},    $msgHash->{from}, $msgHash->{replyTo} );
       log( 'info', "Created new message with id $id" );
     }
@@ -351,7 +337,7 @@ sub sendMessage($;$)
     return;
   }
 
-  log('info', "Attempting to send message $msg_id.");
+  log('info', "Attempting to send message $msg_id IMMEDIATELY.");
 
   if ( HERMES_DEBUG ) {
     log( 'warning', "Mail sending switched off (debug) due to Config-Setting!" );
@@ -364,11 +350,13 @@ sub sendMessage($;$)
   my @bcc;
   my $replyTo;
 
-  my $address_count = fetchAddresses($msg_id, \@to, \@cc, \@bcc, \$replyTo);
+  my $address_count = fetchAddresses($msg_id, SendNow(), \@to, \@cc, \@bcc, \$replyTo);
 
   # Ensure that we have at least one recipient address.
   unless ($address_count > 0) {
-    log('error', 'No recipient addresses were found.');
+    # thats not neccessarily an error, might be that there is no receipient who
+    # wants the message immediately
+    log('info', 'No recipient addresses were found.');
     return;
   }
 
@@ -437,10 +425,10 @@ sub userTypeSettings( $$ )
 {
   my ( $typeId, $personId ) = @_;
 
-  my $sql = "SELECT * FROM msg_types_people WHERE msg_type_id=? AND person_id=?";
-  my ($delayID, $deliveryID) = $dbh->selectcol_arrayref( $sql, undef, ($typeId, $personId ) );
+  my $sql = "SELECT delay_id, delivery_id FROM msg_types_people WHERE msg_type_id=? AND person_id=?";
+  my ($delayID, $deliveryID) = @{$dbh->selectcol_arrayref( $sql, undef, ($typeId, $personId ) )};
 
-  return ($delayID, $deliveryID);
+  return $delayID, $deliveryID;
 }
 
 
@@ -451,16 +439,26 @@ sub userTypeSettings( $$ )
 # given message ID and adds them to the provided address lists.
 ######################################################################
 
-sub fetchAddresses($\@\@\@\$)
+sub fetchAddresses($$\@\@\@\$)
 {
-    my ($msg_id, $to, $cc, $bcc, $replyTo) = @_;
+    my ($msg_id, $delay, $to, $cc, $bcc, $replyTo) = @_;
 
-    return 0 unless( 0+$msg_id );
+    unless( $delay =~ /^\d+$/ ) {
+      log('error', "Delay is not numeric, can not send message!");
+      return 0;
+    }
+
+    unless( 0+$msg_id ) {
+      log( 'error', "Message id is invalid: <$msg_id>" );
+      return 0;
+    }
 
     # Retrieve all of the addresses associated with this message ID.
-    my $sql = "SELECT p.email, a.header FROM messages_people a, persons p WHERE a.person_id=p.id AND a.message_id=?";
+    my $sql = "SELECT p.email, a.header FROM messages_people a, persons p ";
+    $sql .= "WHERE a.delay=? AND a.person_id=p.id AND a.message_id=?";
+
     my $sth = $dbh->prepare($sql);
-    $sth->execute( $msg_id );
+    $sth->execute( $delay, $msg_id );
 
     # use some hashes to assemble the addresses uniquely
     my %toh;

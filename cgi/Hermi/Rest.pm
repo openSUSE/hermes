@@ -38,9 +38,10 @@ sub setup {
   my $self = shift;
   $self->start_mode('hello');
   $self->run_modes(
-		   'post'  => 'postMessage',
-		   'hello' => 'sayHello',
-		   'doc'   => 'showDoc'
+		   'post'   => 'postMessage',
+		   'notify' => 'postNotification',
+		   'hello'  => 'sayHello',
+		   'doc'    => 'showDoc'
 		  );
   $self->mode_param( 'rm' );
 
@@ -50,7 +51,7 @@ sub setup {
 
 }
 
-sub sayHello 
+sub sayHello
 {
   my $self = shift;
 
@@ -75,6 +76,17 @@ sub showDoc
   $htmlTmpl->param( Content => $docTmpl->output );
 
   return $htmlTmpl->output;
+}
+
+sub postNotification {
+  my $self = shift;
+
+  my $q = $self->query();
+
+  my $type = $q->param( 'type' );
+  my $params = $q->Vars;
+
+  sendNotification( $type, $params );
 }
 
 sub postMessage {
