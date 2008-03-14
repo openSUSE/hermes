@@ -1,4 +1,15 @@
-To post messages, please send a POST or GET requests like this:
+<p>This documentation informs you about the client side usage of Hermes.
+You want to read it if you develop software that wants to hand over 
+messages to the Hermes system.</p>
+
+<h2>Messages</h2>
+<p>
+Messages are complete texts that should be sent to a list of 
+receivers such as emails. The receivers are specified by a 
+to, cc and bcc list. Delays could be specified.</p>
+
+<p>
+To post messages, please send a POST or GET requests like this:</p>
 <pre>
   http://<TMPL_VAR NAME=urlbase>/index.cgi?rm=post&\
                                           type=Type&\
@@ -21,3 +32,22 @@ and <tt>MONTHLY</tt>, skipping the value sends it immediately.</p>
 message with <tt>&lt;BODY&gt;</tt> and <tt>&lt;/BODY&gt;</tt> tags.
 Everything inside these tags is inserted into the digest. Contents
 outside of these tags is lost in the digest message.
+
+<h2>Notifications</h2>
+
+<p>Notifications are kind of signals to Hermes that a client system 
+likes to inform a group of people of an event. Hermes creates a message
+from it and sends it to all subscribed persons. A parameter hash can
+be sent along with the notification that can be put into the message.
+</p>
+
+<pre>
+  http://<TMPL_VAR NAME=urlbase>/index.cgi?rm=notify&\
+                                          type=Type&
+                                          param1=...&param2=...
+</pre>
+
+<p>Note that it is not garanteed who will receive the message because
+that depends on who is subscribed on the type.
+</p>
+<p>Posting to new types automatically creates the type</p>
