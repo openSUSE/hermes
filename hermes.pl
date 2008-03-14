@@ -22,8 +22,9 @@
 #
 # This is a test script for the hermes library.
 
+use strict;
 
-use Hermes::Message qw(:DEFAULT /^SEND_/);
+use Hermes::Message; 
 
 my $subject = 'Test subject';
 my $text = "Hi. <BODY>This is a test.</BODY>";
@@ -40,7 +41,7 @@ $text = "<PRE>We are sending something interesting: </PRE>";
 $text .= "<BODY>The monkeys look left</BODY>";
 $text .= "<POST>Have fun with it :)</POST>";
 $type = "TestDigest";
-$delay = SEND_WEEKLY;
+$delay = SendWeekly;
 newMessage($subject, $text, $type, $delay, @to, @cc, @bcc);
 
 $text = "<PRE>We are sending something interesting: </PRE>";
@@ -49,4 +50,4 @@ $text .= "<POST>Have fun with it :)</POST>";
 
 newMessage($subject, $text, $type, $delay, @to, @cc, @bcc);
 
-sendMessageDigest( SEND_WEEKLY, "testdigest", 1 );
+# sendMessageDigest( $delay, "testdigest", 1 );

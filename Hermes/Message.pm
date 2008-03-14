@@ -28,23 +28,20 @@ use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
 
+use Cwd;
 use Data::Dumper;
 use MIME::Lite;
 
-use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
+use vars qw(@ISA @EXPORT @EXPORT_OK $dbh %delayHash);
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw(newMessage sendMessageDigest HERMES_DEBUG);
+@EXPORT	    = qw( newMessage sendNotification 
+                  SendNow SendHourly SendDaily SendWeekly SendMonthly 
+	          HERMES_DEBUG );
 
-@EXPORT_OK  = qw(SEND_NOW SEND_HOURLY SEND_DAILY SEND_WEEKLY SEND_MONTHLY);
 
 # Message delay constants:
 use constant HERMES_DEBUG   => -1;  # Debug mode: message delivery is faked.
-use constant SEND_NOW	    =>  0;  # Message should be sent immediately.
-use constant SEND_HOURLY    =>  1;  # Messages should be sent once, on the hour.
-use constant SEND_DAILY	    =>  2;  # Messages should be sent once a day.
-use constant SEND_WEEKLY    =>  3;  # Messages should be sent once a week.
-use constant SEND_MONTHLY   =>  4;  # Messages should be sent once a month.
 
 =head1 NAME
 
@@ -155,7 +152,7 @@ Parameter 2 specifies the message's text, including tags.  Allowed tags are:
 Parameter 3 is the message type. The type is a free string. Messages of the
 same type are grouped together in digest mailings.
 
-Parameter 4 is specifies the delay.  The pdb mail system will wait this
+Parameter 4 is specifies the delay.  The hermes system will wait this
 period of time before sending the message.  If this value is negative,
 the pdb mail system will enter debug mode and fake the mail delivery by
 writing the message to standard error.
@@ -169,10 +166,9 @@ Values for the delay are defined as constants (SEND_*):
     SEND_WEEKLY		# Messages should be sent once a week.
     SEND_MONTHLY	# Messages should be sent once a month.
 
-Note that these constants must be explictly imported into the current
-namespace.  For example:
+Note that the delay parameter is automatically overwritten by the user 
+setting if there is one for the message type.
 
-    use DB::pdbMail qw(:DEFAULT /^SEND_/);
 
 Parameter 5 is an array of recipients.  Each recipient may be specified as
 either an email addressm, a numberic user ID, or as a function.
@@ -211,13 +207,15 @@ sub newMessage($$$$\@;\@\@$$)
     	$from = 'hermes@opensuse.org';
     }
 
+    # This call returns the id of the type. If that does not exist, it is created.
     my $typeId = createMsgType( $type );
 
+    # check for a user 
+
     # Add the new message to the database.
-    my $sql = 'INSERT INTO messages( msg_type_id, sender, subject, ' .
-      'body, delay, created, sent) ' .
-	'VALUES (?, ?, ?, ?, ?, NOW(), 0)';
-    $dbh->do( $sql, undef, ( $typeId, $from, $subject, $text, $delay ) );
+    my $sql = 'INSERT INTO messages( msg_type_id, sender, subject, body, created) ' .
+	'VALUES (?, ?, ?, ?, NOW())';
+    $dbh->do( $sql, undef, ( $typeId, $from, $subject, $text ) );
 
     # Grab the message's ID.
     my $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
@@ -249,14 +247,20 @@ sub newMessage($$$$\@;\@\@$$)
     }
 
     # Set up the SQL insertion template for the mail addresses.
-    my $sth = $dbh->prepare( "INSERT INTO messages_people( message_id, person_id, header) "
-                            ."VALUES ($id, ?, ? )");
+    my $sth = $dbh->prepare( "INSERT INTO messages_people( message_id, person_id, header, delay ) "
+                            ."VALUES ($id, ?, ?, ?)");
 
     # Adds the addresses to the MailAddresses table.
     foreach my $person (keys %addresses) {
-      my $person_id = emailToPersonID( $person );
-      if( $person_id ) {
-	$sth->execute( ($person_id, $addresses{$person}) );
+      
+      my $person_id = $person; # assume the person id is numeric
+      if( $person_id =~ /^\S+@\S+\.\S{2,}?$/ ) {
+	$person_id = emailToPersonID( $person );
+      }
+      if( $person_id =~ /^\d+$/ ) {
+	my ($delayID, $deliveryID) = userTypeSettings( $typeId, $person_id );
+
+	$sth->execute( ($person_id, $addresses{$person}, $delayID ) );
       } else {
 	log( 'error', "Unknown or invalid person, can not store message!" );
       }
@@ -267,7 +271,7 @@ sub newMessage($$$$\@;\@\@$$)
     log( 'info', "Delay is set to <$delay>" );
     log( 'info', "Delay is set to <$cnt>" );
 
-    if ( $delay == SEND_NOW) {
+    if ( $delay == SendNow() ) {
     	log('info', 'Sending message immediately.');
 	unless (sendMessage($id)) {
 	    return -1;
@@ -282,6 +286,30 @@ sub newMessage($$$$\@;\@\@$$)
     return $id;
 }
 
+
+sub sendNotification( $$ )
+{
+  my ( $msgType, $params ) = @_;
+
+  my $module = 'Hermes::Buildservice';
+
+  push @INC, "..";
+
+  unless( eval "use $module; 1" ) {
+    log( 'warning', "Error with <$module>" );
+    log( 'warning', "$@" );
+  } else {
+    my $msgHash = expandFromMsgType( $msgType, $params );
+    if( $msgHash->{error} ) {
+      log( 'error', "Could not expand message: $msgHash->{error}\n" );
+    } else {
+      my $id = newMessage( $msgHash->{subject},   $msgHash->{body}, $msgHash->{type},
+			   $msgHash->{delay},   @{$msgHash->{to}},  @{$msgHash->{cc}},
+			   @{$msgHash->{bcc}},    $msgHash->{from}, $msgHash->{replyTo} );
+      log( 'info', "Created new message with id $id" );
+    }
+  }
+}
 
 
 =head1 NAME
@@ -299,7 +327,8 @@ sendMessage() - sends a single queued message
 =head1 DESCRIPTION
 
 pdbSendMessage() will send a single message that is queued in the system,
-based on the provided message ID.
+based on the provided message ID. It does not take the user set delays
+into account, it sends the message immediately to all receipients.
 
 =head1 PARAMETERS
 
@@ -344,7 +373,7 @@ sub sendMessage($;$)
   }
 
   # Retrieve the message's contents.
-  my ($from, $subject, $content) = fetchMessage($msg_id);
+  my ($from, $subject, $content) = fetchMessage( $msg_id );
 
   # retain only the body segment of this message.
   my ($body) = getSnippets('BODY', $content, 1);
@@ -398,159 +427,21 @@ sub sendMessage($;$)
   return 1;
 }
 
+######################################################################
+# sub userDelaySetting
+# -------------------------------------------------------------------
+# Returns the user setting of the delay according to the given msg type.
+######################################################################
 
-
-=head1 NAME
-
-sendMessageDigest() - sends a digest of queued messages
-
-=head1 SYNOPSIS
-
-    use Hermes::Message qw(:DEFAULT /^SEND_/);
-
-    my $delay = SEND_HOURLY;	# Send messages queued for hourly distribution.
-    my $type = 'test';		# Send messages of the 'test' type.
-
-    my $count = sendMessageDigest($delay, $type);
-
-=head1 DESCRIPTION
-
-sendMessageDigest() sends a digest of similarly-typed messages in the 
-system queue.  Each message is marked according to its distribution frequency
-(e.g. hourly, daily, weekly, monthly) and its type.  Messages with the same
-type will have their message bodies grouped into a single digested mail.
-
-=head1 PARAMETERS
-
-Parameter 1 indicates the frequency of this digest run.
-
-Parameter 2 is an optional parameter that specifies the message type for
-this mailing.
-
-Parameter 3 is an optional debug flag.
-
-=head1 RETURN VALUE
-
-Returns the number of messages sent in this digest run.
-
-=cut
-
-sub sendMessageDigest($;$$$)
+sub userTypeSettings( $$ )
 {
-  my ($delay, $type, $debug, $subject) = @_;
+  my ( $typeId, $personId ) = @_;
 
-  if ( HERMES_DEBUG ) {
-    log( 'warning', "Mail sending switched off (debug) due to Config-Setting!" );
-    $debug = 1;
-  }
+  my $sql = "SELECT * FROM msg_types_people WHERE msg_type_id=? AND person_id=?";
+  my ($delayID, $deliveryID) = $dbh->selectcol_arrayref( $sql, undef, ($typeId, $personId ) );
 
-  # Find all messages of the same type and delay that haven't been sent.
-  my $sql = '';
-  my $sth;
-
-  if ( $type ) {
-    log('notice', "Fetching messages with type '$type' and delay $delay");
-    $sql = "SELECT msg.id, types.msgtype FROM messages msg, msg_types types WHERE ";
-    $sql .= "msg.msg_type_id = types.id AND ";
-    $sql .= "msg.sent=0 AND types.msgtype=? AND msg.delay=?";
-
-    $sth = $dbh->prepare( $sql );
-    $sth->execute( $type, $delay );
-  } else {
-    log('notice', "Fetching messages without type and delay $delay");
-
-    $sql = "SELECT msg.id, types.msgtype FROM messages msg, msg_types types WHERE ";
-    $sql .= "msg.msg_type_id = types.id AND ";
-    $sql .= "msg.sent=0 AND msg.delay=?";
-
-    $sth = $dbh->prepare( $sql );
-    $sth->execute( $delay );
-  }
-
-  # Store all of the message ID's in a hash by type.
-  my %messages;
-  while ( my ($msg_id, $msg_type) = $sth->fetchrow_array ) {
-    if (!defined $messages{$msg_type}) {
-      $messages{$msg_type} = [];
-    }
-    push @{$messages{$msg_type}}, $msg_id;
-  }
-  my @types = keys %messages;
-
-  # Iterate through the hash and assemble the digested mailings.
-  foreach my $msg_type (keys %messages) {
-    log('info', "Creating new '$msg_type' message digest.");
-
-    # Build the MIME single-part message.
-    my $msg_subject;
-    if ( defined $subject ) {
-      $msg_subject = $subject;
-    } else {
-      $msg_subject = "openSUSE: '$msg_type' message digest";
-    }
-
-    # Initialize the message body strings.
-    my $body = '';
-    my ($pre_body, $post_body);
-
-    # Prepare a hash to hold the recipient address lists.
-    my %addresses;
-    $addresses{'to'} = ();
-    $addresses{'cc'} = ();
-    $addresses{'bcc'} = ();
-    $addresses{'replyTo'} = '';
-    my $from;
-
-    # Sort the message ID's in ascending numeric order.
-    my @msg_ids = sort {$a <=> $b} @{$messages{$msg_type}};
-
-    # Iterate through the messages, adding a new MIME part for each one.
-    foreach my $msg_id (@msg_ids) {
-
-      log('info', "Adding message $msg_id to digest.");
-
-      # Fetch and store this message's address lists.
-      fetchAddresses( $msg_id, \@{$addresses{'to'}}, \@{$addresses{'cc'}},
-		     \@{$addresses{'bcc'}}, \$addresses{'replyTo'} );
-
-      # Fetch the message.
-      my ($singlefrom, $subject, $content) = fetchMessage($msg_id);
-      log( 'warning', "digest messages with different from settings" ) if( $singlefrom ne $from );
-      $from = $singlefrom;
-
-      # Extract the "pre-body" and "post-body" text segments.
-      unless (defined $pre_body && defined $post_body) {
-	($pre_body)  = getSnippets('PRE',  $content, 1);
-	($post_body) = getSnippets('POST', $content, 1);
-      }
-
-      # Append the <body> snippet to the message body.
-      my ($body_cont) = getSnippets('BODY', $content, 1);
-      $body_cont = $content if (!$body_cont);
-      $body .= $body_cont . "\n";
-    }
-
-    # Add the message contents (data) to the MIME message.
-    $body = ($pre_body||'') . ($body||'') . ($post_body||'');
-
-    if ( createMimeMessage( { from => $from,
-			      to      => \@{$addresses{'to'}},
-			      cc      => \@{$addresses{'cc'}},
-			      bcc     => \@{$addresses{'bcc'}},
-			      replyto => $addresses{'replyto'},
-			      subject => $subject,
-			      body    => $body,
-			      debug   => 1 } ) ) {
-
-      # Now mark all digested messages sent
-      markSent( \@msg_ids );
-    }
-  }
-
-  # Return the number of digests sent.
-  return (0 + scalar(@types));
+  return ($delayID, $deliveryID);
 }
-
 
 
 ######################################################################
@@ -723,6 +614,31 @@ sub getSnippets($$;$) {
     return @snippets;
 }
 
+sub SendNow
+{
+  return $delayHash{'NO_DELAY'};
+}
+
+sub SendHourly
+{
+  return $delayHash{'PER_HOUR'};
+}
+
+sub SendDaily
+{
+  return $delayHash{'PER_DAY'};
+}
+
+sub SendWeekly
+{
+  return $delayHash{'PER_WEEK'};
+}
+
+sub SendMonthly
+{
+  return $delayHash{'PER_MONTH'};
+}
+
 ######################################################################
 # sub markSent
 # -------------------------------------------------------------------
@@ -730,24 +646,37 @@ sub getSnippets($$;$) {
 # success and false on failure.
 ######################################################################
 
-sub markSent($)
+sub markSent($;$)
 {
-    my ($msg_id) = @_;
+    my ( $msg_id, $user_id ) = @_;
     log( 'info', "SCALAR: " . ref( $msg_id ));
-    my $sth = $dbh->prepare( 'UPDATE LOW_PRIORITY messages SET sent = NOW() WHERE id = ?' );
+    my $sql = 'UPDATE LOW_PRIORITY messages_people SET sent = NOW() WHERE message_id = ?';
+    if( $user_id ) {
+      $sql .= ' AND person_id=?';
+    }
+    my $sth = $dbh->prepare( $sql );
 
     my $res = 0;
 
     if( ref $msg_id ne 'ARRAY') {
       log('notice', "Marking message $msg_id as sent.");
-      $res = $sth->execute( $msg_id );
+      if( $user_id ) {
+	$res = $sth->execute( $msg_id, $user_id );
+      } else {
+	$res = $sth->execute( $msg_id );
+      }
     } else {
-      foreach my $id ( @$msg_id ) {
-	log( 'notice', "Bulk message sent <$id>" );
-	$res += $sth->execute( $id );
+      if( ref $msg_id eq 'ARRAY' && ref $user_id eq 'ARRAY' ) {
+	foreach my $id ( @$msg_id ) {
+	  log( 'notice', "Bulk message sent <$id>" );
+	  foreach my $uid( @$user_id ) {
+	    $res += $sth->execute( $id, $uid );
+	  }
+	}
+      } else {
+	log( 'warning', "Mismatch: msg and user id not both references!" );
       }
     }
- 
     return ($res > 0);
 }
 
@@ -793,7 +722,17 @@ sub emailToPersonID( $ )
 }
 
 
+#
+# some initialisations
+#
 $dbh = Hermes::DBI->connect();
+
+my $sth = $dbh->prepare( 'SELECT id, name FROM delays order by seconds asc' );
+$sth->execute();
+while ( my ($id, $name) = $sth->fetchrow_array ) {
+  log( 'info', "Storing delay value $name with id $id" );
+  $delayHash{$name} = $id;
+}
 
 1;
 
