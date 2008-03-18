@@ -2,7 +2,9 @@
 
 use Hermes::Message;
 
-sendNotification( "TestType", {} );
+my $id = sendNotification( "TestType", {} );
+
+print "Message created: $id\n";
 
 # END
 
