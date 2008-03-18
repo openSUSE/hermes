@@ -2,7 +2,9 @@
 
 use Hermi::Rest;
 
-my $webapp = Hermi::Rest->new();
+my $webapp = Hermi::Rest->new(
+    TMPL_PATH => 'templates/' 
+);
 
 $webapp->run();
 

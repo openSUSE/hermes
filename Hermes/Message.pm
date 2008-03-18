@@ -280,6 +280,7 @@ sub sendNotification( $$ )
 
   push @INC, "..";
 
+  my $id;
   unless( eval "use $module; 1" ) {
     log( 'warning', "Error with <$module>" );
     log( 'warning', "$@" );
@@ -289,12 +290,13 @@ sub sendNotification( $$ )
       log( 'error', "Could not expand message: $msgHash->{error}\n" );
     } else {
       # FIXME: Delay(SendNow) configurable
-      my $id = newMessage( $msgHash->{subject},   $msgHash->{body}, $msgHash->{type},
-			   SendNow(),   @{$msgHash->{to}},  @{$msgHash->{cc}},
-			   @{$msgHash->{bcc}},    $msgHash->{from}, $msgHash->{replyTo} );
+      $id = newMessage( $msgHash->{subject},   $msgHash->{body}, $msgHash->{type},
+			SendNow(),   @{$msgHash->{to}},  @{$msgHash->{cc}},
+			@{$msgHash->{bcc}},    $msgHash->{from}, $msgHash->{replyTo} );
       log( 'info', "Created new message with id $id" );
     }
   }
+  return $id;
 }
 
 

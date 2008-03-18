@@ -54,3 +54,11 @@ div#Inhalt p {
   font-size:1em;
   margin: 1em 0;
 }
+
+table {
+  font-size:small;
+}
+
+td {
+  padding-right: 15px;
+}

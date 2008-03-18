@@ -26,6 +26,7 @@ use base 'CGI::Application';
 # use CGI::Application::Plugin::ActionDispatch;
 use Hermes::Log;
 use Hermes::Message;
+use Hermes::Statistics;
 
 
 
@@ -58,8 +59,14 @@ sub sayHello
   # Get CGI query object
   my $q = $self->query();
   $htmlTmpl->param( Header => "Welcome to Hermes" );
-  $htmlTmpl->param( Content => "Fight the information flood..." );
 
+  my $detailTmpl = $self->load_tmpl( 'info.tmpl', die_on_bad_params => 1, cache => 0 );
+
+  my $msgList = latestNMessages(10);
+  $detailTmpl->param( LatestMessages => $msgList );
+  $detailTmpl->param( countMessages => countMessages() );
+
+  $htmlTmpl->param( Content => $detailTmpl->output );
   return $htmlTmpl->output;
 }
 
@@ -86,7 +93,9 @@ sub postNotification {
   my $type = $q->param( 'type' );
   my $params = $q->Vars;
 
-  sendNotification( $type, $params );
+  my $id = sendNotification( $type, $params );
+
+  return "<html><body>$id</body></html>";
 }
 
 sub postMessage {

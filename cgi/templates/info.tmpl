@@ -1,0 +1,17 @@
+
+<h2>The latest Messages added:</h2>
+<p>
+<table>
+<tr><th>Id</th><th>Subject</th><th>created at</th></tr>
+<TMPL_LOOP NAME="LatestMessages">
+  <tr><td><TMPL_VAR NAME=id></td>
+      <td><TMPL_VAR NAME=subject></td>
+      <td><TMPL_VAR NAME=created></td>
+</tr>
+</TMPL_LOOP>
+</table>
+</p>
+
+<p>
+Overall message count: <TMPL_VAR NAME=countMessages>
+</p>
