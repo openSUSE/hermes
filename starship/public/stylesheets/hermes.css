@@ -14,15 +14,18 @@ ul#Navigation {
   margin-top:60px;
   border: 1px dashed silver;
 }
+
 ul#Navigation li {
   list-style: none;
   margin: 0; padding: 0.5em;
 }
+
 ul#Navigation a {
   display: block;
   padding: 0.2em;
   font-weight: bold;
 }
+
 ul#Navigation a:link {
   color: black; background-color: #eee;
 }
@@ -70,4 +73,10 @@ div#Inhalt h2 {
 div#Inhalt p {
   font-size:1em;
   margin: 1em 0;
+}
+
+
+table.msgtable th,td{
+	text-align:left;
+	width:80px;	
 }

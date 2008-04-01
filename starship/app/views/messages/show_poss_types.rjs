@@ -1,0 +1,16 @@
+=begin
+if @isSet
+	page[:types].visual_effect :blind_up
+	@isSet = false
+else
+	page.replace_html("types", :partial => "types", :object => @showtypes)
+	@isSet = true
+end
+=end
+page[:types].toggle()
+	
+
+
+
+
+

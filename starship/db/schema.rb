@@ -39,7 +39,7 @@ ActiveRecord::Schema.define(:version => 0) do
   create_table "messages_people", :force => true do |t|
     t.integer   "message_id"
     t.integer   "person_id",                                 :null => false
-    t.string    "header",     :limit => 0, :default => "to", :null => false
+    t.string    "header",     			   :default => "to", :null => false
     t.integer   "delay",      :limit => 4, :default => 0
     t.timestamp "sent",                                      :null => false
   end
