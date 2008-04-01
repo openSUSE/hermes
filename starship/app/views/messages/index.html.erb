@@ -1,21 +1,31 @@
-<h1>Listing messages</h1>
+<% if @showtype %>
+	<h1>Listing messages for <%= @showtype.msgtype %></h1>
+	<table class="ruler">
+	<% for message in @showtype.messages %>
+		<tr id="msgtr">
+		<td><%= link_to message.id, message %></td>
+		<td><%=h message.sender %></td>
+		<td><%=h message.subject %></td>
+		</tr>
+	<% end %>
+	</table>
 
-<table class="ruler">
+<% else %>
+	<h1>Message Overview</h1>
+	<table class="msgtable">
+	<tr>
+	<th>Types</th>
+	<th>Count</th>
+	</tr>
+	
+	<% for showtype in @showtypes %>
+		<tr>
+		<td><%=h showtype.msgtype %></td>
+		<td><%= showtype.messages.count %></td>
+		</tr>
+	<% end %>
+	</table>
 
-<% for showtype in @showtypes %>
-  <tr>
-    <th align="left" colspan="3"><%=h showtype.msgtype %></th>
-  </tr>
-  <% for message in showtype.messages %>
-  <tr id="msgtr">
-    <td><%= link_to message.id, message %></td>
-    <td><%=h message.sender %></td>
-    <td><%=h message.subject %></td>
-  </tr>
-  <% end %>
 <% end %>
-</table>
 
-<br />
 
-<%= link_to 'New message', new_message_path %>

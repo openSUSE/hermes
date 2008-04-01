@@ -1,6 +1,6 @@
 <p>
   <b>Msgtype:</b>
-  <%=h @message.msg_type %>
+  <%=h @message.msg_type.msgtype %>
 </p>
 
 <p>
@@ -15,14 +15,10 @@
 
 <p>
   <b>Body:</b>
-  <%=h @message.body %>
+  <%= @message.body %>
 </p>
 
-<p>
-  <b>Delay:</b>
-  <%=h @message.delay %>
-</p>
 
 
 <%= link_to 'Edit', edit_message_path(@message) %> |
-<%= link_to 'Back', messages_path %>
+<%= link_to 'Index', :action => "index", :type => @message.msg_type.id %>
