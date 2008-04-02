@@ -24,6 +24,7 @@ package Hermes::MessageSender;
 use strict;
 use Exporter;
 
+use Hermes::Message;
 use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
@@ -31,7 +32,7 @@ use Hermes::Log;
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( sendMessageDigest );
+@EXPORT	    = qw( sendMessageDigest sendImmediateMessages );
 
 
 =head1 NAME
@@ -73,7 +74,7 @@ sub sendMessageDigest($;$$$)
 {
   my ($delay, $type, $debug, $subject) = @_;
 
-  if ( HERMES_DEBUG ) {
+  if ( $Hermes::Config::Debug ) {
     log( 'warning', "Mail sending switched off (debug) due to Config-Setting!" );
     $debug = 1;
   }
@@ -137,6 +138,7 @@ sub sendMessageDigest($;$$$)
 
     # Sort the message ID's in ascending numeric order.
     my @msg_ids = sort {$a <=> $b} @{$messages{$msg_type}};
+    my @markSentIds;
 
     # Iterate through the messages, adding a new MIME part for each one.
     foreach my $msg_id (@msg_ids) {
@@ -145,7 +147,7 @@ sub sendMessageDigest($;$$$)
 
       # Fetch and store this message's address lists.
       fetchAddresses( $msg_id, Delay(), \@{$addresses{'to'}}, \@{$addresses{'cc'}},
-		     \@{$addresses{'bcc'}}, \$addresses{'replyTo'} );
+		     \@{$addresses{'bcc'}}, \@markSentIds, \$addresses{'replyTo'} );
 
       # Fetch the message.
       my ($singlefrom, $subject, $content) = fetchMessage($msg_id);
@@ -177,13 +179,69 @@ sub sendMessageDigest($;$$$)
 			      debug   => 1 } ) ) {
 
       # Now mark all digested messages sent
-      markSent( \@msg_ids );
+      markSent( @markSentIds );
     }
   }
 
   # Return the number of digests sent.
   return (0 + scalar(@types));
 }
+
+sub sendImmediateMessages(;$)
+{
+  my ($type) = @_;
+
+  # FIXME: Honour message type parameter
+
+  my $sql;
+  $sql = "SELECT msg.*, mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg ";
+  $sql .= "JOIN messages_people mp ON (msg.id=mp.message_id) ";
+  $sql .= "LEFT JOIN msg_types_people mtp on (msg.msg_type_id=mtp.msg_type_id AND ";
+  $sql .= "mp.person_id=mtp.person_id) WHERE mp.sent=0 AND mp.delay=" . SendNow;
+  $sql .= " ORDER BY msg.id LIMIT 1000";
+
+  print "SQL: $sql\n";
+
+  my $cnt = 0;
+  my %receipients;
+  my $last_id = -1;
+  my @markSentIds;
+
+  while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
+	       $header, $deliveryId ) = $dbh->selectrow_array( $sql )) {
+    # The query returns a message id multiple times, depending on the amount of 
+    # receipients.
+    push @markSentIds, $markSentId;
+
+    log( 'info', "Sending <$msgid> with <$personId> as <$header>" );
+    if ( $msgid != $last_id ) {
+      # we have a new id and do the actual sending. 
+      if ( $last_id > -1 ) {
+	# we're not in the start of the processing
+	if ( createMimeMessage( { from       => 'hermes\@suse.de',
+				  to         => $receipients{'to'},
+				  cc         => $receipients{'cc'},
+				  bcc        => $receipients{'bcc'},
+				  replyto    => $sender,
+				  subject    => $subject,
+				  body       => $body,
+				  debug      => 1 } ) ) {
+	  markSent( @markSentIds );
+	  @markSentIds = ();
+	}
+      }
+      $last_id = $msgid;
+      $receipients{to}  = ();
+      $receipients{cc}  = ();
+      $receipients{bcc} = ();
+    }
+    push @{$receipients{ $header }}, $personId
+  }
+
+
+  return $cnt;
+}
+
 
 $dbh = Hermes::DBI->connect();
 

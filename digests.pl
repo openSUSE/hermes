@@ -26,7 +26,7 @@
 
 use strict qw 'vars';
 use Getopt::Std;
-use Hermes::Message qw(:DEFAULT /^SEND_/);
+use Hermes::MessageSender;
 
 use vars qw ($opt_f $opt_t $opt_s $opt_d $opt_h $opt_c);
 

@@ -50,7 +50,7 @@ $DB{ 'default' } = { 'type'	=>  'mysql',
 # Read local configuration file, if this exists. This is meant to be used to
 # override configuration values with specific values.
 
-my $cfg = "/etc/inttools.conf";
+my $cfg = "/etc/hermes.conf";
 
 if( -r $cfg ) {
   my $return = do $cfg;
@@ -64,6 +64,8 @@ if( -r $cfg ) {
 	warn( "Cannot find $cfg" );
     }
   }
+} else {
+  warn( "Can not read config file!" );
 }
 
 #---------------------------------------------------------------------------

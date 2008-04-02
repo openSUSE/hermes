@@ -35,8 +35,8 @@ use MIME::Lite;
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh %delayHash);
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( newMessage sendNotification 
-                  SendNow SendHourly SendDaily SendWeekly SendMonthly 
+@EXPORT	    = qw( newMessage sendNotification delayStringToValue
+                  SendNow SendHourly SendDaily SendWeekly SendMonthly
 	          HERMES_DEBUG );
 
 
@@ -82,9 +82,9 @@ Currenty there are methods to send messages either as digest or immediately
 by mail. There is no support for other sending agents for other formats at
 the moment.
 
-Furthermore this module contains the  method L<sendMessageDigest> that 
+Furthermore this module contains the  method L<sendMessageDigest> that
 assembles digest mails. It must be called by a script that runs in a cron
-environment firing every hour. 
+environment firing every hour.
 
 Unfortunately Hermes does not yet honour user input, at the moment messages
 are sent the way the sending client suggests. Later the user input will
@@ -104,7 +104,7 @@ The message text to send is stored in one Perl string which contains
 tags.  The tags need a opening tag and a closing tag, which is the
 same as the opening tag with a prefixed / (slash).
 
-For example: 
+For example:
 
 The text of every single mail inside the BODY tags is stored and put to the
 collection mail. The text between PRE and POST is assembled around the
@@ -166,7 +166,7 @@ Values for the delay are defined as constants (SEND_*):
     SEND_WEEKLY		# Messages should be sent once a week.
     SEND_MONTHLY	# Messages should be sent once a month.
 
-Note that the delay parameter is automatically overwritten by the user 
+Note that the delay parameter is automatically overwritten by the user
 setting if there is one for the message type.
 
 
@@ -179,7 +179,7 @@ It takes the same format as parameter 5.
 Parameter 7 is an array of recipients who will be blind-carbon-copied (Bcc:'ed).
 It takes the same format as parameter 5.
 
-Parameter 8 is a string wiht the recipients mail who will be put into the headers's 
+Parameter 8 is a string wiht the recipients mail who will be put into the headers's
 reply to field.
 It takes the same format as parameter 5.
 
@@ -210,7 +210,7 @@ sub newMessage($$$$\@;\@\@$$)
     # This call returns the id of the type. If that does not exist, it is created.
     my $typeId = createMsgType( $type );
 
-    # check for a user 
+    # check for a user
 
     # Add the new message to the database.
     my $sql = 'INSERT INTO messages( msg_type_id, sender, subject, body, created) ' .
@@ -258,6 +258,16 @@ sub newMessage($$$$\@;\@\@$$)
       }
       if( $person_id =~ /^\d+$/ ) {
 	my ($delayID, $deliveryID) = userTypeSettings( $typeId, $person_id );
+
+ 	unless( defined $delayID ) {
+	  if( $delay =~ /^\d+$/ ) {
+	    $delayID = $delay;
+	  } else {
+	    log( 'error', "Delay needs to be numeric value!" );
+	  }
+	}
+	$deliveryID = $Config::DefaultDelivery unless( defined $deliveryID );
+
 	log( 'info', "User delay id <$delayID> for type <$typeId> for person <$person_id>" );
 	$sth->execute( ($person_id, $addresses{$person}, $delayID ) );
       } else {
@@ -352,7 +362,8 @@ sub sendMessage($;$)
   my @bcc;
   my $replyTo;
 
-  my $address_count = fetchAddresses($msg_id, SendNow(), \@to, \@cc, \@bcc, \$replyTo);
+  my @sentMarkIds;
+  my $address_count = fetchAddresses($msg_id, SendNow(), \@to, \@cc, \@bcc, \@sentMarkIds, \$replyTo);
 
   # Ensure that we have at least one recipient address.
   unless ($address_count > 0) {
@@ -403,7 +414,7 @@ sub sendMessage($;$)
 			     debug   => 1 } ) ) {
 
       # Mark this message as sent by updating the MsgSent timestamp.
-      if (markSent($msg_id)) {
+      if (markSent( @sentMarkIds )) {
 	log('notice', "Message $msg_id was sent successfully!");
       } else {
 	log('error', "Failed marking message $msg_id as sent!");
@@ -441,9 +452,9 @@ sub userTypeSettings( $$ )
 # given message ID and adds them to the provided address lists.
 ######################################################################
 
-sub fetchAddresses($$\@\@\@\$)
+sub fetchAddresses($$\@\@\@\@\$)
 {
-    my ($msg_id, $delay, $to, $cc, $bcc, $replyTo) = @_;
+    my ($msg_id, $delay, $to, $cc, $bcc, $sentMarkerIds, $replyTo) = @_;
 
     unless( $delay =~ /^\d+$/ ) {
       log('error', "Delay is not numeric, can not send message!");
@@ -456,7 +467,7 @@ sub fetchAddresses($$\@\@\@\$)
     }
 
     # Retrieve all of the addresses associated with this message ID.
-    my $sql = "SELECT p.email, a.header FROM messages_people a, persons p ";
+    my $sql = "SELECT p.email, a.id, a.header FROM messages_people a, persons p ";
     $sql .= "WHERE a.delay=? AND a.person_id=p.id AND a.message_id=?";
 
     my $sth = $dbh->prepare($sql);
@@ -468,8 +479,10 @@ sub fetchAddresses($$\@\@\@\$)
     my %bcch;
 
     # Iterate through the addresses and separate them by header-type.
-    while ( my ($mail, $header) = $sth->fetchrow_array ) {
+    while ( my ($mail, $sentMarkId, $header) = $sth->fetchrow_array ) {
       log( 'info', "Adding address $header: $mail" );
+
+      push @$sentMarkerIds, $sentMarkId;
 
       if ($header eq 'to' ) {
 	$toh{$mail} = 1;
@@ -533,7 +546,7 @@ sub fetchMessage($)
 # bcc     -> a list of bcc'ed receipients (arrayref)
 #
 ######################################################################
-sub createMimeMessage( $ ) 
+sub createMimeMessage( $ )
 {
   my ($msg) = @_;
 
@@ -582,7 +595,7 @@ sub formatAddress($$)
     if( defined $fullname && $fullname =~ /\w+/ )
     {
 	return sprintf("\"%s\" <%s>", $fullname, $login);
-    } 
+    }
     else
     {
 	return $login;
@@ -646,41 +659,23 @@ sub SendMonthly
 # success and false on failure.
 ######################################################################
 
-sub markSent($;$)
+sub markSent( @ )
 {
-    my ( $msg_id, $user_id ) = @_;
-    log( 'info', "SCALAR: " . ref( $msg_id ));
-    my $sql = 'UPDATE LOW_PRIORITY messages_people SET sent = NOW() WHERE message_id = ?';
-    if( $user_id ) {
-      $sql .= ' AND person_id=?';
-    }
-    my $sth = $dbh->prepare( $sql );
+  my @msgPeopleIds = @_;
 
-    my $res = 0;
+  my $sql = 'UPDATE LOW_PRIORITY messages_people SET sent = NOW() WHERE id = ?';
+  my $sth = $dbh->prepare( $sql );
 
-    if( ref $msg_id ne 'ARRAY') {
-      log('notice', "Marking message $msg_id as sent.");
-      if( $user_id ) {
-	$res = $sth->execute( $msg_id, $user_id );
-      } else {
-	$res = $sth->execute( $msg_id );
-      }
-    } else {
-      if( ref $msg_id eq 'ARRAY' && ref $user_id eq 'ARRAY' ) {
-	foreach my $id ( @$msg_id ) {
-	  log( 'notice', "Bulk message sent <$id>" );
-	  foreach my $uid( @$user_id ) {
-	    $res += $sth->execute( $id, $uid );
-	  }
-	}
-      } else {
-	log( 'warning', "Mismatch: msg and user id not both references!" );
-      }
-    }
-    return ($res > 0);
+  my $res = 0;
+
+  foreach my $id ( @msgPeopleIds ) {
+    log( 'notice', "set messages_people id <$id> to sent!" );
+    $res += $sth->execute( $id );
+  }
+  return ($res > 0);
 }
 
-sub createMsgType( $ ) 
+sub createMsgType( $ )
 {
   my ($msgType) = @_;
 
@@ -699,7 +694,7 @@ sub createMsgType( $ )
 }
 
 #
-# Note: this sub identifies the persons with their email address - which 
+# Note: this sub identifies the persons with their email address - which
 # is to fix as soon as we use a common user base throughout all openSUSE
 # systems, FIXME
 #
@@ -717,10 +712,29 @@ sub emailToPersonID( $ )
     $sth1->execute( $email);
     $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
   }
-  log( 'info', "Returning id <$id> for msg_type <$email>" );
+  log( 'info', "Returning id <$id> for email <$email>" );
   return $id;
 }
 
+sub delayStringToValue( $ )
+{
+  my ($str) = @_;
+
+  return SendNow() unless( $str );
+
+  if( $str =~ /NOW|IMMEDIATELY/i ) {
+    return SendNow();
+  } elsif( $str =~ /HOUR/i ) {
+    return SendHourly();
+  } elsif( $str =~ /DAILY/i ) {
+    return SendDaily();
+  } elsif( $str =~ /WEEK/i ) {
+    return SendWeekly();
+  } elsif( $str =~ /MONTH/i ) {
+    return SendMonthly();
+  }
+  return SendNow(); # Default
+}
 
 #
 # some initialisations
@@ -734,5 +748,6 @@ while ( my ($id, $name) = $sth->fetchrow_array ) {
   $delayHash{$name} = $id;
 }
 
+log( 'info', "Config-Setting: DefaultDelivery: ". $Hermes::Config::DefaultDelivery );
 1;
 
