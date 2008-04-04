@@ -50,22 +50,31 @@ $DB{ 'default' } = { 'type'	=>  'mysql',
 # Read local configuration file, if this exists. This is meant to be used to
 # override configuration values with specific values.
 
-my $cfg = "/etc/hermes.conf";
 
-if( -r $cfg ) {
-  my $return = do $cfg;
+my $haveConfig = 0;
+my @cfgs = ( "/etc/hermes.conf", "./hermes.conf", "conf/hermes.conf" );
 
-  unless( $return ) {
-    if( $@ ) {
-      warn( "Cannot compile $cfg: $@" );
-    } elsif( $! ) {
+foreach my $cfg ( @cfgs ) {
+  print "Try to read config from $cfg... ";
+  if( -r $cfg ) {
+    my $return = do $cfg;
+    unless( $return ) {
+      if( $@ ) {
+	warn( "Cannot compile $cfg: $@" );
+      } elsif( $! ) {
 	warn( "Cannot read $cfg: $!" );
-    } else {
+      } else {
 	warn( "Cannot find $cfg" );
+      }
+    } else {
+      $haveConfig = 1;
+      print "success!";
+      last;
     }
+  } else {
+    print "failed.";
   }
-} else {
-  warn( "Can not read config file!" );
+  print "\n";
 }
 
 #---------------------------------------------------------------------------
