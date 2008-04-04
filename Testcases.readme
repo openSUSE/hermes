@@ -1,0 +1,11 @@
+Testcases for Hermes, to be implemented.
+
+
+1. Test Purpose: Multiple receipients with different delay settings
+
+- one of a list of receipients has a user defined delay, others not
+  -> default delay existing?
+  -> user setting used?
+  -> list of receipients with default setting without the user with
+     user setting?
+  -> entries in messages_people correctly sent marked?

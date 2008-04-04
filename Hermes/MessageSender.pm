@@ -24,15 +24,17 @@ package Hermes::MessageSender;
 use strict;
 use Exporter;
 
-use Hermes::Message;
+use Hermes::Message qw( :DEFAULT getSnippets createMimeMessage markSent );
 use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
 
-use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
+use vars qw(@ISA @EXPORT @EXPORT_OK $dbh $query );
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( sendMessageDigest sendImmediateMessages );
+
+
 
 
 =head1 NAME
@@ -82,136 +84,207 @@ sub sendMessageDigest($;$$$)
   # Find all messages of the same type and delay that haven't been sent.
   my $sql = '';
   my $sth;
+  my $cnt = 0;
+  my $knownType;
+  my @markSentIds;
+  my @msg;
 
-  if ( $type ) {
-    log('notice', "Fetching messages with type '$type' and delay $delay");
-    $sql = "SELECT msg.id, types.msgtype FROM messages msg, msg_types types WHERE ";
-    $sql .= "msg.msg_type_id = types.id AND ";
-    $sql .= "msg.sent=0 AND types.msgtype=? AND msg.delay=?";
+  log('notice', "Fetching messages of all types with delay $delay");
 
-    $sth = $dbh->prepare( $sql );
-    $sth->execute( $type, $delay );
-  } else {
-    log('notice', "Fetching messages without type and delay $delay");
+  $query->execute( $delay, 1000 );
 
-    $sql = "SELECT msg.id, types.msgtype FROM messages msg, msg_types types WHERE ";
-    $sql .= "msg.msg_type_id = types.id AND ";
-    $sql .= "msg.sent=0 AND msg.delay=?";
+  while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
+	       $header, $deliveryId ) = $query->fetchrow_array()) {
+    # The query returns a message id multiple times, depending on the amount of 
+    # receipients.
+    push @markSentIds, $markSentId; # if of the record in messages_people
 
-    $sth = $dbh->prepare( $sql );
-    $sth->execute( $delay );
-  }
+    # Store the message for further processing.
+    push @msg, { MsgId => $msgid, Sender => $sender, Subject => $subject, 
+		 Body => $body, Created => $created, Person => $personId,
+		 Header => $header, Delivery => $deliveryId };
 
-  # Store all of the message ID's in a hash by type.
-  my %messages;
-  while ( my ($msg_id, $msg_type) = $sth->fetchrow_array ) {
-    if (!defined $messages{$msg_type}) {
-      $messages{$msg_type} = [];
-    }
-    push @{$messages{$msg_type}}, $msg_id;
-  }
-  my @types = keys %messages;
+    log( 'info', "Sending <$msgid> with <$personId> as <$header>" );
 
-  # Iterate through the hash and assemble the digested mailings.
-  foreach my $msg_type (keys %messages) {
-    log('info', "Creating new '$msg_type' message digest.");
-
-    # Build the MIME single-part message.
-    my $msg_subject;
-    if ( defined $subject ) {
-      $msg_subject = $subject;
-    } else {
-      $msg_subject = "openSUSE: '$msg_type' message digest";
-    }
-
-    # Initialize the message body strings.
-    my $body = '';
-    my ($pre_body, $post_body);
-
-    # Prepare a hash to hold the recipient address lists.
-    my %addresses;
-    $addresses{'to'} = ();
-    $addresses{'cc'} = ();
-    $addresses{'bcc'} = ();
-    $addresses{'replyTo'} = '';
-    my $from;
-
-    # Sort the message ID's in ascending numeric order.
-    my @msg_ids = sort {$a <=> $b} @{$messages{$msg_type}};
-    my @markSentIds;
-
-    # Iterate through the messages, adding a new MIME part for each one.
-    foreach my $msg_id (@msg_ids) {
-
-      log('info', "Adding message $msg_id to digest.");
-
-      # Fetch and store this message's address lists.
-      fetchAddresses( $msg_id, Delay(), \@{$addresses{'to'}}, \@{$addresses{'cc'}},
-		     \@{$addresses{'bcc'}}, \@markSentIds, \$addresses{'replyTo'} );
-
-      # Fetch the message.
-      my ($singlefrom, $subject, $content) = fetchMessage($msg_id);
-      log( 'warning', "digest messages with different from settings" ) if( $singlefrom ne $from );
-      $from = $singlefrom;
-
-      # Extract the "pre-body" and "post-body" text segments.
-      unless (defined $pre_body && defined $post_body) {
-	($pre_body)  = getSnippets('PRE',  $content, 1);
-	($post_body) = getSnippets('POST', $content, 1);
+    # if a new type starts, we have to combine the messages and form a message
+    if( $knownType && $type != $knownType ) {
+      # The current type is not yet handled.
+      my $combinedMsg = digestList( @msg );
+      $cnt += @msg;
+      if( createMimeMessage( $combinedMsg ) ) {
+	markSent( @markSentIds );
+	@markSentIds = ();
       }
-
-      # Append the <body> snippet to the message body.
-      my ($body_cont) = getSnippets('BODY', $content, 1);
-      $body_cont = $content if (!$body_cont);
-      $body .= $body_cont . "\n";
+      @msg = ();
     }
-
-    # Add the message contents (data) to the MIME message.
-    $body = ($pre_body||'') . ($body||'') . ($post_body||'');
-
-    if ( createMimeMessage( { from => $from,
-			      to      => \@{$addresses{'to'}},
-			      cc      => \@{$addresses{'cc'}},
-			      bcc     => \@{$addresses{'bcc'}},
-			      replyto => $addresses{'replyto'},
-			      subject => $subject,
-			      body    => $body,
-			      debug   => 1 } ) ) {
-
-      # Now mark all digested messages sent
-      markSent( @markSentIds );
-    }
+    $knownType = $type;
   }
-
-  # Return the number of digests sent.
-  return (0 + scalar(@types));
 }
 
+
+sub digestList( @ )
+{
+  my @msges = @_;
+
+  # go through the incoming list of hash refs with non yet digested messages
+
+  # The message parts of the new message
+  my ( $preMsg, $msgText, $postMsg, $body );
+  my $oldMsgId = 0;
+  my $subject;
+  my $sender;
+  my %addresses;
+  $addresses{'to'} = ();
+  $addresses{'cc'} = ();
+  $addresses{'bcc'} = ();
+  $addresses{'replyTo'} = '';
+
+  foreach my $msgRef ( @msges ) {
+
+    unless (defined $preMsg && defined $postMsg ) {
+      ($preMsg)  = getSnippets('PRE',  $msgRef->{Body}, 1);
+      ($postMsg) = getSnippets('POST', $msgRef->{Body}, 1);
+    }
+
+    unless( $subject ) {
+      $subject = $msgRef->{Subject};
+    } else {
+      if( $subject ne $msgRef->{Subject} ) {
+	log( 'warning', "Subject differs between messages of the same types <$msgRef->{MsgId}>: ".
+	   "<$subject> ne <$msgRef->{Subject}" );
+      }
+    }
+    unless( $sender ) {
+      $sender = $msgRef->{Sender};
+    } else {
+      if( $subject ne $msgRef->{Sender} ) {
+	log( 'warning', "Sender differs between messages of the same types!" );
+      }
+    }
+
+    if( $msgRef->{MsgId} != $oldMsgId ) {
+      my ($bodyCont) = getSnippets('BODY', $msgRef->{Body}, 1);
+
+      $bodyCont = $msgRef->{Body} if (!$bodyCont);
+      $body .= $bodyCont . "\n==>\n";
+    }
+
+    push @{$addresses{ $msgRef->{'Header'} } }, $msgRef->{Person};
+    $oldMsgId = $msgRef->{MsgId};
+
+  }
+
+  return { from => $sender, to => \@{$addresses{'to'}}, 
+	   cc => \@{$addresses{'cc'}}, bcc => \@{$addresses{'bcc'}},
+	   replyto => $Hermes::Config::ReplyTo, subject => $subject,
+	   body => $body };
+
+}
+
+
+#   # Store all of the message ID's in a hash by type.
+#   my %messages;
+#   while ( my ($msg_id, $msg_type) = $sth->fetchrow_array ) {
+#     if (!defined $messages{$msg_type}) {
+#       $messages{$msg_type} = [];
+#     }
+#     push @{$messages{$msg_type}}, $msg_id;
+#   }
+#   my @types = keys %messages;
+# 
+#   # Iterate through the hash and assemble the digested mailings.
+#   foreach my $msg_type (keys %messages) {
+#     log('info', "Creating new '$msg_type' message digest.");
+# 
+#     # Build the MIME single-part message.
+#     my $msg_subject;
+#     if ( defined $subject ) {
+#       $msg_subject = $subject;
+#     } else {
+#       $msg_subject = "openSUSE: '$msg_type' message digest";
+#     }
+# 
+#     # Initialize the message body strings.
+#     my $body = '';
+#     my ($pre_body, $post_body);
+# 
+#     # Prepare a hash to hold the recipient address lists.
+#     my %addresses;
+#     $addresses{'to'} = ();
+#     $addresses{'cc'} = ();
+#     $addresses{'bcc'} = ();
+#     $addresses{'replyTo'} = '';
+#     my $from;
+# 
+#     # Sort the message ID's in ascending numeric order.
+#     my @msg_ids = sort {$a <=> $b} @{$messages{$msg_type}};
+#     my @markSentIds;
+# 
+#     # Iterate through the messages, adding a new MIME part for each one.
+#     foreach my $msg_id (@msg_ids) {
+# 
+#       log('info', "Adding message $msg_id to digest.");
+# 
+#       # Fetch and store this message's address lists.
+#       fetchAddresses( $msg_id, Delay(), \@{$addresses{'to'}}, \@{$addresses{'cc'}},
+# 		     \@{$addresses{'bcc'}}, \@markSentIds, \$addresses{'replyTo'} );
+# 
+#       # Fetch the message.
+#       my ($singlefrom, $subject, $content) = fetchMessage($msg_id);
+#       log( 'warning', "digest messages with different from settings" ) if( $singlefrom ne $from );
+#       $from = $singlefrom;
+# 
+#       # Extract the "pre-body" and "post-body" text segments.
+#       unless (defined $pre_body && defined $post_body) {
+# 	($pre_body)  = getSnippets('PRE',  $content, 1);
+# 	($post_body) = getSnippets('POST', $content, 1);
+#       }
+# 
+#       # Append the <body> snippet to the message body.
+#       my ($body_cont) = getSnippets('BODY', $content, 1);
+#       $body_cont = $content if (!$body_cont);
+#       $body .= $body_cont . "\n";
+#     }
+# 
+#     # Add the message contents (data) to the MIME message.
+#     $body = ($pre_body||'') . ($body||'') . ($post_body||'');
+# 
+#     if ( createMimeMessage( { from => $from,
+# 			      to      => \@{$addresses{'to'}},
+# 			      cc      => \@{$addresses{'cc'}},
+# 			      bcc     => \@{$addresses{'bcc'}},
+# 			      replyto => $addresses{'replyto'},
+# 			      subject => $subject,
+# 			      body    => $body,
+# 			      debug   => 1 } ) ) {
+# 
+#       # Now mark all digested messages sent
+#       markSent( @markSentIds );
+#     }
+#   }
+# 
+#   # Return the number of digests sent.
+#   return (0 + scalar(@types));
+# }
+# 
 sub sendImmediateMessages(;$)
 {
   my ($type) = @_;
 
   # FIXME: Honour message type parameter
 
-  my $sql;
-  $sql = "SELECT msg.*, mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg ";
-  $sql .= "JOIN messages_people mp ON (msg.id=mp.message_id) ";
-  $sql .= "LEFT JOIN msg_types_people mtp on (msg.msg_type_id=mtp.msg_type_id AND ";
-  $sql .= "mp.person_id=mtp.person_id) WHERE mp.sent=0 AND mp.delay=" . SendNow;
-  $sql .= " ORDER BY msg.id LIMIT 1000";
-
-  print "SQL: $sql\n";
-
   my $cnt = 0;
   my %receipients;
   my $last_id = -1;
   my @markSentIds;
 
+  $query->execute( SendNow(), 1000 );
+
   while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
-	       $header, $deliveryId ) = $dbh->selectrow_array( $sql )) {
+	       $header, $deliveryId ) = $query->fetchrow_array()) {
     # The query returns a message id multiple times, depending on the amount of 
     # receipients.
-    push @markSentIds, $markSentId;
+    push @markSentIds, $markSentId; # if of the record in messages_people
 
     log( 'info', "Sending <$msgid> with <$personId> as <$header>" );
     if ( $msgid != $last_id ) {
@@ -244,5 +317,16 @@ sub sendImmediateMessages(;$)
 
 
 $dbh = Hermes::DBI->connect();
+
+my $sql;
+$sql = "SELECT msg.*, mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg ";
+$sql .= "JOIN messages_people mp ON (msg.id=mp.message_id) ";
+$sql .= "LEFT JOIN msg_types_people mtp on (msg.msg_type_id=mtp.msg_type_id AND ";
+$sql .= "mp.person_id=mtp.person_id) WHERE mp.sent=0 AND mp.delay=?";
+$sql .= " ORDER BY msg.id LIMIT ?";
+log( 'info', "MessageSender Base Query: $sql\n" );
+
+$query = $dbh->prepare( $sql );
+
 
 1;

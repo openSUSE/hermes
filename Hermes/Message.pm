@@ -29,15 +29,16 @@ use Hermes::DBI;
 use Hermes::Log;
 
 use Cwd;
-use Data::Dumper;
 use MIME::Lite;
 
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh %delayHash);
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( newMessage sendNotification delayStringToValue
-                  SendNow SendHourly SendDaily SendWeekly SendMonthly
-	          HERMES_DEBUG );
+@EXPORT	    = qw( newMessage sendNotification delayStringToValue 
+		  SendNow SendMinutely SendHourly SendDaily SendWeekly 
+		  SendMonthly HERMES_DEBUG );
+@EXPORT_OK  = qw( getSnippets createMimeMessage markSent );
+
 
 
 # Message delay constants:
@@ -602,6 +603,36 @@ sub formatAddress($$)
     }
 }
 
+sub SendNow
+{
+  return $delayHash{'NO_DELAY'};
+}
+
+sub SendMinutely
+{
+  return $delayHash{'PER_MINUTE'};
+}
+
+sub SendHourly
+{
+  return $delayHash{'PER_HOUR'};
+}
+
+sub SendDaily
+{
+  return $delayHash{'PER_DAY'};
+}
+
+sub SendWeekly
+{
+  return $delayHash{'PER_WEEK'};
+}
+
+sub SendMonthly
+{
+  return $delayHash{'PER_MONTH'};
+}
+
 ######################################################################
 # sub getSnippets
 # -------------------------------------------------------------------
@@ -625,31 +656,6 @@ sub getSnippets($$;$) {
     }
 
     return @snippets;
-}
-
-sub SendNow
-{
-  return $delayHash{'NO_DELAY'};
-}
-
-sub SendHourly
-{
-  return $delayHash{'PER_HOUR'};
-}
-
-sub SendDaily
-{
-  return $delayHash{'PER_DAY'};
-}
-
-sub SendWeekly
-{
-  return $delayHash{'PER_WEEK'};
-}
-
-sub SendMonthly
-{
-  return $delayHash{'PER_MONTH'};
 }
 
 ######################################################################
