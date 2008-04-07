@@ -76,7 +76,17 @@ div#Inhalt p {
 }
 
 
-table.msgtable th,td{
+table.defaultTable th,td{
 	text-align:left;
-	width:80px;	
+	width:160px;	
 }
+/* START:notice */
+#notice {
+  border: 2px solid red;
+  padding: 1em;
+  margin-bottom: 2em;
+  background-color: #f0f0f0;
+  font: bold smaller sans-serif;
+}
+/* END:notice */
+

@@ -1,7 +1,10 @@
 class MessagesController < ApplicationController
   # GET /messages
   # GET /messages.xml
+
   def index
+
+  @message_view = true
 
 	if params[:type]
 #		@showtype = MsgType.find :all, :conditions => { :msg_type_id => params[:type] }
@@ -28,6 +31,8 @@ class MessagesController < ApplicationController
     @message = Message.find(params[:id])
     @showtypes = MsgType.find :all, { :include => :messages }
 
+  	@message_view = true
+
 	if params[:menu] == "expanded"
 		@menu_expand = true
 	else
@@ -40,23 +45,11 @@ class MessagesController < ApplicationController
     end
   end
 
-  # GET /messages/new
-  # GET /messages/new.xml
+  # GET /messages/1/add_comment
 
-  def new
-    @message = Message.new
-
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.xml  { render :xml => @message }
-    end
-  end
-
-  # GET /messages/1/edit
-
-  def edit
-    @message = Message.find(params[:id])
+  def add_comment
+    @message = Message.find(params[:msg])
+	
 
   end
 

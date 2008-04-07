@@ -1,0 +1,27 @@
+<h1>Create new Subscription</h1>
+<table class="defaultTable">
+<% form_for :subscr, :url => { :action => :addSubscr } do |f| %>
+   <tr>
+	<td><b>Msgtype: </b></td>
+    <td><%= collection_select('subscr', 'msg_type_id', @availTypes, 'id','msgtype') %></td>
+  </tr>
+
+  <tr>
+    <td><b>Person: </b></td>
+    <td><%= @person.name %></td>
+  </tr>
+
+  <tr>
+    <td><b>Delay: </b></td>
+    <td><%= collection_select('subscr', 'delay_id', @availDelay, 'id','name') %></td>
+  </tr>
+
+  <tr>
+    <td><b>Delivery: </b></td>
+    <td><%= collection_select('subscr','delivery_id', @availDeliveres, 'id','name') %></td>
+  </tr>
+
+<tr><td><%= submit_tag %></td></tr>
+<% end %>
+</table>
+

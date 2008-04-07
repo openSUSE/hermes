@@ -20,5 +20,5 @@
 
 
 
-<%= link_to 'Edit', edit_message_path(@message) %> |
+<%= link_to 'Add Comment', :action => "add_comment", :msg => @message.id %> |
 <%= link_to 'Index', :action => "index", :type => @message.msg_type.id %>

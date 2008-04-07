@@ -53,14 +53,14 @@ ActiveRecord::Schema.define(:version => 0) do
 
   add_index "msg_types", ["msgtype"], :name => "msgtype"
 
-  create_table "msg_types_people", :force => true do |t|
+  create_table "msg_types_peoples", :force => true do |t|
     t.integer "msg_type_id", :null => false
     t.integer "person_id",   :null => false
     t.integer "delay_id"
     t.integer "delivery_id"
   end
 
-  add_index "msg_types_people", ["person_id", "msg_type_id"], :name => "person_id"
+  add_index "msg_types_peoples", ["person_id", "msg_type_id"], :name => "person_id"
 
   create_table "persons", :force => true do |t|
     t.string "email"

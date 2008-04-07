@@ -1,0 +1,22 @@
+<h1>Hermes for <%= @myUser.name %></h1>
+<h3>Subscribed Messagtypes</h3>
+<table class="defaultTable">
+<tr>
+<th>Message Type</th>
+<th>Delay </th>
+<th>Delivery</th>
+</tr>
+<% for subs in @subscribedMsgs %>
+	<tr>
+	<td><%= subs.msg_type.msgtype %></td>
+	<td><%= subs.delay.name %></td>
+	<td><%= subs.delivery.name %></td>
+	</tr>
+<% end %>
+</table>
+
+<%= link_to 'New Subscription', :action => "addSubscr", :user => @myUser.id %> 
+
+
+
+
