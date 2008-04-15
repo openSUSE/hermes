@@ -24,10 +24,13 @@ package Hermes::MessageSender;
 use strict;
 use Exporter;
 
-use Hermes::Message qw( :DEFAULT getSnippets createMimeMessage markSent );
+use Data::Dumper;
+
 use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
+
+use Hermes::Message qw( :DEFAULT getSnippets createMimeMessage markSent );
 
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh $query );
 
@@ -97,27 +100,37 @@ sub sendMessageDigest($;$$$)
 	       $header, $deliveryId ) = $query->fetchrow_array()) {
     # The query returns a message id multiple times, depending on the amount of 
     # receipients.
-    push @markSentIds, $markSentId; # if of the record in messages_people
+    log( 'info', "MessagePeople ID <$markSentId> handling!" );
 
-    # Store the message for further processing.
-    push @msg, { MsgId => $msgid, Sender => $sender, Subject => $subject, 
-		 Body => $body, Created => $created, Person => $personId,
-		 Header => $header, Delivery => $deliveryId };
+    $deliveryId = $Hermes::Config::DefaultDelivery unless( $deliveryId );
+
 
     log( 'info', "Sending <$msgid> with <$personId> as <$header>" );
 
     # if a new type starts, we have to combine the messages and form a message
-    if( $knownType && $type != $knownType ) {
+    if( defined $knownType && $type != $knownType ) {
       # The current type is not yet handled.
-      my $combinedMsg = digestList( @msg );
-      $cnt += @msg;
-      if( createMimeMessage( $combinedMsg ) ) {
-	markSent( @markSentIds );
-	@markSentIds = ();
-      }
+      my $deliverHashRef = digestList( @msg );
+      log( 'info', "sending digest begins ========================================!" );
+      sendHash( $deliverHashRef );
+      log( 'info', "sending digest end    ========================================!" );
       @msg = ();
     }
     $knownType = $type;
+
+    # Store the message for further processing.
+    push @msg, { MsgId => $msgid, Sender => $sender, Subject => $subject, 
+		 Body => $body, Created => $created, Person => $personId,
+		 Header => $header, Delivery => $deliveryId, markSentId => $markSentId,
+	         Type => $type };
+  }
+
+  # send whats left over
+  if( @msg ) {
+    log( 'info', "Sending left over digests =====================================!" );
+    my $deliverHashRef = digestList( @msg );
+    sendHash( $deliverHashRef );
+    log( 'info', "Finished left over digests ====================================!" );
   }
 }
 
@@ -127,19 +140,35 @@ sub digestList( @ )
   my @msges = @_;
 
   # go through the incoming list of hash refs with non yet digested messages
-
+  # these messages are all of the same type.
+  #
   # The message parts of the new message
   my ( $preMsg, $msgText, $postMsg, $body );
   my $oldMsgId = 0;
   my $subject;
   my $sender;
-  my %addresses;
-  $addresses{'to'} = ();
-  $addresses{'cc'} = ();
-  $addresses{'bcc'} = ();
-  $addresses{'replyTo'} = '';
+  my $receipientsRef;
+
+  my %deliveryMatrix;
 
   foreach my $msgRef ( @msges ) {
+
+    my $deliveryId = $msgRef->{Delivery};
+
+    unless(  $deliveryMatrix{ $deliveryId } ) {
+      $deliveryMatrix{$deliveryId} = {};
+      $receipientsRef = $deliveryMatrix{$deliveryId};
+      $receipientsRef->{type} = $msgRef->{Type};
+      $receipientsRef->{to} = ();
+      $receipientsRef->{cc} = ();
+      $receipientsRef->{bcc} = ();
+      $receipientsRef->{sentIds} = ();
+      $receipientsRef->{MsgID} = (); # $msgRef->{MsgId};
+    }
+    $receipientsRef = $deliveryMatrix{$deliveryId};
+    push @{$receipientsRef->{sentIds}}, $msgRef->{markSentId};
+    push @{$receipientsRef->{ $msgRef->{Header}}}, $msgRef->{Person};
+    push @{$receipientsRef->{MsgID}}, $msgRef->{MsgId};
 
     unless (defined $preMsg && defined $postMsg ) {
       ($preMsg)  = getSnippets('PRE',  $msgRef->{Body}, 1);
@@ -154,6 +183,8 @@ sub digestList( @ )
 	   "<$subject> ne <$msgRef->{Subject}" );
       }
     }
+    $receipientsRef->{subject} = $subject;
+
     unless( $sender ) {
       $sender = $msgRef->{Sender};
     } else {
@@ -161,6 +192,7 @@ sub digestList( @ )
 	log( 'warning', "Sender differs between messages of the same types!" );
       }
     }
+    $receipientsRef->{sender} = $sender;
 
     if( $msgRef->{MsgId} != $oldMsgId ) {
       my ($bodyCont) = getSnippets('BODY', $msgRef->{Body}, 1);
@@ -169,104 +201,54 @@ sub digestList( @ )
       $body .= $bodyCont . "\n==>\n";
     }
 
-    push @{$addresses{ $msgRef->{'Header'} } }, $msgRef->{Person};
+    push @{$receipientsRef->{ $msgRef->{'Header'} } }, $msgRef->{Person};
     $oldMsgId = $msgRef->{MsgId};
-
   }
 
-  return { from => $sender, to => \@{$addresses{'to'}}, 
-	   cc => \@{$addresses{'cc'}}, bcc => \@{$addresses{'bcc'}},
-	   replyto => $Hermes::Config::ReplyTo, subject => $subject,
-	   body => $body };
+  # Set the combined body in all messages in the delivery matrix
+  foreach my $msgRef ( values %deliveryMatrix ) {
+    $msgRef->{body} = $body;
+  }
 
+  return \%deliveryMatrix;
 }
 
 
-#   # Store all of the message ID's in a hash by type.
-#   my %messages;
-#   while ( my ($msg_id, $msg_type) = $sth->fetchrow_array ) {
-#     if (!defined $messages{$msg_type}) {
-#       $messages{$msg_type} = [];
-#     }
-#     push @{$messages{$msg_type}}, $msg_id;
-#   }
-#   my @types = keys %messages;
-# 
-#   # Iterate through the hash and assemble the digested mailings.
-#   foreach my $msg_type (keys %messages) {
-#     log('info', "Creating new '$msg_type' message digest.");
-# 
-#     # Build the MIME single-part message.
-#     my $msg_subject;
-#     if ( defined $subject ) {
-#       $msg_subject = $subject;
-#     } else {
-#       $msg_subject = "openSUSE: '$msg_type' message digest";
-#     }
-# 
-#     # Initialize the message body strings.
-#     my $body = '';
-#     my ($pre_body, $post_body);
-# 
-#     # Prepare a hash to hold the recipient address lists.
-#     my %addresses;
-#     $addresses{'to'} = ();
-#     $addresses{'cc'} = ();
-#     $addresses{'bcc'} = ();
-#     $addresses{'replyTo'} = '';
-#     my $from;
-# 
-#     # Sort the message ID's in ascending numeric order.
-#     my @msg_ids = sort {$a <=> $b} @{$messages{$msg_type}};
-#     my @markSentIds;
-# 
-#     # Iterate through the messages, adding a new MIME part for each one.
-#     foreach my $msg_id (@msg_ids) {
-# 
-#       log('info', "Adding message $msg_id to digest.");
-# 
-#       # Fetch and store this message's address lists.
-#       fetchAddresses( $msg_id, Delay(), \@{$addresses{'to'}}, \@{$addresses{'cc'}},
-# 		     \@{$addresses{'bcc'}}, \@markSentIds, \$addresses{'replyTo'} );
-# 
-#       # Fetch the message.
-#       my ($singlefrom, $subject, $content) = fetchMessage($msg_id);
-#       log( 'warning', "digest messages with different from settings" ) if( $singlefrom ne $from );
-#       $from = $singlefrom;
-# 
-#       # Extract the "pre-body" and "post-body" text segments.
-#       unless (defined $pre_body && defined $post_body) {
-# 	($pre_body)  = getSnippets('PRE',  $content, 1);
-# 	($post_body) = getSnippets('POST', $content, 1);
-#       }
-# 
-#       # Append the <body> snippet to the message body.
-#       my ($body_cont) = getSnippets('BODY', $content, 1);
-#       $body_cont = $content if (!$body_cont);
-#       $body .= $body_cont . "\n";
-#     }
-# 
-#     # Add the message contents (data) to the MIME message.
-#     $body = ($pre_body||'') . ($body||'') . ($post_body||'');
-# 
-#     if ( createMimeMessage( { from => $from,
-# 			      to      => \@{$addresses{'to'}},
-# 			      cc      => \@{$addresses{'cc'}},
-# 			      bcc     => \@{$addresses{'bcc'}},
-# 			      replyto => $addresses{'replyto'},
-# 			      subject => $subject,
-# 			      body    => $body,
-# 			      debug   => 1 } ) ) {
-# 
-#       # Now mark all digested messages sent
-#       markSent( @markSentIds );
-#     }
-#   }
-# 
-#   # Return the number of digests sent.
-#   return (0 + scalar(@types));
-# }
-# 
+ 
+sub deliverMessage( $$ )
+{
+  my ($delivery, $msgRef) = @_;
+  
+  my $res = 1;
+
+  return $res;
+}
+
+
+#
+# takes a hash that is structured by the delivery id where we loop over.
+# Called from the sendImmediateMessage
+sub sendHash( $ )
+{
+  my ( $deliveryMatrixRef ) = @_;
+
+  log( 'info', "Delivering Msg: " . Dumper( $deliveryMatrixRef ) );
+  foreach my $delivery ( keys %$deliveryMatrixRef ) {
+    if( deliverMessage( $delivery,
+			{ from       => $deliveryMatrixRef->{$delivery}->{sender},
+			  to         => $deliveryMatrixRef->{$delivery}->{to},
+			  cc         => $deliveryMatrixRef->{$delivery}->{cc},
+			  bcc        => $deliveryMatrixRef->{$delivery}->{bcc},
+			  replyto    => $deliveryMatrixRef->{$delivery}->{sender},
+			  subject    => $deliveryMatrixRef->{$delivery}->{subject},
+			  body       => $deliveryMatrixRef->{$delivery}->{body},
+			  debug      => 1 } ) ) {
+      log( 'info', "Successfully delivered message!!" );
+      markSent( $deliveryMatrixRef->{$delivery}->{sentIds} );
+    }
+  }
+}
+
 sub sendImmediateMessages(;$)
 {
   my ($type) = @_;
@@ -274,50 +256,64 @@ sub sendImmediateMessages(;$)
   # FIXME: Honour message type parameter
 
   my $cnt = 0;
-  my %receipients;
+  my %deliveryMatrix;
   my $last_id = -1;
-  my @markSentIds;
-
+  log( 'info', "SendNow: " . SendNow() );
   $query->execute( SendNow(), 1000 );
 
   while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
 	       $header, $deliveryId ) = $query->fetchrow_array()) {
     # The query returns a message id multiple times, depending on the amount of 
     # receipients.
-    push @markSentIds, $markSentId; # if of the record in messages_people
+    # push @markSentIds, $markSentId; # if of the record in messages_people
 
-    log( 'info', "Sending <$msgid> with <$personId> as <$header>" );
+    # reasonable default for empty delivery id. That happens if the user does not have
+    # a preference, it's the default delivery. FIXME
+    $deliveryId = $Hermes::Config::DefaultDelivery unless( $deliveryId );
+
     if ( $msgid != $last_id ) {
       # we have a new id and do the actual sending. 
       if ( $last_id > -1 ) {
-	# we're not in the start of the processing
-	if ( createMimeMessage( { from       => 'hermes\@suse.de',
-				  to         => $receipients{'to'},
-				  cc         => $receipients{'cc'},
-				  bcc        => $receipients{'bcc'},
-				  replyto    => $sender,
-				  subject    => $subject,
-				  body       => $body,
-				  debug      => 1 } ) ) {
-	  markSent( @markSentIds );
-	  @markSentIds = ();
-	}
+	sendHash( \%deliveryMatrix );
+	%deliveryMatrix = ();
+	$cnt++;
       }
       $last_id = $msgid;
-      $receipients{to}  = ();
-      $receipients{cc}  = ();
-      $receipients{bcc} = ();
     }
-    push @{$receipients{ $header }}, $personId
+
+    my $receipientsRef;
+    log( 'info', "Storing MsgID <$msgid> with <$personId> as <$header> in DeliveryID <$deliveryId>" );
+
+    # if we do not yet have a hash for this delivery method, create one. 
+    unless( $deliveryMatrix{$deliveryId} ) {
+      $deliveryMatrix{$deliveryId} = {};
+      $receipientsRef = $deliveryMatrix{$deliveryId};
+      $receipientsRef->{to} = ();
+      $receipientsRef->{cc} = ();
+      $receipientsRef->{bcc} = ();
+      $receipientsRef->{sentIds} = ();
+      $receipientsRef->{MsgID} = $msgid;
+      $receipientsRef->{subject} = $subject;
+      $receipientsRef->{sender} = $sender;
+      $receipientsRef->{body} = $body;
+    }
+    $receipientsRef = $deliveryMatrix{$deliveryId};
+    push @{$receipientsRef->{sentIds}}, $markSentId;
+    push @{$receipientsRef->{ $header }}, $personId
   }
-
-
+  # don't forget the last hash fill.
+  sendHash( \%deliveryMatrix );
   return $cnt;
 }
 
 
 $dbh = Hermes::DBI->connect();
 
+#
+# This is the general query used by the most sending methods here. It is prepared and 
+# stored in a module global variable, which only causes trouble if its used multiple 
+# times.
+#
 my $sql;
 $sql = "SELECT msg.*, mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg ";
 $sql .= "JOIN messages_people mp ON (msg.id=mp.message_id) ";

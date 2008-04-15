@@ -34,7 +34,8 @@ use vars qw( %LOG %DB );
     'params'    => {'name'	=> 'PDB',
 		    'filename'	=> '/tmp/inttools.log',
 		    'min_level'	=> 'info',
-		    'mode'	=> 'append'}
+		    'mode'	=> 'write',
+                    'close_after_write' => 'true' }
 );
 
 #--[ Default DB Configuration ]---------------------------------------------------
@@ -68,7 +69,7 @@ foreach my $cfg ( @cfgs ) {
       }
     } else {
       $haveConfig = 1;
-      print "success!";
+      print "success!\n";
       last;
     }
   } else {

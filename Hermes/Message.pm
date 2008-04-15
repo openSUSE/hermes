@@ -277,7 +277,7 @@ sub newMessage($$$$\@;\@\@$$)
     }
 
     # some of the receipients might want the message immediately.
-    sendMessage( $id );
+    # sendMessage( $id );
 
     return $id;
 }
@@ -676,7 +676,11 @@ sub markSent( @ )
 
   foreach my $id ( @msgPeopleIds ) {
     log( 'notice', "set messages_people id <$id> to sent!" );
-    $res += $sth->execute( $id );
+    if( $Hermes::Config::Debug ) {
+      log( 'info', "skipping to mark sent for messages_people id <$id>" );
+    } else {
+      $res += $sth->execute( $id );
+    }
   }
   return ($res > 0);
 }
