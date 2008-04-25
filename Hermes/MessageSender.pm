@@ -218,7 +218,9 @@ sub digestList( @ )
 sub deliverMessage( $$ )
 {
   my ($delivery, $msgRef) = @_;
-  
+
+  log( 'info', "Delivery is <$delivery>" );
+
   my $res = 1;
 
   return $res;
@@ -303,6 +305,8 @@ sub sendImmediateMessages(;$)
   }
   # don't forget the last hash fill.
   sendHash( \%deliveryMatrix );
+  $cnt++; # because of the last hash sending
+
   return $cnt;
 }
 

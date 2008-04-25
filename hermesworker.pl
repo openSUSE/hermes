@@ -37,8 +37,6 @@ use vars qw ( $opt_h $opt_s $opt_d $opt_w $opt_t $opt_o $opt_m );
 
 sub usage()
 {
-  print "Usage!";
-
   print<<END
 
   hermesworker.pl

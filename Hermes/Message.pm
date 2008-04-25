@@ -209,7 +209,7 @@ sub newMessage($$$$\@;\@\@$$)
     }
 
     # This call returns the id of the type. If that does not exist, it is created.
-    my $typeId = createMsgType( $type );
+    my $typeId = createMsgType( $type, $delay ); # use delay as default for new types.
 
     # check for a user
 
@@ -267,7 +267,7 @@ sub newMessage($$$$\@;\@\@$$)
 	    log( 'error', "Delay needs to be numeric value!" );
 	  }
 	}
-	$deliveryID = $Config::DefaultDelivery unless( defined $deliveryID );
+	$deliveryID = $Hermes::Config::DefaultDelivery unless( defined $deliveryID );
 
 	log( 'info', "User delay id <$delayID> for type <$typeId> for person <$person_id>" );
 	$sth->execute( ($person_id, $addresses{$person}, $delayID ) );
@@ -300,7 +300,8 @@ sub sendNotification( $$ )
     if( $msgHash->{error} ) {
       log( 'error', "Could not expand message: $msgHash->{error}\n" );
     } else {
-      # FIXME: Delay(SendNow) configurable
+      $msgHash->{delay} = SendNow() if( $msgHash->{delay} == 0 );
+
       $id = newMessage( $msgHash->{subject},   $msgHash->{body}, $msgHash->{type},
 			SendNow(),   @{$msgHash->{to}},  @{$msgHash->{cc}},
 			@{$msgHash->{bcc}},    $msgHash->{from}, $msgHash->{replyTo} );
@@ -685,9 +686,9 @@ sub markSent( @ )
   return ($res > 0);
 }
 
-sub createMsgType( $ )
+sub createMsgType( $;$ )
 {
-  my ($msgType) = @_;
+  my ($msgType, $defaultDelay) = @_;
 
   my $sth = $dbh->prepare( 'SELECT id FROM msg_types WHERE msgtype=?' );
   $sth->execute( $msgType );
@@ -695,8 +696,9 @@ sub createMsgType( $ )
   my ($id) = $sth->fetchrow_array();
 
   unless( $id ) {
-    my $sth1 = $dbh->prepare( 'INSERT INTO msg_types (msgtype) VALUES (?)' );
-    $sth1->execute( $msgType );
+    $defaultDelay = $Hermes::Config::NotifyDefaultDelay;
+    my $sth1 = $dbh->prepare( 'INSERT INTO msg_types (msgtype, defaultdelay) VALUES (?, ?)' );
+    $sth1->execute( $msgType, $defaultDelay );
     $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
   }
   log( 'info', "Returning id <$id> for msg_type <$msgType>" );
