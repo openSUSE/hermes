@@ -17,8 +17,7 @@ class ConfigController < ApplicationController
 				redirect_to_index("Subscription entry already exists.")
 			else
 				sub = MsgTypesPeople.new(sub_param)
-				sub.save
-      			if sub.save
+      			        if sub.save
 				 	redirect_to_index()
 				else
 					redirect_to_index(sub.errors.full_messages())
@@ -28,7 +27,7 @@ class ConfigController < ApplicationController
 		else
 			@person = Person.find(params[:user])
 			@availTypes = MsgType.find(:all)
-			@availDeliveres = Delivery.find(:all)
+			@availDeliveries = Delivery.find(:all)
 			@availDelay = Delay.find(:all)
 		end
 	end
