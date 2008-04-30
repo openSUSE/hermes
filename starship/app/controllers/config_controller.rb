@@ -2,10 +2,16 @@ class ConfigController < ApplicationController
 
 		@@user = 0
 	def index
-		@@user = Person.find(1)
+		@@user = Person.find(126)
 		@myUser = @@user
+		
+		if ! @myUser.name
+		  @myUser.name = "unknown";
+		end
+		
 		id = @@user.id
-		@subscribedMsgs = MsgTypesPeople.find(:all, :conditions => { :person_id => id }, :include => [:msg_type,:delay,:delivery])
+		@subscribedMsgs = MsgTypesPeople.find( :all, :conditions => { :person_id => id }, 
+		                                       :include => [:msg_type,:delay,:delivery])
 	end
 
 	def addSubscr

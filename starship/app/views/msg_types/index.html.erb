@@ -1,0 +1,17 @@
+<h1>Message Overview</h1>
+<table class="defaultTable">
+<tr>
+<th>Types</th>
+<th>Count</th>
+</tr>
+	
+<% for showtype in @showtypes %>
+	<tr>
+	<td><%= link_to showtype.msgtype, {:action => "show", :controller => "msg_types", :id => showtype.id} %></td>
+	<td><%= showtype.messages.count %></td>
+	</tr>
+<% end %>
+</table>
+<p>
+<%= will_paginate @showtypes %>
+</p>
