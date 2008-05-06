@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 1) do
+ActiveRecord::Schema.define(:version => 3) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -25,11 +25,11 @@ ActiveRecord::Schema.define(:version => 1) do
   add_index "deliveries", ["name"], :name => "name"
 
   create_table "messages", :force => true do |t|
-    t.integer  "msg_type_id",                :null => false
-    t.string   "sender"
-    t.string   "subject",     :limit => 128
-    t.text     "body"
-    t.datetime "created",                    :null => false
+    t.integer   "msg_type_id",                :null => false
+    t.string    "sender"
+    t.string    "subject",     :limit => 128
+    t.text      "body"
+    t.timestamp "created",                    :null => false
   end
 
   add_index "messages", ["msg_type_id"], :name => "fk_messages_msgtype"
@@ -37,18 +37,19 @@ ActiveRecord::Schema.define(:version => 1) do
   add_index "messages", ["created"], :name => "created"
 
   create_table "messages_people", :force => true do |t|
-    t.integer  "message_id"
-    t.integer  "person_id",                                 :null => false
-    t.string   "header",                  :default => "to", :null => false
-    t.integer  "delay",      :limit => 4, :default => 0
-    t.datetime "sent",                                      :null => false
+    t.integer   "message_id"
+    t.integer   "person_id",                                 :null => false
+    t.string    "header",     :limit => 0, :default => "to", :null => false
+    t.integer   "delay",      :limit => 4, :default => 0
+    t.timestamp "sent",                                      :null => false
   end
 
   add_index "messages_people", ["message_id", "person_id", "header"], :name => "msg_id"
 
   create_table "msg_types", :force => true do |t|
-    t.string   "msgtype", :limit => 64
-    t.datetime "added",                 :null => false
+    t.string    "msgtype",      :limit => 64
+    t.timestamp "added",                      :null => false
+    t.integer   "defaultdelay"
   end
 
   add_index "msg_types", ["msgtype"], :name => "msgtype"
