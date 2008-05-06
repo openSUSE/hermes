@@ -56,7 +56,7 @@ my $haveConfig = 0;
 my @cfgs = ( "/etc/hermes.conf", "./hermes.conf", "conf/hermes.conf" );
 
 foreach my $cfg ( @cfgs ) {
-  print "Try to read config from $cfg... ";
+  print STDERR "Try to read config from $cfg... ";
   if( -r $cfg ) {
     my $return = do $cfg;
     unless( $return ) {
@@ -69,13 +69,13 @@ foreach my $cfg ( @cfgs ) {
       }
     } else {
       $haveConfig = 1;
-      print "success!\n";
+      print STDERR "success!\n";
       last;
     }
   } else {
-    print "failed.";
+    print STDERR "failed.";
   }
-  print "\n";
+  print STDERR "\n";
 }
 
 #---------------------------------------------------------------------------
