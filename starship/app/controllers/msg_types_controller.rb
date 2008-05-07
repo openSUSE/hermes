@@ -5,17 +5,22 @@ class MsgTypesController < ApplicationController
   def index
 
     @message_view = true
-	
-	if ! params['msgtype']['search'].empty?
-		puts "seraching for : #{params['msgtype']['search']}"
-#		search_string = params['msgtype']['search']
-		
-#		if serach_string.include?('*')
-		
-		@showtypes = MsgType.find( :all, :conditions => "msg_types.msgtype = '#{params['msgtype']['search']}'")
+
+	if ! params['msgtype'].nil?
+		if ! params['msgtype']['search'].empty?
+			puts "seraching for : #{params['msgtype']['search']}"
+	#		search_string = params['msgtype']['search']
+			
+	#		if serach_string.include?('*')
+			
+			@showtypes = MsgType.find( :all, :conditions => "msg_types.msgtype = '#{params['msgtype']['search']}'")
+		else
+			@showtypes = MsgType.find :all #, { :include => :messages }
+		end
 	else
-	    @showtypes = MsgType.find :all #, { :include => :messages }
+		@showtypes = MsgType.find :all #, { :include => :messages }
 	end
+		
 
     respond_to do |format|
       format.html # 
