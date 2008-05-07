@@ -1,9 +1,3 @@
- 
- <% form_tag :action=>'index', :method => 'get' do -%>
- Search: <%= text_field 'msgtype', 'search' %>
- <%= submit_tag "OK" %>
- <% end -%>
- 
 <% if @showtype %>
 	<h1>Listing messages for <%= @showtype.msgtype %></h1>
 	<table class="ruler">

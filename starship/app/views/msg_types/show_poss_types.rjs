@@ -8,6 +8,7 @@ else
 end
 =end
 page[:types].toggle()
+#page[:types].visual_effect :blind_down
 	
 
 

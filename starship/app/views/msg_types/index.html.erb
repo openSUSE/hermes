@@ -1,3 +1,9 @@
+<% form_tag({:action=>'index'}, :method => :get) do -%>
+	Search: <%= text_field 'msgtype', 'search' %>
+	<%= submit_tag "OK" %>
+<% end -%>
+
+
 <h1>Message Overview</h1>
 <table class="defaultTable">
 <tr>
@@ -13,5 +19,6 @@
 <% end %>
 </table>
 <p>
-<%= will_paginate @showtypes %>
+<%= #will_paginate @showtypes 
+%>
 </p>

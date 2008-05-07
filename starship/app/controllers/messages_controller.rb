@@ -3,13 +3,7 @@ class MessagesController < ApplicationController
   # GET /messages.xml
 
   def index
-    @message_view = true
 
-    if params[:menu] == "expanded"
-	@menu_expand = true
-    else
-	@menu_expand = false
-    end	
 	
     @showtypes = MsgType.search( params[:search], params[:page], 50 )
     
@@ -23,9 +17,11 @@ class MessagesController < ApplicationController
   # GET /messages/1.xml
 
   def show
+	
+
+
     @message = Message.find(params[:id])
     @showtypes = MsgType.find :all #, { :include => :messages }
-    @message_view = true
 
     if params[:menu] == "expanded"
 	@menu_expand = true
@@ -39,11 +35,25 @@ class MessagesController < ApplicationController
     end
   end
 
-  # GET /messages/1/add_comment
+  # GET /messages/1/update
 
-  def add_comment
-    @message = Message.find(params[:msg])
-	
+  def update
+
+	msg = Message.find(params[:id])
+	mess = params[:message]
+	msg['comment'] = mess["comment"]
+	if msg.save
+		redirect_to_msg("Successfully saved comment",msg.id)
+	else
+		redirect_to_msg(msg.errors.full_messages(),msg.id)
+		msg.errors.clear()
+	end
 
   end
+
+  def redirect_to_msg(info=nil,id=nil)
+    flash[:notice] = info
+    redirect_to :action => 'show', :id => id
+  end
+
 end

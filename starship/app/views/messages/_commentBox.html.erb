@@ -1,0 +1,9 @@
+<% form_for(@message) do |f| %>
+	<%= f.text_area :comment, :size => "50x5" %>
+	<br/>
+	<%= f.submit "Save" %>
+<% end %>
+
+
+<%= #link_to 'Save', :action => "addComment", :id => @message.id, :content => :comment 
+%>

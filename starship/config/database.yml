@@ -19,7 +19,7 @@ development:
   encoding: utf8
   database: hermes 
   username: root
-  password:
+  password: 
   socket: /var/lib/mysql/mysql.sock
 
 # Warning: The database defined as 'test' will be erased and

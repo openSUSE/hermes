@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 3) do
+ActiveRecord::Schema.define(:version => 4) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -30,6 +30,7 @@ ActiveRecord::Schema.define(:version => 3) do
     t.string   "subject",     :limit => 128
     t.text     "body"
     t.datetime "created",                    :null => false
+    t.text     "comment"
   end
 
   add_index "messages", ["msg_type_id"], :name => "fk_messages_msgtype"
@@ -38,10 +39,10 @@ ActiveRecord::Schema.define(:version => 3) do
 
   create_table "messages_people", :force => true do |t|
     t.integer  "message_id"
-    t.integer  "person_id",                                  :null => false
-    t.string   "header",     :limit => 16, :default => "to", :null => false
-    t.integer  "delay",      :limit => 4,  :default => 0
-    t.datetime "sent",                                       :null => false
+    t.integer  "person_id",                                 :null => false
+    t.string   "header",                  :default => "to", :null => false
+    t.integer  "delay",      :limit => 4, :default => 0
+    t.datetime "sent",                                      :null => false
   end
 
   add_index "messages_people", ["message_id", "person_id", "header"], :name => "msg_id"
@@ -66,7 +67,6 @@ ActiveRecord::Schema.define(:version => 3) do
   create_table "persons", :force => true do |t|
     t.string "email"
     t.string "name"
-    t.string "jid"
   end
 
 end

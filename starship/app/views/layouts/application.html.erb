@@ -1,44 +1,320 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
-<head>
-<title> Hermes Messaging</title>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="KEYWORDS" content="openSUSE.org" />
+  <meta name="robots" content="index,follow" />
+  <link rel="shortcut icon" href="http://www.opensuse.org/favicon.ico" />
+  <title>Hermes - Notification Client</title>
 
-<%= stylesheet_link_tag 'hermes', :media => 'all' %>
-<%= javascript_include_tag 'tableruler' %>
-<%= javascript_include_tag :defaults %>
+  <link href="/css/local/style.css" rel="stylesheet" type="text/css" />
+  <!--[if lte IE 7]>
+    <link href="./css/local/style_iehacks.css" rel="stylesheet" type="text/css"/>
+  <![endif]-->
+  <link rel="stylesheet" type="text/css" media="print" href="/css/local/style_print.css" />
+<!--
+  <script type="text/javascript" src="./javascript/common/langsel.js"></script>
+-->
+
+	<%# stylesheet_link_tag 'hermes', :media => 'all' %>
+	<%= javascript_include_tag 'tableruler' %>
+	<%= javascript_include_tag :defaults %>
 
 <script type="text/javascript">
   window.onload=function(){tableruler();} 
 </script>
 
-</head>
+ </head>
+<!--
+ <body onload="langShow ();" class="ns-0">
+-->
+ <body class="ns-0">
+  <div class="skipLinks">
+   <a href="/" accesskey="1">Home</a> | 
+   <a href="#top" accesskey="2">Content</a> | 
+   <a href="#searchbox" accesskey="3">Search</a> | 
+   <a href="#firstnavitem" accesskey="4">Navigation</a>
+<!-- | 
+   <a href="#p-lang" accesskey="5">In other languages</a>
+-->
+  </div>
+  <div id="page_margins">
+   <div id="page" class="hold_floats">
+    <!-- Begin 2 column main part -->
+    <div id="main">
+     <!-- Begin left column -->
+     <div id="col1">
+      <div id="col1_content" class="clearfix">
+       <!-- Begin Logo -->
+       <div class="grey_box" id="logo">
+        <div class="box_content_row">
+         <div class="box_content" id="logo_content">
+          <a href="/"><img src="/images/common/geeko.jpg" alt="openSUSE" title="openSUSE Home" /></a>
+         </div>
+        </div>
+        <div class="box_bottom_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+       </div>
+       <!-- End Logo -->
+       <!-- Begin openSUSE navigation -->
+       <div class="grey_box" id="firstnavitem">
+        <div class="box_top_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+        <div class="box_title_row">
+         <div class="box_title">
+          openSUSE 
+         </div>
+        </div>
+        <div class="box_content">
+         <ul class="navlist">
+          <li style="list-style-image: url(./css/common/images/liDot_download.png)"><a href="http://download.opensuse.org/">Get Software</a></li>
+          <li style="list-style-image: url(./css/common/images/liDot_wiki.png)"><a href="/">Get Help</a></li>
+          <li style="list-style-image: url(./css/common/images/liDot_wiki.png)"><a href="http://en.opensuse.org/">openSUSE Wiki</a></li>
+          <li style="list-style-image: url(./css/common/images/liDot_build.png)"><a href="http://build.opensuse.org/">Build Software</a></li>
+          <li style="list-style-image: url(./css/common/images/liDot_community.png)"><a href="http://users.opensuse.org/">User Directory</a></li>          
+          <li style="list-style-image: url(./css/common/images/liDot_wiki.png)"><a href="http://news.opensuse.org/">News</a></li>
+         </ul>
+        </div>
+        <div class="box_bottom_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+       </div>
+       <br />
+       <!-- End openSUSE navigation -->
+       <!-- Begin custom navigation -->
+<!--       <div class="orange_box">
+        <div class="box_top_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+        <div class="box_title_row">
+         <div class="box_title">
+          Box Title
+         </div>
+        </div>
+        <div class="box_content">
+         <ul class="navlist">
+          <li><a href="/">Link</a></li>
+          <li><a href="/">Link</a></li>
+          <li><a href="/">Link</a></li>
+          <li><a href="/">Link</a></li>
+         </ul>
+        </div>
+        <div class="box_bottom_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+       </div>
+       <br />
+-->
+       <div class="blue_box" id="p-tb">
+        <div class="box_top_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+        <div class="box_title_row">
+         <div class="box_title">
+          Hermes
+         </div>
+        </div>
+        <div class="box_content">
+         <ul class="navlist">
+          <li><a href="/msg_types">Hermes</a></li>
+		  <li><a href="index.cgi?rm=doc">Documentation</a></li>
+		  <li><a href="/config">My Hermes</a></li>
+		  <% if @message_view %>
+			  <li><%= link_to_remote "Message Types", :url => { :action => :show_poss_types } %></li>
 
-<body>
-<ul id="Navigation">
-<!--  <li><% link_to "Hermes", :action => "index" %></li> -->
-  <li><a href="/messages">Hermes</a></li>
-  <li><a href="index.cgi?rm=doc">Documentation</a></li>
-  <li><a href="/config">My Hermes</a></li>
-  <% if @message_view %>
-	  <li><%= link_to_remote "Message Types", :url => { :action => :show_poss_types } %></li>
+			  <% if @menu_expand %>
+				<div id="types" style="">
+			  <% else %>
+				<div id="types" style="display: none;">
+			  <% end %>
+					<%= render(:partial => "types", :object => @showtypes) %>
+			  </div>
+		  <% end %>
 
-	  <% if @menu_expand %>
-		<div id="types" style="">
-	  <% else %>
-		<div id="types" style="display: none;">
-	  <% end %>
-			<%= render(:partial => "types", :object => @showtypes) %>
-	  </div>
-  <% end %>
+         </ul>
+        </div>
+        <div class="box_bottom_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+       </div>
+       <br />
+       <!-- End custom navigation -->
+       <!-- Begin Language navigation noscript -->
+<!--
+       <noscript>
+       <div class="blue_box" id="p-lang">
+        <div class="box_top_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+        <div class="box_title_row">
+         <div class="box_title">
+          In other languages
+         </div>
+        </div>
+        <div class="box_content">
+         <ul class="navlist">
+	  <li><a href="/">Language 1</a></li>
+	  <li><a href="/">Language 2</a></li>
+	  <li><a href="/">Language 3</a></li>
+         </ul>
+        </div>
+        <div class="box_bottom_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+       </div>
+       <br />
+       </noscript>
+-->
+       <!-- End Language navigation noscript -->       
+      </div>
+     </div>
+     <!-- End left column -->
+     <!-- Begin right cloumn -->
+     <div id="col3">
+      <div id="col3_content" class="clearfix">
+       <div class="blue_box_double" id="banner_blue">
+        <div class="box_content_row">
+         <div class="box_content" id="banner_content">
+          <div id="pt-personal">
+           <!-- Begin Personal links (Login, etc.) -->
+           <a href="/">Create an account or log in</a>
+           <!-- End Personal links (Login, etc.) -->
+          </div>
+          <div class="subcolumns">
+           <div class="c50l">
+            <div class="subcl">
+<!--
+	     <div id="slogan">
+	      <img src="/images/local/discover.png" alt="Discover it" />
+             </div>
+-->
+            </div>
+           </div>
+           <div class="c50r">
+            <div class="subcr">
+             <div id="searchbox">
+<!--              <!-- Begin search -->
+              <form name="searchform" action="/Special:Search">
+               <div class="topleft">
+                <div class="topright">
+                 <div class="bottomleft">
+                  <div class="bottomright">
+                   <input id="searchInput" name="search" type="text"  value="" />
+                  </div>
+                 </div>
+                </div>
+               </div>
+               <input type="image" name="go" value="Go" title="Title Search" src="/css/local/images/blue_searchbox/go.png" class="button" />
+               &nbsp;
+               <input type="image" name="fulltext" value="Search" title="Fulltext Search" src="/css/local/images/blue_searchbox/search.png" class="button" />
+              </form>
+-->              <!-- End search -->
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="box_bottom_row">
+         <div class="box_left"></div>
+         <div class="box_right"></div>
+        </div>
+       </div>
+       <br style="clear: right;" />
+       <div id="contentarea">
+        <div class="grey_box_double">
+         <div class="box_top_row">
+          <div class="box_left"></div>
+          <div class="box_right"></div>
+         </div>
+         <div class="box_title_row">
+          <div class="box_title">
+           <!-- Begin language select -->
+<!--
+           <div id="langsel" class="hide">
+            <form action="" name="langsel">
+             <select name="lang" onchange="langRedirect()">
+              <option value="">In other languages</option>
+              <option value="language 1">Language 1</option>
+              <option value="language 2">Language 2</option>
+              <option value="language 3">Language 3</option>
+             </select>
+            </form>
+           </div>
+-->
+           <!-- End langauge select -->
+           <div id="page_actions">
+            <!-- Begin page actions -->
 
-</ul>
+            <ul class="navlist">
+              <li>Hermes</a></li>
+            </ul>
 
-<div id="Content">
-	<% if flash[:notice] -%>
-         <div id="notice"><%= flash[:notice] %></div>
-	<% end %>
-   <%= yield %>
-</div>
+            <!-- End page actions -->
+           </div>
+          </div>
+         </div>
 
-</body>
+         <div class="box_content" id="bodyContent">
+          <a name="top" id="top"></a>
+<!--          <h1>openSUSE.org Theme</h1>
+	  <h3 id="siteSub">From openSUSE</h3> -->
+	  <div id="contentSub"></div>
+
+			<% if flash[:notice] -%>
+				 <div id="notice"><%= flash[:notice] %></div>
+			<% end %>
+		   <%= yield %>
+
+          <div style="clear:both;"></div>
+         </div>
+         <div class="box_footer_row">
+          <div id="page_footer" class="box_footer">
+           <!-- Begin Footer -->
+           Copyright &copy; 2005 Novell, Inc. All rights reserved. Novell is a registered trademark and<br/>
+           openSUSE and SUSE are trademarks of Novell, Inc. in the United States and other countries.<br />
+           This site uses the <a href="http://www.yaml.de/en/">YAML</a> CSS framework.
+  -->         <br />
+           <a href="http://en.opensuse.org/openSUSE:About" title="openSUSE:About">About openSUSE</a> | 
+           <a href="http://en.opensuse.org/openSUSE:General_disclaimer" title="openSUSE:General disclaimer">Disclaimers</a> | 
+           <a class="plainlink" href="mailto:webmaster@opensuse.org">Feedback</a>
+           <br />
+            This page was last modified DATE.<br />
+           <br />
+           <a href="http://www.novell.com/linux/"><img src="/images/common/founded_novell.gif" alt="Founded by Novell" /></a>
+           <!-- End Footer -->
+          </div>
+         </div>
+         <div class="box_bottom_row">
+          <div class="box_left"></div>
+          <div class="box_right"></div>
+         </div>
+        </div>
+       </div>
+      </div>
+      <!-- IE Column Clearing -->
+      <div id="ie_clearing">&nbsp;</div>
+      <!-- Ende: IE Column Clearing -->
+     </div>
+     <!-- End right column -->
+    </div>
+    <!-- End 2 cloumn main part -->
+   </div>
+  </div>
+  <!-- Begin Statistic Thing -->
+  <script type="text/javascript" src="http://www.novell.com/inc/superstats.js"></script>
+  <noscript><img src="https://novellcom.112.2O7.net/b/ss/novellcom/1/G.6--NS/0" height="1" width="1" alt="" /></noscript>
+  <!-- End Statistic Thing -->
+ </body>
 </html>

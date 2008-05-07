@@ -1,0 +1,95 @@
+
+/* 
+**
+**  $Id: $
+**
+**  Funktion:  Provides styles only needed on the openSUSE.org wiki
+**  Author:    Frank Sundermeyer <fs@opensuse.org>
+**  License:   see copyright/COPYRIGHT
+*/
+
+/*****************
+* General Styles *
+*****************/
+
+.navlist,
+#rightnav ul {
+    list-style-image: url(../common/images/liDot_double_green.png);
+}
+.skipLinks {
+    display: none;
+}
+#searchbox .topleft {
+    background: #fff url(images/green_searchbox/top_left_corner.png) top left no-repeat;
+}
+#searchbox .topright {
+    background: url(images/green_searchbox/top_right_corner.png) top right no-repeat;
+}
+#searchbox .bottomleft {
+    background: url(images/green_searchbox/bottom_left_corner.png) bottom left no-repeat;
+}
+#searchbox .bottomright {
+    background: url(images/green_searchbox/bottom_right_corner.png) bottom right no-repeat;
+}
+h1, h2, h3, h4, h5, h6 {
+    color: #669900;
+}
+
+/*************************************************
+* Overwrite YAML styles                          *
+*   all non color/image changes should go to the *
+*   common css directory                         *
+*************************************************/
+
+blockquote {
+    border-left: 4px solid #D9E5BF;
+    border-right: 4px solid #D9E5BF;
+    border-top: 1px solid #D9E5BF;
+    border-bottom: 1px solid #D9E5BF;
+}
+cite {
+    border-left: 4px solid #D9E5BF;
+}
+code {
+    background-color: #D9E5BF;
+}
+hr {
+    border-bottom: 1px #ccc solid; 
+}
+input, textarea {
+    border: 1px solid #669900;
+}
+input[type=text]:focus, textarea:focus {
+        border-color: #669900;
+}
+input[type=submit] {
+    background-color: #D9E5BF;
+    color: #000;
+}
+pre {
+    border: 2px dashed #B2CC7F;
+    background:#F0F0F4 none repeat scroll 0%;
+    color:#000;
+    display:block;
+    margin:0pt 0pt 1em 1em;
+    padding:0.5em;
+}
+ul {
+    list-style-image: url(../common/images/liDot_wiki.png);
+}
+
+#bodyContent {
+    padding: .5em 1.5em;
+	font-size: 1em;
+}
+
+/*----------------------
+*  The Personal Toolbar 
+*----------------------*/
+
+#pt-personal {
+    color: #D9E5BF;
+}
+#pt-personal a {
+    color: #D9E5BF;
+}

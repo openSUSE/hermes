@@ -17,8 +17,23 @@
   <b>Body:</b>
   <%= @message.body %>
 </p>
+<% if ! @message.comment.nil? %>
+	<p>
+	  <b>Comment:</b>
+	  <%=h @message.comment %>
+	</p>
 
+<% end %>
 
+<% if @message.comment.nil? %>
+	<%= link_to_remote "Add Comment", :url => { :action => :show_comment_box } %>
+<% else %>
+	<%= link_to_remote "Edit Comment", :url => { :action => :show_comment_box } %>
+<% end %>
 
-<%= link_to 'Add Comment', :action => "add_comment", :msg => @message.id %> |
-<%= link_to 'Index', :action => "index", :type => @message.msg_type.id %>
+<%= link_to 'Index', :controller => 'msg_types', :action => "show", :id => @message.msg_type.id %>
+
+<div id="commentBox" style="display: none;">
+	<%= render(:partial => "commentBox", :object => @message) %>
+</div>
+

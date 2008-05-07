@@ -1,0 +1,5 @@
+<% for showtype in @showtypes %>
+    <li><%= link_to showtype.msgtype, :controller => 'msg_types', :action => "show", :id => showtype.id, :menu => "expanded" %></li>
+		
+<% end %> 	
+

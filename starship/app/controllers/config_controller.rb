@@ -2,7 +2,7 @@ class ConfigController < ApplicationController
 
 		@@user = 0
 	def index
-		@@user = Person.find(126)
+		@@user = Person.find(1)
 		@myUser = @@user
 		
 		if ! @myUser.name
