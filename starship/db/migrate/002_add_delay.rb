@@ -9,6 +9,6 @@ class AddDelay < ActiveRecord::Migration
   end
 
   def self.down
-    Delay.destroy
+    Delay.find(:all).each{ |d| d.destroy } 
   end
 end
