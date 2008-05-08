@@ -12,6 +12,18 @@ class ConfigController < ApplicationController
 		id = @@user.id
 		@subscribedMsgs = MsgTypesPeople.find( :all, :conditions => { :person_id => id }, 
 		                                       :include => [:msg_type,:delay,:delivery])
+		@latestMsgsTypes = Array.new
+		@latestMsgs = Array.new
+
+		for subs in @subscribedMsgs
+			@latestMsgsTypes << subs.msg_type.id
+		end
+
+		@latestMsgsTypes.uniq
+
+		@latestMsgs = Message.find (:all, :conditions => ["msg_type_id in (?)", @latestMsgsTypes] , :order => "created DESC", :limit => 10)
+
+
 	end
 
 	def addSubscr
