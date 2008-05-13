@@ -29,7 +29,6 @@ use Hermes::DBI;
 use Hermes::Log;
 
 use Cwd;
-use MIME::Lite;
 
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh %delayHash);
 
@@ -203,7 +202,6 @@ sub newMessage($$$$\@;\@\@$$)
     	log('warning', 'Empty message subject.');
     }
 
-    # XXX: Perhaps this should be configurable on a per-message basis.
     if(!defined($from)){
     	$from = 'hermes@opensuse.org';
     }
@@ -753,12 +751,16 @@ sub delayStringToValue( $ )
 #
 $dbh = Hermes::DBI->connect();
 
+
+#
+# Load the existing delay values
 my $sth = $dbh->prepare( 'SELECT id, name FROM delays order by seconds asc' );
 $sth->execute();
 while ( my ($id, $name) = $sth->fetchrow_array ) {
   log( 'info', "Storing delay value $name with id $id" );
   $delayHash{$name} = $id;
 }
+
 
 log( 'info', "Config-Setting: DefaultDelivery: ". $Hermes::Config::DefaultDelivery );
 1;

@@ -29,13 +29,15 @@ use Data::Dumper;
 use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
+use Hermes::Delivery::Mail;
+use Hermes::Person;
 
 use Hermes::Message qw( :DEFAULT getSnippets createMimeMessage markSent );
 
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh $query );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( sendMessageDigest sendImmediateMessages );
+@EXPORT	    = qw( sendMessageDigest sendImmediateMessages deliveryIdToString );
 
 
 
@@ -134,6 +136,35 @@ sub sendMessageDigest($;$$$)
   }
 }
 
+sub deliveryIdToString( $ )
+{
+  my ($delivery) = @_;
+  my $re;
+
+  if( $delivery =~ /^\s*\d+\s*$/ ) {
+    my $sql = "SELECT name FROM deliveries WHERE id=?";
+    my $sth = $dbh->prepare( $sql );
+    $sth->execute( $delivery );
+
+    ($re) = $sth->fetchrow_array;
+  }
+  return $re;
+}
+
+sub typeIdToString( $ )
+{
+  my ($typeId) = @_;
+  my $re;
+
+  if( $typeId =~ /^\s*\d+\s*$/ ) {
+    my $sql = "SELECT msgtype FROM msg_types WHERE id=?";
+    my $sth = $dbh->prepare( $sql );
+    $sth->execute( $typeId);
+
+    ($re) = $sth->fetchrow_array;
+  }
+  return $re;
+}
 
 sub digestList( @ )
 {
@@ -222,10 +253,22 @@ sub digestList( @ )
 sub deliverMessage( $$ )
 {
   my ($delivery, $msgRef) = @_;
+  my $res = 0;
+
+  my $deliveryString = deliveryIdToString( $delivery );
 
   log( 'info', "Delivery is <$delivery>, to is <$msgRef->{to}>" );
 
-  my $res = 1;
+  # FIXME: Better detection of the delivery type
+  if( $deliveryString =~ /mail/i ) {
+    sendMail( $msgRef );
+    $res = 1;
+  } elsif( $deliveryString =~ /jabber personal/i ) {
+
+    $res = 1;
+  } else {
+    log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
+  }
 
   return $res;
 }
@@ -233,18 +276,25 @@ sub deliverMessage( $$ )
 
 #
 # takes a hash that is structured by the delivery id where we loop over.
-# Called from the sendImmediateMessage
+# Called from the sendImmediateMessage and from the digest list generator
+#
+# This sub has to set the human readable type from the id
+#
 sub sendHash( $ )
 {
   my ( $deliveryMatrixRef ) = @_;
 
   log( 'info', "Delivering Msg: " . Dumper( $deliveryMatrixRef ) );
   foreach my $delivery ( keys %$deliveryMatrixRef ) {
+
+    my $type = typeIdToString( $deliveryMatrixRef->{$delivery}->{type} );
+
     if( deliverMessage( $delivery,
 			{ from       => $deliveryMatrixRef->{$delivery}->{sender},
 			  to         => $deliveryMatrixRef->{$delivery}->{to},
 			  cc         => $deliveryMatrixRef->{$delivery}->{cc},
 			  bcc        => $deliveryMatrixRef->{$delivery}->{bcc},
+			  type       => $type,
 			  replyto    => $deliveryMatrixRef->{$delivery}->{sender},
 			  subject    => $deliveryMatrixRef->{$delivery}->{subject},
 			  body       => $deliveryMatrixRef->{$delivery}->{body},
@@ -299,6 +349,7 @@ sub sendImmediateMessages(;$)
       $receipientsRef->{bcc} = ();
       $receipientsRef->{sentIds} = ();
       $receipientsRef->{MsgID} = $msgid;
+      $receipientsRef->{type} = $type;
       $receipientsRef->{subject} = $subject;
       $receipientsRef->{sender} = $sender;
       $receipientsRef->{body} = $body;
