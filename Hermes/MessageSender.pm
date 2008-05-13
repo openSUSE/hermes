@@ -214,12 +214,16 @@ sub digestList( @ )
 }
 
 
- 
+#
+# This sub does the actual sending according to the method that is specified
+# in the parameter delivery.
+# The second parameter is a hash ref that contains the message details.
+#
 sub deliverMessage( $$ )
 {
   my ($delivery, $msgRef) = @_;
 
-  log( 'info', "Delivery is <$delivery>" );
+  log( 'info', "Delivery is <$delivery>, to is <$msgRef->{to}>" );
 
   my $res = 1;
 
@@ -260,7 +264,7 @@ sub sendImmediateMessages(;$)
   my $cnt = 0;
   my %deliveryMatrix;
   my $last_id = -1;
-  log( 'info', "SendNow: " . SendNow() );
+
   $query->execute( SendNow(), 1000 );
 
   while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
@@ -272,7 +276,7 @@ sub sendImmediateMessages(;$)
     # reasonable default for empty delivery id. That happens if the user does not have
     # a preference, it's the default delivery. FIXME
     $deliveryId = $Hermes::Config::DefaultDelivery unless( $deliveryId );
-
+    log('info', "Last ID: $last_id" );
     if ( $msgid != $last_id ) {
       # we have a new id and do the actual sending. 
       if ( $last_id > -1 ) {
@@ -304,8 +308,11 @@ sub sendImmediateMessages(;$)
     push @{$receipientsRef->{ $header }}, $personId
   }
   # don't forget the last hash fill.
-  sendHash( \%deliveryMatrix );
-  $cnt++; # because of the last hash sending
+  log( 'info', "Sending left overs" );
+  if( %deliveryMatrix ) {
+    sendHash( \%deliveryMatrix );
+    $cnt++; # because of the last hash sending
+  }
 
   return $cnt;
 }

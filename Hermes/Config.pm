@@ -43,7 +43,7 @@ use vars qw( %LOG %DB );
 $DB{ 'default' } = { 'type'	=>  'mysql',
 		     'host'	=>  'localhost',
 		     'port'	=>  3306,
-		     'name'	=>  'hermes',
+		     'name'	=>  'hermes_test',
 		     'user'	=>  'root',
 		     'pass'	=>  undef };
 
