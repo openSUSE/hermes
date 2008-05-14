@@ -24,6 +24,8 @@ package Hermes::Buildservice;
 use strict;
 use Exporter;
 
+use HTML::Template;
+
 use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
@@ -67,16 +69,25 @@ sub expandFromMsgType( $$ )
   $re->{from} = $paramHash->{from} || "hermes\@opensuse.org";
 
   my $text;
-  if( -r "messages/$type" ) {
-    if( open F, "messages/$type" ) {
-      $text = <F>;
-      close F;
-    }
+  my $filename = $Hermes::Config::Basedir . "/notifications/$type.tmpl";
+
+  if( -r "$filename" ) {
+    my $tmpl = HTML::Template->new(filename => "$filename",
+				     die_on_bad_params => 0 );
+    # Fill the template
+    $tmpl->param( $paramHash );
+    $text = $tmpl->output;
   } else {
-    log( 'warning', "Can not find message/$type text, using default" );
-    $text = "Could not find the text for message type $type, this is the default "
-      . "which is probably wrong.";
+    log( 'warning', "Can not find <$filename>, using default" );
+    $text = "Hermes received the notification <$type>\n\n";
+    if( keys %$paramHash ) {
+      $text .= "These parameters were added to the notification:\n";
+      foreach my $key( keys %$paramHash ) {
+	$text .= "   $key = " . $paramHash->{$key} . "\n";
+      }
+    }
   }
+
   $re->{body} = $text;
 
   # query the receivers
