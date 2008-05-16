@@ -17,23 +17,29 @@
   <b>Body:</b>
   <%= @message.body %>
 </p>
-<% if ! @message.comment.nil? %>
+
+<% if @to_save_comment.size > 0 and @to_save_comment[0].comment.nil? and @is_subscribed %>
 	<p>
-	  <b>Comment:</b>
-	  <%=h @message.comment %>
+		  <b>Comment:</b>
+		  <%=h @to_save_comment[0].comment %>
 	</p>
-
+	
 <% end %>
+<%= @to_save_comment[0].message_id %>
+<%= @is_subscribed %>
 
-<% if @message.comment.nil? %>
-	<%= link_to_remote "Add Comment", :url => { :action => :show_comment_box } %>
-<% else %>
-	<%= link_to_remote "Edit Comment", :url => { :action => :show_comment_box } %>
+<% if @to_save_comment.size > 0 and @is_subscribed %>
+	<% if @to_save_comment[0].comment.nil? %>
+		<%= link_to_remote "Add Comment", :url => { :action => :show_comment_box } %>
+	<% else %>
+		<%= link_to_remote "Edit Comment", :url => { :action => :show_comment_box } %>
+	<% end %>
+
+<div id="commentBox" style="display: none;">
+	<%= render(:partial => "commentBox", :object => @to_save_comment[0]) %>
+</div>
+
 <% end %>
 
 <%= link_to 'Index', :controller => 'msg_types', :action => "show", :id => @message.msg_type.id %>
-
-<div id="commentBox" style="display: none;">
-	<%= render(:partial => "commentBox", :object => @message) %>
-</div>
 

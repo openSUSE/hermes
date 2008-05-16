@@ -2,6 +2,7 @@ class MessagesController < ApplicationController
   # GET /messages
   # GET /messages.xml
 
+	@@user = Person.find(1)
   def index
 
 	
@@ -18,10 +19,19 @@ class MessagesController < ApplicationController
 
   def show
 	
-
+	@to_save_comment = Array.new
 
     @message = Message.find(params[:id])
     @showtypes = MsgType.find :all #, { :include => :messages }
+
+	subscribed = MsgTypesPeople.find( :all, :conditions => { :person_id => @@user.id , 
+											:msg_type_id => @message.msg_type_id})
+
+	if subscribed.size > 0
+		@is_subscribed = true
+		@to_save_comment = MessagesPeople.find( :all, :conditions => { :person_id => @@user.id ,     
+                                            :message_id => @message.id})
+	end
 
     if params[:menu] == "expanded"
 	@menu_expand = true
@@ -40,14 +50,20 @@ class MessagesController < ApplicationController
   def update
 
 	msg = Message.find(params[:id])
+	msgs_to_save_comment = MessagesPeople.find( :all, :conditions => { :person_id => @@user.id ,
+                                            :message_id => msg.id})	
+
 	mess = params[:message]
-	msg['comment'] = mess["comment"]
-	if msg.save
-		redirect_to_msg("Successfully saved comment",msg.id)
-	else
-		redirect_to_msg(msg.errors.full_messages(),msg.id)
-		msg.errors.clear()
+	
+	for entry in msgs_to_save_comment
+		entry['comment'] = mess["comment"]
+		entry.save
 	end
+
+	redirect_to_msg("Successfully saved comment",msg.id)
+
+#	redirect_to_msg(msg.errors.full_messages(),msg.id)
+#	msg.errors.clear()
 
   end
 

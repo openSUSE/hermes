@@ -1,7 +1,9 @@
-<% form_for(@message) do |f| %>
+<% entry = @to_save_comment[0] %>
+
+<% form_for(entry) do |f| %>
 	<%= f.text_area :comment, :size => "50x5" %>
 	<br/>
-	<%= f.submit "Save" %>
+	<%= f.submit "Save"%>
 <% end %>
 
 
