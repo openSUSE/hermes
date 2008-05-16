@@ -30,6 +30,7 @@ use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
 use Hermes::Delivery::Mail;
+use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;
 
@@ -315,7 +316,7 @@ sub deliverMessage( $$ )
     sendMail( $msgRef );
     $res = 1;
   } elsif( $deliveryString =~ /jabber personal/i ) {
-
+    sendJabber( $msgRef );
     $res = 1;
   } else {
     log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );

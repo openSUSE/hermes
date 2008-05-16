@@ -28,9 +28,9 @@ use Getopt::Std;
 
 use Hermes::MessageSender;
 use Hermes::Message;
-use SDBM_File;
+use Hermes::Delivery::Jabber;
+
 use Time::HiRes qw( gettimeofday tv_interval );
-use Fcntl;
 use Hermes::Log;
 use vars qw ( $opt_h $opt_s $opt_d $opt_w $opt_t $opt_o $opt_m );
 
@@ -69,15 +69,14 @@ $debug = 1 if( $opt_d );
 my $type;
 $type = $opt_t if( $opt_t );
 
+Hermes::Delivery::Jabber::initCommunication();
+Hermes::Delivery::Jabber::sendJabber( { subject => "Hello World", body => 'Hermes talks to you' } );
 
 # Sending time for daily digests, defaults to midnight
 my $dailyHour = $Hermes::Config::DailySendHour || 0;
 my $dailyMin  = $Hermes::Config::DailySendHourMinute || 0;
 
-my $timerfile = "workertimes";
 my %times;
-
-# tie( %times, SDBM_File, $timerfile, O_RDWR|O_CREAT, 0644 ) || die "Cannot open timer file $timerfile\n";
 
 for my $step ( ('minute', 'hour', 'week', 'month') ) {
     $times{ $step } = 0 unless( exists $times{ $step } );
@@ -94,6 +93,8 @@ if( $opt_m ) {
     for( my $i = 0; $i < 20; $i++ ) {
 	log( 'info', "Filler $i" );
     }
+    
+    Hermes::Delivery::Jabber::quitCommunication();
     exit;
 }
 
@@ -142,4 +143,4 @@ while( 1 ) {
     sleep( $workerdelay );
 }
 
-untie %times;
+Hermes::Delivery::Jabber::quitCommunication();

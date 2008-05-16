@@ -91,6 +91,14 @@ exit;
 
 }
 
+sub error(;$) 
+{
+    my ($msg) = @_;
+
+    print "ERROR: $msg\n";
+    exit(1);
+}
+
 getopts('d:t:h' );
 
 help() if( $opt_h );
@@ -102,7 +110,7 @@ if( $mail =~ /(.+?)(\n{3})(.+)/s ) {
   $header = $1;
   $body = $3;
 } else {
-  die( "Could not parse message" );
+  error( "Could not parse message" );
 }
 
 my @headerLines = split( /\n/, $header  );
@@ -131,10 +139,12 @@ print "=========================================================================
 
 $type = $opt_t if( $opt_t );
 
+error( "No type given, use either command option or in text!" ) unless( $type );
+
 my $delayID = delayStringToValue( $opt_d );
 
 print "Type: <$type> and delay <$delayID>\n";
-die( "No message type specified, use -t to do so!" ) unless( $type );
+error( "No message type specified, use -t to do so!" ) unless( $type );
 
 my $id = newMessage( $subject, $body, $type, $delayID, @{$receiver{'to'}}, @{$receiver{'cc'}}, 
 		     @{$receiver{'bcc'}}, 

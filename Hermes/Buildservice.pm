@@ -69,14 +69,17 @@ sub expandFromMsgType( $$ )
   $re->{from} = $paramHash->{from} || "hermes\@opensuse.org";
 
   my $text;
-  my $filename = $Hermes::Config::Basedir . "/notifications/$type.tmpl";
+  my $filename = $Hermes::Config::Basedir . "/notifications/" . lc $type . ".tmpl";
+  log( 'info', "template filename: <$filename>" );
 
   if( -r "$filename" ) {
     my $tmpl = HTML::Template->new(filename => "$filename",
-				     die_on_bad_params => 0 );
+				   die_on_bad_params => 0 );
     # Fill the template
     $tmpl->param( $paramHash );
     $text = $tmpl->output;
+    log('info', "Template output <$text>" );
+
   } else {
     log( 'warning', "Can not find <$filename>, using default" );
     $text = "Hermes received the notification <$type>\n\n";
