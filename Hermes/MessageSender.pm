@@ -31,15 +31,66 @@ use Hermes::DBI;
 use Hermes::Log;
 use Hermes::Delivery::Mail;
 use Hermes::Person;
+use Hermes::Message;
 
-use Hermes::Message qw( :DEFAULT getSnippets createMimeMessage markSent );
-
-use vars qw(@ISA @EXPORT @EXPORT_OK $dbh $query );
+use vars qw(@ISA @EXPORT $dbh $query );
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( sendMessageDigest sendImmediateMessages deliveryIdToString );
 
 
+######################################################################
+# sub markSent
+# -------------------------------------------------------------------
+# Marks the message with the given ID as sent.  Returns true on
+# success and false on failure.
+######################################################################
+
+sub markSent( @ )
+{
+  my @msgPeopleIds = @_;
+
+  my $sql = 'UPDATE LOW_PRIORITY messages_people SET sent = NOW() WHERE id = ?';
+  my $sth = $dbh->prepare( $sql );
+
+  my $res = 0;
+
+  foreach my $id ( @msgPeopleIds ) {
+    log( 'notice', "set messages_people id <$id> to sent!" );
+    if( $Hermes::Config::Debug ) {
+      log( 'info', "skipping to mark sent for messages_people id <$id>" );
+    } else {
+      $res += $sth->execute( $id );
+    }
+  }
+  return ($res > 0);
+}
+
+
+######################################################################
+# sub getSnippets
+# -------------------------------------------------------------------
+# Returns the snippets in text which is between the marker tags.
+######################################################################
+
+sub getSnippets($$;$) {
+    my ($marker, $text, $max_number) = @_;
+    $max_number = -1 if (!$max_number);
+
+    my $openMarker = '<' . $marker . '>';
+    my $closeMarker = '</' . $marker . ">";
+
+    my @snippets = ();
+
+    # Multiline and case-sensitive
+    while ( $max_number && $text =~ /$openMarker(.+?)$closeMarker/gsi ) {
+       push(@snippets, $1);
+       $max_number = $max_number - 1;
+       log('debug', "Found Snippet: '$marker'");
+    }
+
+    return @snippets;
+}
 
 
 =head1 NAME
@@ -48,7 +99,7 @@ sendMessageDigest() - sends a digest of queued messages
 
 =head1 SYNOPSIS
 
-    use Hermes::Message qw(:DEFAULT /^SEND_/);
+    use Hermes::MessageSender;
 
     my $delay = SEND_HOURLY;	# Send messages queued for hourly distribution.
     my $type = 'test';		# Send messages of the 'test' type.
@@ -377,7 +428,8 @@ $dbh = Hermes::DBI->connect();
 # times.
 #
 my $sql;
-$sql = "SELECT msg.*, mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg ";
+$sql = "SELECT msg.id, msg.msg_type_id, msg.sender, msg.subject, msg.body, msg.created, ";
+$sql .= "mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg ";
 $sql .= "JOIN messages_people mp ON (msg.id=mp.message_id) ";
 $sql .= "LEFT JOIN msg_types_people mtp on (msg.msg_type_id=mtp.msg_type_id AND ";
 $sql .= "mp.person_id=mtp.person_id) WHERE mp.sent=0 AND mp.delay=?";

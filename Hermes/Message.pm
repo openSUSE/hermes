@@ -30,18 +30,12 @@ use Hermes::Log;
 
 use Cwd;
 
-use vars qw(@ISA @EXPORT @EXPORT_OK $dbh %delayHash);
+use vars qw(@ISA @EXPORT $dbh %delayHash);
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( newMessage sendNotification delayStringToValue 
-		  SendNow SendMinutely SendHourly SendDaily SendWeekly 
-		  SendMonthly HERMES_DEBUG );
-@EXPORT_OK  = qw( getSnippets createMimeMessage markSent );
-
-
-
-# Message delay constants:
-use constant HERMES_DEBUG   => -1;  # Debug mode: message delivery is faked.
+		  SendNow SendMinutely SendHourly SendDaily SendWeekly
+		  SendMonthly );
 
 =head1 NAME
 
@@ -49,7 +43,7 @@ Hermes::Message - a module to post messages to the hermes system
 
 =head1 SYNOPSIS
 
-    use Hermes::Message qw(:DEFAULT /^SEND_/);
+    use Hermes::Message;
 
 =head1 DESCRIPTION
 
@@ -58,49 +52,69 @@ This chapter describes the basic idea behind the Hermes message handling
 =head2 The Idea
 
 Hermes abstracts the sending of a message to the user. That means that
-a system that wants to send a notification to a user hands the message
-to Hermes. Hermes lets the user decide which way the message should
-approach him. Both the way of message delivery and the amount of sent
-messages is adjustable by the user.
+any software system that wants to send a notification to a user hands
+the message to Hermes. Hermes gives the power back to the user lets
+him decide which way the message should approach him.
 
-1. Way of Message delivery: Hermes is able to deliver the messages in
-several ways: Web access, mail, news but also instant messages like
-jabber.
+Both the way of message delivery and the amount of sent messages is
+adjustable by the user.
 
-2. Amount of Messages: Hermes is able to create message digests, that
-are collected messages to one, i.e. all build-failed messages are
-combined to a digest one sent at midnight that contains a list of all
-failed packages.
+=over
+
+=item 1. Way of Message delivery
+
+Hermes is able to deliver the messages in several ways: Web access,
+mail, news but also instant messages like jabber.
+
+=item 2. Amount of Messages
+
+Hermes is able to create message digests, that are collected messages
+to one, i.e. all build-failed messages are combined to a digest one
+sent at midnight that contains a list of all failed packages.
+
+=back
+
+For systems that want to hand over their messages to Hermes, there are
+two different concepts of message inputs:
+
+=over
+
+=item 1. Messages
+
+These are classical messages that consist of subject, body and lists
+of receivers, just like emails. Hermes processes these messages only
+to the user in the receiver lists as expected.
+
+=item 2. Notifications
+
+Client systems also can send only Notifications which indicate that a
+cerain event has happend togehter with some parameters which specify
+details. Hermes generates a message for all users who have subscribed
+to the certain notification.
+
+=back 
 
 This module provides methods to store messages to the Hermes system
-and thus should be used by systems that needs to notify users.
-
+and thus should be used by systems that needs to notify users. The 
+sending of messages is done by a special process running on the
+hermes server.
 
 =head2 Current Status
 
 Currenty there are methods to send messages either as digest or immediately
-by mail. There is no support for other sending agents for other formats at
-the moment.
+by several output options such as mail, rss or jabber.
 
-Furthermore this module contains the  method L<sendMessageDigest> that
-assembles digest mails. It must be called by a script that runs in a cron
-environment firing every hour.
-
-Unfortunately Hermes does not yet honour user input, at the moment messages
-are sent the way the sending client suggests. Later the user input will
-override the client settings.
-
-Attachments are not yet supported.
+Message Attachments are not yet supported.
 
 =head2 Usage
 
 Messages can be sent by the funciton L<newMessage>.
 
-L<newMessage> stores the message to hermes' database and depending on the
+L<newMessage> stores the message to hermes' database. Depending on the
 delay settings it sends the message immediately or as a digested message
 later together with messages of the same type.
 
-The message text to send is stored in one Perl string which contains
+The message text to send is stored in one Perl string which can contain
 tags.  The tags need a opening tag and a closing tag, which is the
 same as the opening tag with a prefixed / (slash).
 
@@ -108,11 +122,12 @@ For example:
 
 The text of every single mail inside the BODY tags is stored and put to the
 collection mail. The text between PRE and POST is assembled around the
-collection mail (grammarwise a collection mail is PRE? BODY+ POST? ATTACHMENT*)
+collection mail only once.
 
-An ATTACHMENT needs to contain the tags FILENAME MIMETYPE and DATA. If the
-mail contains attachments it will be encoded as mime multipart message. Otherwise
-it will be simple text.
+Notifications can be sent to Hermes with L<sendNotification>. 
+
+Notifications let Hermes create the message according to the notification and
+store it to the database to picked up by the sender process.
 
 =cut
 
@@ -123,17 +138,17 @@ newMessage() - queues a new message for sending
 
 =head1 SYNOPSIS
 
-    use Hermes::Message qw(:DEFAULT /^SEND_/);
+    use Hermes::Message;
 
     my $subject = 'Test Subject';
     my $text = "Hi. <BODY>This is a test.</BODY>";
     my $type = 'test';
-    my $delay = SEND_NOW; # send now !
-    my @to = ('goof@universe.com', 'freitag@suse.de');
+    my $delay = SendNow(); # send now !
+    my @to = ('goof@universe.com', 'thefreitag@suse.de');
     my @cc = ();
     my @bcc = ('bigbrother@suse.de');
 
-    newMessage($subject, $text, $type, $delay, @to, @cc, @bcc);
+    my $id = newMessage($subject, $text, $type, $delay, @to, @cc, @bcc);
 
 =head1 DESCRIPTION
 
@@ -150,25 +165,13 @@ Parameter 2 specifies the message's text, including tags.  Allowed tags are:
     <POST>: Text to be extracted and put into the digest after the content
 
 Parameter 3 is the message type. The type is a free string. Messages of the
-same type are grouped together in digest mailings.
+same type can be grouped together in digest mailings.
 
-Parameter 4 is specifies the delay.  The hermes system will wait this
-period of time before sending the message.  If this value is negative,
-the pdb mail system will enter debug mode and fake the mail delivery by
-writing the message to standard error.
-
-Values for the delay are defined as constants (SEND_*):
-
-    HERMES_DEBUG        # Debug mode: message delivery is faked.
-    SEND_NOW		# Message should be sent immediately.
-    SEND_HOURLY		# Messages should be sent once, on the hour.
-    SEND_DAILY		# Messages should be sent once a day.
-    SEND_WEEKLY		# Messages should be sent once a week.
-    SEND_MONTHLY	# Messages should be sent once a month.
+Parameter 4 is specifies the delay. Use the methods L<SendNow>, L<SendHourly>,
+L<SendDaily> etc to specify the delay.
 
 Note that the delay parameter is automatically overwritten by the user
 setting if there is one for the message type.
-
 
 Parameter 5 is an array of recipients.  Each recipient may be specified as
 either an email addressm, a numberic user ID, or as a function.
@@ -185,7 +188,7 @@ It takes the same format as parameter 5.
 
 =head1 RETURN VALUE
 
-Returns the message's ID on success or -1 on failure.
+Returns the message's ID
 
 =cut
 
@@ -280,12 +283,48 @@ sub newMessage($$$$\@;\@\@$$)
     return $id;
 }
 
+=head1 NAME
+
+sendNotification() - notify the hermes system to generate messages
+
+=head1 SYNOPSIS
+
+    use Hermes::Message;
+
+    my $type = 'testnotification';
+    my $paramRef = { foo => 'bar', name => 'goof' };
+
+    my $id = sendNotification( $type, $paramRef );
+
+=head1 DESCRIPTION
+
+sendNotifcation() notifies Hermes to generate a message for all people
+who are subscribed to the message type given in the parameters.
+
+=head1 PARAMETERS
+
+The first parameter is a string that contains the message type that is 
+notified.
+
+The second parameter is a hash reference that contains additional specific 
+information for the message such as Ids, etc. All the contents of the
+hash is transfered to the message generator in Hermes that builds the
+actual message. 
+
+If the message type is not yet known to Hermes, it is automatically created
+and people can subscribe to it from now on.
+
+=head1 RETURN VALUE
+
+Returns the message's ID
+
+=cut
 
 sub sendNotification( $$ )
 {
   my ( $msgType, $params ) = @_;
 
-  my $module = 'Hermes::Buildservice';
+  my $module = 'Hermes::Buildservice'; # FIXME - better plugin handling
 
   push @INC, "..";
 
@@ -310,126 +349,9 @@ sub sendNotification( $$ )
 }
 
 
-=head1 NAME
-
-sendMessage() - sends a single queued message
-
-=head1 SYNOPSIS
-
-  use Hermes::Message;
-
-  my $msg_id = 24;	# Send message with ID 24.
-
-  sendMessage( $msg_id );
-
-=head1 DESCRIPTION
-
-pdbSendMessage() will send a single message that is queued in the system,
-based on the provided message ID. It does not take the user set delays
-into account, it sends the message immediately to all receipients.
-
-=head1 PARAMETERS
-
-Parameter 1 specifies the message ID of the message to send.
-
-Parameter 2 is an optional debug flag.
-
-=head1 RETURN VALUE
-
-Returns true on success or false on failure.
-
-=cut
-
-sub sendMessage($;$)
-{
-  my ($msg_id, $debug) = @_;
-
-  unless ($msg_id =~ /^\d+$/) {
-    log('error', "ID ($msg_id) is not numeric.");
-    return;
-  }
-
-  log('info', "Attempting to send message $msg_id IMMEDIATELY.");
-
-  if ( HERMES_DEBUG ) {
-    log( 'warning', "Mail sending switched off (debug) due to Config-Setting!" );
-    $debug = 1;
-  }
-
-  # Fetch the addresses associated with this message.
-  my @to;
-  my @cc;
-  my @bcc;
-  my $replyTo;
-
-  my @sentMarkIds;
-  my $address_count = fetchAddresses($msg_id, SendNow(), \@to, \@cc, \@bcc, \@sentMarkIds, \$replyTo);
-
-  # Ensure that we have at least one recipient address.
-  unless ($address_count > 0) {
-    # thats not neccessarily an error, might be that there is no receipient who
-    # wants the message immediately
-    log('info', 'No recipient addresses were found.');
-    return;
-  }
-
-  # Retrieve the message's contents.
-  my ($from, $subject, $content) = fetchMessage( $msg_id );
-
-  # retain only the body segment of this message.
-  my ($body) = getSnippets('BODY', $content, 1);
-  $body = $content if (!$body); # otherwise use whole body
-
-  # my @attachments = getSnippets('ATTACHMENT', $content);
-
-  # Prepare to send the message.
-  if (defined $subject || defined $body) {
-
-    # Attachments not supported for the moment  - FIXME
-    # if (scalar @attachments) {
-    #   $mime_msg = MIME::Lite->new(
-    # 				  From	  => formatAddress($from, $sender_name),
-    # 				  Subject => $subject,
-    # 				  Type    => 'multipart/mixed'
-    # 				 );
-    #   $mime_msg->attach(Type     => 'TEXT',
-    # 			Data     => $body
-    # 		       );
-    #   foreach my $attachment (@attachments) {
-    # 	my ($data)     = getSnippets('DATA', $attachment, 1);
-    # 	my ($filename) = getSnippets('FILENAME', $attachment, 1);
-    # 	my ($mimetype) = getSnippets('MIMETYPE', $attachment, 1);
-    # 	$mime_msg->attach(Type     => $mimetype,
-    # 			  Data     => $data,
-    # 			  Filename => $filename );
-    #   }
-    # } else {
-    if( createMimeMessage( { from => $from,
-			     to      => \@to,
-			     cc      => \@cc,
-			     bcc     => \@bcc,
-			     replyto => $replyTo,
-			     subject => $subject,
-			     body    => $body,
-			     debug   => 1 } ) ) {
-
-      # Mark this message as sent by updating the MsgSent timestamp.
-      if (markSent( @sentMarkIds )) {
-	log('notice', "Message $msg_id was sent successfully!");
-      } else {
-	log('error', "Failed marking message $msg_id as sent!");
-      }
-    }
-  } else {
-    log('error', 'Bad message: no body or subject!');
-    return;
-  }
-
-  return 1;
-}
 
 ######################################################################
-# sub userDelaySetting
+# sub userTypeSettings
 # -------------------------------------------------------------------
 # Returns the user setting of the delay according to the given msg type.
 ######################################################################
@@ -442,164 +364,6 @@ sub userTypeSettings( $$ )
   my ($delayID, $deliveryID) = @{$dbh->selectcol_arrayref( $sql, undef, ($typeId, $personId ) )};
 
   return $delayID, $deliveryID;
-}
-
-
-######################################################################
-# sub fetchAddresses
-# -------------------------------------------------------------------
-# Retrieves all of the addresses (To:, Cc:, Bcc:) associated with the
-# given message ID and adds them to the provided address lists.
-######################################################################
-
-sub fetchAddresses($$\@\@\@\@\$)
-{
-    my ($msg_id, $delay, $to, $cc, $bcc, $sentMarkerIds, $replyTo) = @_;
-
-    unless( $delay =~ /^\d+$/ ) {
-      log('error', "Delay is not numeric, can not send message!");
-      return 0;
-    }
-
-    unless( 0+$msg_id ) {
-      log( 'error', "Message id is invalid: <$msg_id>" );
-      return 0;
-    }
-
-    # Retrieve all of the addresses associated with this message ID.
-    my $sql = "SELECT p.email, a.id, a.header FROM messages_people a, persons p ";
-    $sql .= "WHERE a.delay=? AND a.person_id=p.id AND a.message_id=?";
-
-    my $sth = $dbh->prepare($sql);
-    $sth->execute( $delay, $msg_id );
-
-    # use some hashes to assemble the addresses uniquely
-    my %toh;
-    my %cch;
-    my %bcch;
-
-    # Iterate through the addresses and separate them by header-type.
-    while ( my ($mail, $sentMarkId, $header) = $sth->fetchrow_array ) {
-      log( 'info', "Adding address $header: $mail" );
-
-      push @$sentMarkerIds, $sentMarkId;
-
-      if ($header eq 'to' ) {
-	$toh{$mail} = 1;
-      } elsif ($header eq 'cc' ) {
-	$cch{$mail} = 1;
-      } elsif ($header eq 'bcc') {
-	$bcch{$mail} = 1;
-      } elsif ($header eq 'reply-to' ) {
-	$$replyTo = $mail;
-      } else {
-	log('warning', "Unknown header: <$header> - skipping");
-	next;
-      }
-    }
-
-    @$to =  keys %toh;
-    @$cc =  keys %cch;
-    @$bcc = keys %bcch;
-
-    my $cnt = (scalar keys %toh) + (scalar keys %cch) +  (scalar keys %bcch);
-    # Return the number of addresses added to the lists.
-    # Does _not_ add the ones for replyTo, because they are not usefull in decision,
-    # if there are people to receive the mail.
-    return $cnt;
-}
-
-
-######################################################################
-# sub fetchMessage
-# -------------------------------------------------------------------
-# Retrieves the requested message from the database based on the
-# given message ID.
-# Returns the message's from, subject, and body values.
-######################################################################
-
-sub fetchMessage($)
-{
-  my ($msg_id) = @_;
-
-  # Retrieve the message's contents.
-  log('info', "Retrieving message $msg_id.");
-  my $sql = "SELECT sender, subject, body FROM messages where id= ?";
-  my $sth = $dbh->prepare( $sql );
-  $sth->execute( $msg_id );
-  return $sth->fetchrow_array;
-}
-
-######################################################################
-# sub createMimeMessage
-# -------------------------------------------------------------------
-# Creates a new mail message with MIME::Lite and sends it
-#
-# The function accepts a hash ref as incoming parameter that contains
-# the following data:
-# subject -> the mail subject (string)
-# body    -> the text
-# from    -> the sender, formatted (string)
-# replyto -> the reply to  (string)
-# to      -> a list of receipients (arrayref)
-# cc      -> a list of cc'ed receipients (arrayref)
-# bcc     -> a list of bcc'ed receipients (arrayref)
-#
-######################################################################
-sub createMimeMessage( $ )
-{
-  my ($msg) = @_;
-
-  my $mime_msg = MIME::Lite->new( From	  => $msg->{from},
-				  Subject => $msg->{subject},
-				  Data    => $msg->{body} );
-
-  # FIXME: Parametercheck.
-
-  my $t = join( ', ', @{$msg->{to} } );
-  log( 'info', "To-line: $t" );
-  $mime_msg->add('To' => $t );
-
-  $t = join( ', ', @{$msg->{cc} } );
-  $mime_msg->add('Cc' => $t );
-
-  $t = join( ', ', @{$msg->{bcc} } );
-  $mime_msg->add('Bcc' => $t );
-
-  $mime_msg->add('reply-to' => $msg->{replyto} ) if( defined $msg->{replyto} );
-
-  $mime_msg->replace('X-Mailer' => 'openSUSE Notification System');
-
-    # Send the message.
-  if (defined $msg->{debug} && $msg->{debug} ) {
-    print STDERR "[ Debug: Start of MIME-encoded message ]\n";
-    print STDERR $mime_msg->as_string;
-    print STDERR "\n[ Debug: End of MIME-encoded message ]\n";
-  } else {
-    $mime_msg->send();
-  }
-
-  1;
-}
-
-######################################################################
-# sub formatAddress
-# -------------------------------------------------------------------
-# Creates a pretty mail address from an email address and a fullname.
-######################################################################
-
-sub formatAddress($$)
-{
-    my ($login, $fullname) = @_;
-
-    if( defined $fullname && $fullname =~ /\w+/ )
-    {
-	return sprintf("\"%s\" <%s>", $fullname, $login);
-    }
-    else
-    {
-	return $login;
-    }
 }
 
 sub SendNow
@@ -632,57 +396,6 @@ sub SendMonthly
   return $delayHash{'PER_MONTH'};
 }
 
-######################################################################
-# sub getSnippets
-# -------------------------------------------------------------------
-# Returns the snippets in text which is between the marker tags.
-######################################################################
-
-sub getSnippets($$;$) {
-    my ($marker, $text, $max_number) = @_;
-    $max_number = -1 if (!$max_number);
-
-    my $openMarker = '<' . $marker . '>';
-    my $closeMarker = '</' . $marker . ">";
-
-    my @snippets = ();
-
-    # Multiline and case-sensitive
-    while ( $max_number && $text =~ /$openMarker(.+?)$closeMarker/gsi ) {
-       push(@snippets, $1);
-       $max_number = $max_number - 1;
-       log('debug', "Found Snippet: '$marker'");
-    }
-
-    return @snippets;
-}
-
-######################################################################
-# sub markSent
-# -------------------------------------------------------------------
-# Marks the message with the given ID as sent.  Returns true on
-# success and false on failure.
-######################################################################
-
-sub markSent( @ )
-{
-  my @msgPeopleIds = @_;
-
-  my $sql = 'UPDATE LOW_PRIORITY messages_people SET sent = NOW() WHERE id = ?';
-  my $sth = $dbh->prepare( $sql );
-
-  my $res = 0;
-
-  foreach my $id ( @msgPeopleIds ) {
-    log( 'notice', "set messages_people id <$id> to sent!" );
-    if( $Hermes::Config::Debug ) {
-      log( 'info', "skipping to mark sent for messages_people id <$id>" );
-    } else {
-      $res += $sth->execute( $id );
-    }
-  }
-  return ($res > 0);
-}
 
 sub createMsgType( $;$ )
 {
