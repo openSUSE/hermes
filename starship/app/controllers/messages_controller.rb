@@ -29,7 +29,7 @@ class MessagesController < ApplicationController
 
 	if subscribed.size > 0
 		@is_subscribed = true
-		@to_save_comment = MessagesPeople.find( :all, :conditions => { :person_id => @@user.id ,     
+		@to_save_comment = MessagesPeople.find( :first, :conditions => { :person_id => @@user.id ,     
                                             :message_id => @message.id})
 	end
 
@@ -47,16 +47,16 @@ class MessagesController < ApplicationController
 
   # GET /messages/1/update
 
-  def update
+  def save_comment
 
-	msg = Message.find(params[:id])
+	postArg = params[:comm]
+	msg = Message.find(postArg['message_id'])
+	puts "The post ARGS are: #{postArg}"
 	msgs_to_save_comment = MessagesPeople.find( :all, :conditions => { :person_id => @@user.id ,
                                             :message_id => msg.id})	
 
-	mess = params[:message]
-	
 	for entry in msgs_to_save_comment
-		entry['comment'] = mess["comment"]
+		entry['comment'] = postArg['comment']
 		entry.save
 	end
 
