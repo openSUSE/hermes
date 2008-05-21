@@ -20,9 +20,8 @@
 # Contributors:
 #  Klaas Freitag <freitag@suse.de>
 #
-# This a cron job driven script to send message digests in the Hermes
-# system.
-
+# This a command line tool to schedule messages in hermes
+#
 
 use strict qw 'vars';
 use Getopt::Std;
@@ -45,7 +44,7 @@ sub help()
 {
   print<<END
 
-NAME:
+NAME
     sendhermes.pl - commandline tool to hand over a message to hermes.
     
 SYNOPSIS
