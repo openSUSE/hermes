@@ -52,6 +52,23 @@ sub setup {
 
 }
 
+# prerun is needed to handle POST calls that have some of the
+# parameters still set as url parameters. prerun analyses the
+# rm parameter to call the correct runmode.
+sub cgiapp_prerun
+{
+  my $self = shift;
+
+  # Get CGI query object
+  my $q = $self->query();
+  if( lc $q->url_param( 'rm' ) eq 'post' ) {
+    $self->prerun_mode( 'post' );
+  }
+
+  my $post = $q->param( 'POSTDATA' );
+  log( 'info', "POST data in prerun: <$post>" );
+}
+
 sub sayHello
 {
   my $self = shift;
@@ -95,7 +112,7 @@ sub postNotification {
 
   my $id = sendNotification( $type, $params );
 
-  return "<html><body>$id</body></html>";
+  return "$id";
 }
 
 sub postMessage {
@@ -104,21 +121,37 @@ sub postMessage {
   # Get CGI query object
   my $q = $self->query();
 
-  my $type    = $q->param( 'type' );
-  my $subject = $q->param( 'subject' );
-  my $body    = $q->param( 'body' );
-  my @to      = $q->param( 'to' );
-  my @cc      = $q->param( 'cc' );
-  my @bcc     = $q->param( 'bcc' );
-  my $from    = $q->param( 'from' );
-  my $delayStr= uc $q->param( 'delay' );
+  # read either the normal param or the url_param in case it is a post 
+  # in mixed mode with url parameters 
+  my $type    = $q->param( 'type')     || $q->url_param( 'type' );
+  my $subject = $q->param( 'subject' ) || $q->url_param( 'subject' );
+  my $body    = $q->param( 'body' )    || $q->url_param( 'body' );
+  my @to      = $q->param( 'to' )      || $q->url_param( 'to' );
+  my @cc      = $q->param( 'cc' )      || $q->url_param( 'cc' );
+  my @bcc     = $q->param( 'bcc' )     || $q->url_param( 'bcc' );
+  my $from    = $q->param( 'from' )    || $q->url_param( 'from' );
+
+  # my $replyTo = $q->param( 'replyto' ); # Can be more than one! FIXME
+  my $delayStr= uc ( $q->url_param( 'delay' ) || $q->url_param( 'delay' ) );
   # FIXME: Security, perfect spammer!
 
   log( 'info', "This is delayStr: <$delayStr>" );
   # Required: subject, body, from, one entry in to
   unless( defined $subject && defined $body && defined $from && scalar @to > 0 ) {
     log( 'error', "Message incomplete, required are subject, from body and a to entry." );
-    return "<h1>Error: Incomplete Message!</h1>";
+
+    log( 'info', "Subject: " . ( $subject || "<empty>" ) );
+    log( 'info', "Body: " . ( $body || "<empty>" ) );
+    log( 'info', "from: " . ( $from || "<empty>" ) );
+    log( 'info', "to: " . join( ', ', @to ) );
+
+    my $err = "ERROR: Message incomplete, ";
+    $err .= "Subject empty" unless $subject;
+    $err .= " Body empty" unless $body;
+    $err .= " from empty" unless $from;
+    $err .= " to empty" unless @to;
+
+    return $err;
   }
 
   # Check the delay
@@ -135,7 +168,7 @@ sub postMessage {
 
   my $id = newMessage( $subject, $body, $type, $delay, @to, @cc, @bcc, $from );
 
-  return "<html><body>$id</body></html>";
+  return "$id";
 }
 
 1;
