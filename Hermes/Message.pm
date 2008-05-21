@@ -470,7 +470,7 @@ $dbh = Hermes::DBI->connect();
 my $sth = $dbh->prepare( 'SELECT id, name FROM delays order by seconds asc' );
 $sth->execute();
 while ( my ($id, $name) = $sth->fetchrow_array ) {
-  log( 'info', "Storing delay value $name with id $id" );
+  # log( 'info', "Storing delay value $name with id $id" );
   $delayHash{$name} = $id;
 }
 
