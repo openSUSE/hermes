@@ -37,19 +37,29 @@ use vars qw( @ISA @EXPORT @EXPORT_OK $dbh);
 #
 # This sub returns a hash ref that contains some information about
 # a person identified through the id
+#
+# The following keys are set in the person desc hash:
+# - all columns from the database table persons
+# - feedPath: a relative path name which is user specific.
+# 
 sub personInfo( $ )
 {
   my ($id) = @_;
+
+  my $personInfoRef;
 
   if( $id =~ /^\s*\d+\s*$/ ) {
     my $sql = "SELECT * FROM persons WHERE id=?";
     my $sth = $dbh->prepare( $sql );
     $sth->execute( $id );
 
-    return $sth->fetchrow_hashref;
-  }
-  return {};
+    $personInfoRef = $sth->fetchrow_hashref;
 
+    my $feeds = $personInfoRef->{email};
+    $feeds =~ s/[\.@]/_/g;
+    $personInfoRef->{feedPath} = $feeds;
+  }
+  return $personInfoRef;
 }
 
 $dbh = Hermes::DBI->connect();
