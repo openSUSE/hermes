@@ -1,0 +1,55 @@
+
+Some hints about the Hermes installation...
+
+
+The Hermes Baselibs:
+===================
+
+The Hermes baselibs are perl modules used by the hermes server and
+the hermes command line tools. They also can be used by clients to
+post messages not over http but directly into the hermes database.
+Direct access to the database and database credentials must be 
+available for that.
+
+Dependencies:
+- perl
+  perl Modules:
+    Name                    SUSE Package Name
+ +------------------------+----------------------------------------
+   Html-Template            perl-HTML-Template
+   Data::Dumper             perl-base
+   DBI                      perl-DBI
+   Log::Dispatch            perl-Log-Dispatch
+   Log::Dispatch::File            "
+   Log::Dispatch::Syslog          "
+   Net::Jabber              perl-Net-Jabber
+   MIME::Lite               perl-MIME-Lite
+   xML::RSS                 -no openSUSE package yet-
+
+The Hermes Server:
+=================
+
+The Hermes server is a server which takes notifications and messages
+over HTTP and stores it to a database. Clients that want to post 
+messages to Hermes use the Hermes server.
+
+Dependencies:
+
+- mysql
+- Hermes Baselibs
+- perl
+  perl Modules:
+  * CGI::Application        perl-CGI-Application
+
+Hermes Starship
+===============
+
+Hermes Starship is a Ruby on Rails application that enables peole to
+manage their subscriptions to notifications in the hermes system.
+
+Dependencies:
+
+- mysql
+- Ruby
+- Ruby on Rails version >2
+
