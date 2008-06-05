@@ -17,7 +17,7 @@
 development:
   adapter: mysql
   encoding: utf8
-  database: hermes 
+  database: hermes
   username: root
   password: 
   socket: /var/lib/mysql/mysql.sock
