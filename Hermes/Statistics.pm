@@ -45,8 +45,9 @@ sub latestNMessages( ;$ )
   $cnt = 10 unless ( $cnt =~ /^\d+$/ );
   $cnt = $cnt < 100 ? $cnt : 100;
 
-  my $sql = "SELECT id, LEFT( subject, 40) as subject, created FROM "
-    ."messages order by created desc limit $cnt";
+  my $sql = "SELECT m.id as id, LEFT( m.subject, 40) as subject, m.created as created, "
+    . "mt.msgtype as msgtype FROM messages m, msg_types mt "
+    . "WHERE m.msg_type_id = mt.id order by created desc limit $cnt";
 
   return $dbh->selectall_arrayref( $sql, { Slice => {} } );
 }
