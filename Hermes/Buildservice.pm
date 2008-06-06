@@ -67,16 +67,12 @@ sub expandFromMsgType( $$ )
 
   $re->{cc}      = [];
   $re->{bcc} = undef;
-  my $hermesid = $hermesUserInfoRef ? $hermesUserInfoRef->{id} : undef;
-  if( $hermesUserInfoRef ) {
-    $re->{bcc}     = [ $hermesUserInfoRef->{id} ];
-  }
 
   $re->{replyTo} = undef;
   $re->{from} = $paramHash->{from} || "hermes\@opensuse.org";
 
   my $text;
-  my $filename = $Hermes::Config::Basedir . "/notifications/" . lc $type . ".tmpl";
+  my $filename = $Hermes::Config::HerminatorDir . "/notifications/" . lc $type . ".tmpl";
   log( 'info', "template filename: <$filename>" );
 
   if( -r "$filename" ) {
@@ -105,7 +101,12 @@ sub expandFromMsgType( $$ )
     . "mtp.msg_type_id = mt.id AND mt.msgtype=?";
   $re->{to} = $dbh->selectcol_arrayref( $sql, undef, $type );
 
-  log( 'info', "These receiver were found: " . join( ", ", @{$re->{to}} ) );
+  my $hermesid = $hermesUserInfoRef ? $hermesUserInfoRef->{id} : undef;
+  if( $hermesUserInfoRef ) {
+    $re->{bcc}     = [ $hermesUserInfoRef->{id} ];
+  }
+
+  log( 'info', "These receiver were found: " . join( ", ", @{$re->{bcc}} ) );
 
   return $re;
 }

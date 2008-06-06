@@ -30,6 +30,7 @@ use vars qw(@ISA @EXPORT);
 use Hermes::Log;
 use Hermes::Person;
 use Hermes::Config;
+use Data::Dumper;
 
 @ISA     = qw( Exporter );
 @EXPORT  = qw( sendRSS );
@@ -45,29 +46,49 @@ sub sendRSS( $ )
   my ($msgRef) = @_;
 
   # Parametercheck
-  foreach my $p ( @{$msgRef->{to} } ) {
+  my @receiver;
+  push @receiver, @{$msgRef->{to}} if( $msgRef->{to} );
+  push @receiver, @{$msgRef->{cc}} if( $msgRef->{cc} );
+  push @receiver, @{$msgRef->{bcc}} if( $msgRef->{bcc} );
+
+
+  foreach my $p ( @receiver ) {
     log( 'info', "RSS-Feed for person $p" );
-    my $rss = new XML::RSS (version => '1.0');
+    my $rss;
+
+    # Loop over the to-list and write RSS feeds for everybody.
+    my $personInfoRef = personInfo( $p );
+
+    my $rdfPath = $Hermes::Config::RdfBasePath . "/$personInfoRef->{feedPath}";
+    mkdir( $rdfPath, 0777 ) unless( -e $rdfPath );
+
+    my $rdfFile = "$rdfPath/personal.rdf";
+    if( -w $rdfFile ) {
+      $rss = new XML::RSS( version => '1.0');
+      $rss->parsefile( $rdfFile );
+    } else {
+      $rss = new XML::RSS( version => '1.0');
+    }
+
+    my $desc = "Personal Hermes RSS Feed";
+    $desc .= " for $personInfoRef->{name}" if( $personInfoRef && $personInfoRef->{name} );
+
     $rss->channel( title        => "openSUSE Hermes",
 		   link         => $Hermes::Config::StarshipBaseUrl . "/messages/",
 		   description  => "Personal Hermes RSS Feed" );
 
 
-    # Loop over the to-list and write RSS feeds for everybody.
-    my $personInfoRef = personInfo( $p );
-    my $rdfPath = $Hermes::Config::RdfBasePath . "/$personInfoRef->{feedPath}";
-    mkdir( $rdfPath, 0777 ) unless( -e $rdfPath );
-
     if( -e $rdfPath ) {
-      my $file = "$rdfPath/personal.rdf";
 
-      log( 'info', "Writing RDF feed for user $personInfoRef->{email} to <$file>" );
+      log( 'info', "Writing RDF feed for user $personInfoRef->{email} to <$rdfFile>" );
+
+      log( 'info', Dumper( $msgRef ));
 
       $rss->add_item( title => $msgRef->{subject},
-		      link => $Hermes::Config::StarshipBase . "/messages/",
-		      description => chomp( $msgRef->{body} ) );
+		      link => $Hermes::Config::StarshipBaseUrl . "/messages/" . $msgRef->{msgid} ,
+		      description => ($msgRef->{body} || '') );
 
-      $rss->save( $file );
+      $rss->save( $rdfFile );
     }
   }
 }

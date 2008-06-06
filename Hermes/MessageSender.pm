@@ -310,7 +310,7 @@ sub deliverMessage( $$ )
 
   my $deliveryString = deliveryIdToString( $delivery );
 
-  log( 'info', "Delivery is <$delivery>, to is <$msgRef->{to}>" );
+  log( 'info', "Delivery is <$delivery> => $deliveryString" );
 
   # FIXME: Better detection of the delivery type
   if( $deliveryString =~ /mail/i ) {
@@ -354,6 +354,7 @@ sub sendHash( $ )
 			  replyto    => $deliveryMatrixRef->{$delivery}->{sender},
 			  subject    => $deliveryMatrixRef->{$delivery}->{subject},
 			  body       => $deliveryMatrixRef->{$delivery}->{body},
+			  msgid      => $deliveryMatrixRef->{$delivery}->{MsgID},
 			  debug      => 1 } ) ) {
       log( 'info', "Successfully delivered message!!" );
       markSent( $deliveryMatrixRef->{$delivery}->{sentIds} );
