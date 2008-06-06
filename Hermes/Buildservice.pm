@@ -29,6 +29,7 @@ use HTML::Template;
 use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
+use Hermes::Person;
 
 use Data::Dumper;
 
@@ -37,6 +38,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( expandFromMsgType );
 
+our $hermesUserInfoRef;
 
 #
 # expand the message, that means
@@ -63,8 +65,13 @@ sub expandFromMsgType( $$ )
   $re->{delay}   = 0; # replace by system default
   $re->{subject} = "Subject for message type <$type>";
 
-  $re->{cc}      = undef;
-  $re->{bcc}     = undef;
+  $re->{cc}      = [];
+  $re->{bcc} = undef;
+  my $hermesid = $hermesUserInfoRef ? $hermesUserInfoRef->{id} : undef;
+  if( $hermesUserInfoRef ) {
+    $re->{bcc}     = [ $hermesUserInfoRef->{id} ];
+  }
+
   $re->{replyTo} = undef;
   $re->{from} = $paramHash->{from} || "hermes\@opensuse.org";
 
@@ -104,5 +111,8 @@ sub expandFromMsgType( $$ )
 }
 
 $dbh = Hermes::DBI->connect();
+
+$hermesUserInfoRef = personInfo( 'hermes2' ); # Get the hermes user info
+log( 'info', "The hermes user id is " . $hermesUserInfoRef->{id} );
 
 1;
