@@ -47,16 +47,20 @@ sub personInfo( $ )
   my ($id) = @_;
 
   my $personInfoRef;
+  my $sql = "SELECT * FROM persons WHERE stringid = ?";
 
-  if( $id =~ /^\s*\d+\s*$/ ) {
-    my $sql = "SELECT * FROM persons WHERE id=?";
+  if( $id && $id =~ /^\s*\d+\s*$/ ) {
+    $sql = "SELECT * FROM persons WHERE id=?";
+  }
+
+  if( $id ) {
     my $sth = $dbh->prepare( $sql );
     $sth->execute( $id );
 
     $personInfoRef = $sth->fetchrow_hashref;
 
-    my $feeds = $personInfoRef->{email};
-    $feeds =~ s/[\.@]/_/g;
+    my $feeds = $personInfoRef->{stringid} || "unknown_hero";
+    # $feeds =~ s/[\.@]/_/g;
     $personInfoRef->{feedPath} = $feeds;
   }
   return $personInfoRef;

@@ -6,7 +6,7 @@ http://en.opensuse.org/Build_Service/Concepts/Notification
 for details.
 
 Message can be posted using either the Hermes::Message module
-directly or via http. HTTP is supported through hermi in the 
-cgi directory. 
+directly or via http. HTTP is supported through herminator in 
+the herminator directory. 
 
 Klaas Freitag <freitag@suse.de>

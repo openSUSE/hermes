@@ -45,24 +45,29 @@ sub sendRSS( $ )
   my ($msgRef) = @_;
 
   # Parametercheck
-
   foreach my $p ( @{$msgRef->{to} } ) {
     log( 'info', "RSS-Feed for person $p" );
     my $rss = new XML::RSS (version => '1.0');
     $rss->channel( title        => "openSUSE Hermes",
-		   link         => $Hermes::Config::StarshipBase . "/messages/",
+		   link         => $Hermes::Config::StarshipBaseUrl . "/messages/",
 		   description  => "Personal Hermes RSS Feed" );
 
 
     # Loop over the to-list and write RSS feeds for everybody.
     my $personInfoRef = personInfo( $p );
-    my $file = $Hermes::Config::rdfBasePath . "/$personInfoRef->{feedPath}/personal.rdf";
-    log( 'info', "Writing RDF feed for user $personInfoRef->{email} to <$file>" );
+    my $rdfPath = $Hermes::Config::RdfBasePath . "/$personInfoRef->{feedPath}";
+    mkdir( $rdfPath, 0777 ) unless( -e $rdfPath );
 
-    $rss->add_item( title => $msgRef->{subject},
-                    link => $Hermes::Config::StarshipBase . "/messages/",
-                    description => chomp( $msgRef->{body} ) );
+    if( -e $rdfPath ) {
+      my $file = "$rdfPath/personal.rdf";
 
-    $rss->save( $file );
+      log( 'info', "Writing RDF feed for user $personInfoRef->{email} to <$file>" );
+
+      $rss->add_item( title => $msgRef->{subject},
+		      link => $Hermes::Config::StarshipBase . "/messages/",
+		      description => chomp( $msgRef->{body} ) );
+
+      $rss->save( $file );
+    }
   }
 }

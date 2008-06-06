@@ -52,7 +52,6 @@ $DB{ 'default' } = { 'type'	=>  'mysql',
 # override configuration values with specific values.
 
 
-my $haveConfig = 0;
 my @cfgs = ( "/etc/hermes.conf", "./hermes.conf", "conf/hermes.conf" );
 
 foreach my $cfg ( @cfgs ) {
@@ -68,7 +67,6 @@ foreach my $cfg ( @cfgs ) {
 	warn( "Cannot find $cfg" );
       }
     } else {
-      $haveConfig = 1;
       print STDERR "success!\n";
       last;
     }
