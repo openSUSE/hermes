@@ -2,10 +2,7 @@ class MessagesController < ApplicationController
   # GET /messages
   # GET /messages.xml
 
-	@@user = Person.find(1)
   def index
-
-	
     @showtypes = MsgType.search( params[:search], params[:page], 50 )
     
     respond_to do |format|
@@ -18,20 +15,20 @@ class MessagesController < ApplicationController
   # GET /messages/1.xml
 
   def show
-	
-	@to_save_comment = Array.new
+    @to_save_comment = Array.new
 
     @message = Message.find(params[:id])
     @showtypes = MsgType.find :all #, { :include => :messages }
 
-	subscribed = MsgTypesPeople.find( :all, :conditions => { :person_id => @@user.id , 
-											:msg_type_id => @message.msg_type_id})
+    user = session[:user]
 
-	if subscribed.size > 0
-		@is_subscribed = true
-		@to_save_comment = MessagesPeople.find( :first, :conditions => { :person_id => @@user.id ,     
-                                            :message_id => @message.id})
-	end
+    subscribed = MsgTypesPeople.find( :all, :conditions => { :person_id => user.id , 
+		:msg_type_id => @message.msg_type_id})
+
+    if subscribed.size > 0
+        @is_subscribed = true
+	@to_save_comment = MessagesPeople.find( :first, :conditions => { :person_id => user.id , :message_id => @message.id})
+    end
 
     if params[:menu] == "expanded"
 	@menu_expand = true
@@ -52,7 +49,8 @@ class MessagesController < ApplicationController
 	postArg = params[:comm]
 	msg = Message.find(postArg['message_id'])
 	puts "The post ARGS are: #{postArg}"
-	msgs_to_save_comment = MessagesPeople.find( :all, :conditions => { :person_id => @@user.id ,
+	user = session[:user]
+	msgs_to_save_comment = MessagesPeople.find( :all, :conditions => { :person_id => user.id ,
                                             :message_id => msg.id})	
 
 	for entry in msgs_to_save_comment
