@@ -70,6 +70,9 @@ sub sendRSS( $ )
       $rss = new XML::RSS( version => '1.0');
     }
 
+    # FIXME: Make maximum item count configurable
+    pop(@{$rss->{'items'}}) if (@{$rss->{'items'}} == 150); # only allow 150 entries.
+
     my $desc = "Personal Hermes RSS Feed";
     $desc .= " for $personInfoRef->{name}" if( $personInfoRef && $personInfoRef->{name} );
 
