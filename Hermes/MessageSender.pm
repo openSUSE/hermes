@@ -149,7 +149,7 @@ sub sendMessageDigest($;$$$)
 
   log('notice', "Fetching messages of all types with delay $delay");
 
-  $query->execute( $delay, 1000 );
+  $query->execute( $delay, 100 ); # FIXME make limit configurable
 
   while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
 	       $header, $deliveryId ) = $query->fetchrow_array()) {
@@ -359,7 +359,7 @@ sub sendHash( $ )
 			  subject    => $deliveryMatrixRef->{$delivery}->{subject},
 			  body       => $deliveryMatrixRef->{$delivery}->{body},
 			  msgid      => $deliveryMatrixRef->{$delivery}->{MsgID},
-			  debug      => 1 } ) ) {
+			  debug      => $Hermes::Config::Debug } ) ) {
       log( 'info', "Successfully delivered message!!" );
       markSent( $deliveryMatrixRef->{$delivery}->{sentIds} );
     }
