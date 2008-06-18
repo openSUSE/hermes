@@ -408,7 +408,7 @@ sub createMsgType( $;$ )
 
   unless( $id ) {
     $defaultDelay = $Hermes::Config::NotifyDefaultDelay;
-    my $sth1 = $dbh->prepare( 'INSERT INTO msg_types (msgtype, defaultdelay) VALUES (?, ?)' );
+    my $sth1 = $dbh->prepare( 'INSERT INTO msg_types (msgtype, defaultdelay,added) VALUES (?, ?, now())' );
     $sth1->execute( $msgType, $defaultDelay );
     $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
   }
