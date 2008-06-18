@@ -19,12 +19,9 @@ Dependencies:
    Html-Template            perl-HTML-Template
    Data::Dumper             perl-base
    DBI                      perl-DBI
-   Log::Dispatch            perl-Log-Dispatch
-   Log::Dispatch::File            "
-   Log::Dispatch::Syslog          "
    Net::Jabber              perl-Net-Jabber
    MIME::Lite               perl-MIME-Lite
-   xML::RSS                 -no openSUSE package yet-
+   XML::RSS                 -no openSUSE package yet-
 
 The Hermes Server:
 =================

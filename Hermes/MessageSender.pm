@@ -310,20 +310,24 @@ sub deliverMessage( $$ )
 
   my $deliveryString = deliveryIdToString( $delivery );
 
-  log( 'info', "Delivery is <$delivery> => $deliveryString" );
-
-  # FIXME: Better detection of the delivery type
-  if( $deliveryString =~ /mail/i ) {
-    sendMail( $msgRef );
-    $res = 1;
-  } elsif( $deliveryString =~ /jabber personal/i ) {
-    sendJabber( $msgRef );
-    $res = 1;
-  } elsif( $deliveryString =~ /RSS/i ) {
-    sendRSS( $msgRef );
-    $res = 1;
+  unless( $deliveryString ) {
+    log('warning', "Problem: Delivery <$delivery> seems to be unknown!" );
   } else {
-    log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
+    log( 'info', "Delivery is <$delivery> => $deliveryString" );
+
+    # FIXME: Better detection of the delivery type
+    if( $deliveryString =~ /mail/i ) {
+      sendMail( $msgRef );
+      $res = 1;
+    } elsif( $deliveryString =~ /jabber personal/i ) {
+      sendJabber( $msgRef );
+      $res = 1;
+    } elsif( $deliveryString =~ /RSS/i ) {
+      sendRSS( $msgRef );
+      $res = 1;
+    } else {
+      log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
+    }
   }
 
   return $res;

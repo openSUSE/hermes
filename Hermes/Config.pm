@@ -30,12 +30,9 @@ use vars qw( %LOG %DB );
 #--[ Logging Configuration ]---------------------------------------------------
 
 %LOG = (
-    'module'	=> 'Hermes::Log::File',
-    'params'    => {'name'	=> 'PDB',
+	'params'    => {'name'	=> 'Hermes',
 		    'filename'	=> '/tmp/inttools.log',
-		    'min_level'	=> 'info',
-		    'mode'	=> 'write',
-                    'close_after_write' => 'true' }
+		    'min_level'	=> 'info' }
 );
 
 #--[ Default DB Configuration ]---------------------------------------------------
