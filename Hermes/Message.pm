@@ -401,6 +401,8 @@ sub createMsgType( $;$ )
 {
   my ($msgType, $defaultDelay) = @_;
 
+  $msgType = "straycat" unless( $msgType );
+
   my $sth = $dbh->prepare( 'SELECT id FROM msg_types WHERE msgtype=?' );
   $sth->execute( $msgType );
 
