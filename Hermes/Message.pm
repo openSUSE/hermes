@@ -255,6 +255,7 @@ sub newMessage($$$$\@;\@\@$$)
     # Adds the addresses to the MailAddresses table.
     foreach my $person (keys %addresses) {
       my $person_id = $person; # assume the person id is numeric
+      next unless( $person_id );
       if( $person_id =~ /^\S+@\S+\.\S{2,}?$/ ) {
 	$person_id = emailToPersonID( $person );
       }
