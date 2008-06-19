@@ -50,14 +50,14 @@ use vars qw(@ISA @EXPORT $dbh $query );
 
 sub markSent( @ )
 {
-  my @msgPeopleIds = @_;
+  my ($msgPeopleIds) = @_;
 
   my $sql = 'UPDATE LOW_PRIORITY messages_people SET sent = NOW() WHERE id = ?';
   my $sth = $dbh->prepare( $sql );
 
   my $res = 0;
 
-  foreach my $id ( @msgPeopleIds ) {
+  foreach my $id ( @$msgPeopleIds ) {
     log( 'notice', "set messages_people id <$id> to sent!" );
     if( $Hermes::Config::Debug ) {
       log( 'info', "skipping to mark sent for messages_people id <$id>" );
