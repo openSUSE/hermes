@@ -81,7 +81,13 @@ sub expandFromMsgType( $$ )
     # Fill the template
     $tmpl->param( $paramHash );
     $text = $tmpl->output;
-    log('info', "Template output <$text>" );
+
+    if( $text =~ /^\s*\@subject: ?(.+)$/im ) {
+      $re->{subject} = $1;
+      log( 'info', "Extracted subject <$re->{subject}> from template!" );
+      $text =~ s/^\s*\@subject:.*$//im;
+    }
+    log('info', "Template body: <$text>" );
 
   } else {
     log( 'warning', "Can not find <$filename>, using default" );
