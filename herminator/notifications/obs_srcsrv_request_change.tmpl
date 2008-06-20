@@ -1,0 +1,11 @@
+@subject: <TMPL_VAR NAME="type">-Request <TMPL_VAR NAME="id"> Changed
+
+<TMPL_VAR NAME="type">-Request was changed, new state: <TMPL_VAR NAME="state">
+
+<TMPL_IF NAME="sourceproject">
+The source project is <TMPL_VAR NAME="sourceproject">.
+The source package is <TMPL_VAR NAME="sourcepackage"> in rev. <TMPL_VAR NAME="sourcerevision">.
+
+The target project is <TMPL_VAR NAME="targetproject">.
+The target package is <TMPL_VAR NAME="targetpackage">.
+</TMPL_IF>
