@@ -107,7 +107,7 @@ sub postNotification {
 
   my $q = $self->query();
 
-  my $type = $q->param( 'type' );
+  my $type = $q->param( '_type' );
   my $params = $q->Vars;
 
   my $id = sendNotification( $type, $params );
