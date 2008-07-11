@@ -65,22 +65,18 @@ $silent = 1 if( $opt_s );
 my $debug = 0;
 $debug = 1 if( $opt_d );
 
-# Handle optional 'type' parameter, if it's available.
+# Handle optional 'type' parameter, if it's available. FIXME!!
 my $type;
 $type = $opt_t if( $opt_t );
 
-Hermes::Delivery::Jabber::initCommunication();
-Hermes::Delivery::Jabber::sendJabber( { subject => "Hello World", body => 'Hermes talks to you' } );
+if( $Hermes::Config::WorkerInitJabber ) {
+    Hermes::Delivery::Jabber::initCommunication();
+    Hermes::Delivery::Jabber::sendJabber( { subject => "Hello World", body => 'Hermes talks to you' } );
+}
 
 # Sending time for daily digests, defaults to midnight
 my $dailyHour = $Hermes::Config::DailySendHour || 0;
 my $dailyMin  = $Hermes::Config::DailySendHourMinute || 0;
-
-my %times;
-
-for my $step ( ('minute', 'hour', 'week', 'month') ) {
-    $times{ $step } = 0 unless( exists $times{ $step } );
-}
 
 my $workerdelay = $opt_w || 10;
 
@@ -94,7 +90,9 @@ if( $opt_m ) {
 	log( 'info', "Filler $i" );
     }
     
-    Hermes::Delivery::Jabber::quitCommunication();
+    if( $Hermes::Config::WorkerInitJabber ) {
+	Hermes::Delivery::Jabber::quitCommunication();
+    }
     exit;
 }
 
@@ -143,4 +141,6 @@ while( 1 ) {
     sleep( $workerdelay );
 }
 
-Hermes::Delivery::Jabber::quitCommunication();
+if( $Hermes::Config::WorkerInitJabber ) {
+    Hermes::Delivery::Jabber::quitCommunication();
+}
