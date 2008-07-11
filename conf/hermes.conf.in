@@ -33,5 +33,11 @@ $StarshipBaseUrl = "http://localhost:3000/";
 # switched off for debugging if jabber is not used.
 $WorkerInitJabber = 0;
 
+#
+# OBS API Connection, with credentials
+$OBSAPIBase = "http://api.opensuse.org";
+$OBSAPIUser = "opensuse";
+$OBSAPIPasswd = "secret";
+
 # leave the one at the end.
 1;

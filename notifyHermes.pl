@@ -91,7 +91,11 @@ die "No notification type specified" unless( defined $type );
 
 my $id = sendNotification( $type, \%params );
 
-print "Message created: $id\n";
+if( $id ) {
+    print "Message created: $id\n";
+} else {
+    print "No message created\n";
+}
 
 # END
 
