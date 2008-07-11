@@ -1,0 +1,37 @@
+#
+# Hermes configurations 
+# please edit to fit your needs.
+# note that this must be a valid perl source code file because it get
+# eval'ed. Check the syntax of this file with 'perl -cw Config.pm'. 
+#
+
+# DEBUG - set to 1 to enable debug. No mail is sent in debug mode.
+$Debug = 1;
+
+# the default delivery type, check with database content
+$DefaultDelivery = 2;
+
+# Notification Default Delay: Which delay for Notifications by default?
+# also check with database content 
+$NotifyDefaultDelay = 1;
+
+# Worker: the hour and minute when the daily messages should go out
+$DailySendHour = 9;
+$DailySendHourMinute = 12;
+
+# The base path of the herminator on the local machine. Used to find
+# the notification message templates
+$HerminatorDir = "/home/kf/suse/infrastructure/hermes/herminator/";
+
+# Local path to store the rss feeds.
+$RdfBasePath = $HerminatorDir . "feeds";
+
+# Starship base url, used to build a link for the RSS items.
+$StarshipBaseUrl = "http://localhost:3000/";
+
+# Enable jabber initialisation in hermesworker. This setting should be
+# switched off for debugging if jabber is not used.
+$WorkerInitJabber = 0;
+
+# leave the one at the end.
+1;
