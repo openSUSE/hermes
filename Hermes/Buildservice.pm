@@ -25,6 +25,8 @@ use strict;
 use Exporter;
 
 use HTML::Template;
+use LWP::UserAgent;
+use URI::Escape;
 
 use Hermes::Config;
 use Hermes::DBI;
@@ -103,18 +105,118 @@ sub expandFromMsgType( $$ )
   $re->{body} = $text;
 
   # query the receivers
-  my $sql = "SELECT mtp.person_id FROM msg_types_people mtp, msg_types mt WHERE " 
-    . "mtp.msg_type_id = mt.id AND mt.msgtype=?";
-  $re->{to} = $dbh->selectcol_arrayref( $sql, undef, $type );
+  my $sql = "SELECT mtp.person_id, p.stringid, mtp.private FROM ";
+  $sql .= "msg_types_people mtp, msg_types mt, persons p WHERE ";
+  $sql .= "mtp.msg_type_id = mt.id AND mt.msgtype=? AND mtp.person_id=p.id";
+
+  my $query = $dbh->prepare( $sql );
+  $query->execute( $type );
+  my $userListRef = undef;
+
+  #
+  while( my ($personId, $stringId, $private) = $query->fetchrow_array()) {
+    # do that only if not private or if the project param is there 
+    # and the personId is user in the project.
+    if( !$private ) {
+      push @{$re->{to}}, $personId;
+    } else {
+      # Privacy is requested.
+      if( $paramHash->{'project'} ) {
+	# We have a project.
+	if( ! $userListRef ) {
+	  my $meta = callOBSAPI( 'prjMetaRef', $paramHash->{'project'} );
+	  $userListRef = extractUserFromMeta( $meta );
+	  log( 'info', "These users are in project <" . $paramHash->{'project'} . 
+	       ">: " . join( ', ', keys %{$userListRef} ) );
+	}
+	# add to the to-list if the userlist contains the stringid of the subscribed user.
+	if( $userListRef && $userListRef->{$stringId} ) {
+	  push @{$re->{to}}, $personId;
+	}
+      } else {
+	# unfortunately no project param, but privacy is requested.
+	# -> problem
+	log( 'warning', "Problem: Privacy is requested, but <$type> does not have param project" );
+      }
+    }
+  }
 
   my $hermesid = $hermesUserInfoRef ? $hermesUserInfoRef->{id} : undef;
   if( $hermesUserInfoRef ) {
     $re->{bcc}     = [ $hermesUserInfoRef->{id} ];
   }
 
-  log( 'info', "These receiver were found: " . join( ", ", @{$re->{bcc}} ) );
-
+  my $receiverCnt = 0;
+  foreach my $header( ('to', 'cc', 'bcc') ) {
+    if( $re->{$header} ) {
+      my $cnt = @{$re->{$header}};
+      $receiverCnt += $cnt;
+      log( 'info', "These $header-receiver were found: " . join( ", ", @{$re->{$header}} ) ) if( $cnt );
+    }
+  }
+  $re->{receiverCnt} = $receiverCnt;
   return $re;
+}
+
+#
+# calls the OBS API, uses credentials aus conf/hermes.conf
+# returns the result as plain text or undef, if an error happened
+# FIXME: report errors back to calling functions
+#
+sub callOBSAPI( $$;$ )
+{
+  my ( $function, $project, $package ) = @_;
+
+  return {} unless( $project );
+  $project = uri_escape( $project );
+  $package = url_escape( $package ) if( $package );
+
+  my %results;
+  my $OBSAPIUrl = $Hermes::Config::OBSAPIBase ||  "http://api.opensuse.org/";
+  $OBSAPIUrl =~ s/\s*$//; # Wipe whitespace at end.
+  $OBSAPIUrl .= '/' unless( $OBSAPIUrl =~ /\/$/ );
+
+  my $ua = LWP::UserAgent->new;
+  $ua->agent( "Hermes Buildservice Processor" );
+  my $uri;
+
+  if( $function eq 'prjMetaRef' ) {
+    $uri = $OBSAPIUrl . "source/$project/_meta";
+  }
+  log( 'info', "Asking $uri with GET" );
+  my $req = HTTP::Request->new( GET => $uri );
+  $req->header( 'Accept' => 'text/xml' );
+  $req->authorization_basic( $Hermes::Config::OBSAPIUser,
+			     $Hermes::Config::OBSAPIPasswd );
+
+  my $res = $ua->request( $req );
+
+  if( $res->is_success ) {
+    return $res->decoded_content;
+  } else {
+    log( 'error', "API Call Error: " . $res->status_line . "\n" );
+    return undef;
+  }
+}
+
+#
+# returns a list of users from the projects meta file
+#
+sub extractUserFromMeta( $ )
+{
+  my ($meta) = @_;
+  my %retuser;
+
+  if( $meta ) {
+    my @xml = split(/\n/, $meta );
+    my @people = grep ( /<person .+?\/>/, @xml );
+    foreach my $pl (@people) {
+      if( $pl =~ /userid=\"(.+?)\"/ ) {
+	$retuser{$1} = 1 if( $1 );
+      }
+    }
+  }
+  return \%retuser;
 }
 
 $dbh = Hermes::DBI->connect();

@@ -335,15 +335,21 @@ sub sendNotification( $$ )
     log( 'warning', "$@" );
   } else {
     my $msgHash = expandFromMsgType( $msgType, $params );
+    return undef unless( $msgHash );
+
     if( $msgHash->{error} ) {
       log( 'error', "Could not expand message: $msgHash->{error}\n" );
     } else {
-      $msgHash->{delay} = SendNow() if( $msgHash->{delay} == 0 );
+      if( $msgHash->{receiverCnt} ) {
+	$msgHash->{delay} = SendNow() if( $msgHash->{delay} == 0 );
 
-      $id = newMessage( $msgHash->{subject},   $msgHash->{body}, $msgHash->{type},
-			SendNow(),   @{$msgHash->{to}},  @{$msgHash->{cc}},
-			@{$msgHash->{bcc}},    $msgHash->{from}, $msgHash->{replyTo} );
-      log( 'info', "Created new message with id $id" );
+	$id = newMessage( $msgHash->{subject},   $msgHash->{body}, $msgHash->{type},
+			  SendNow(),   @{$msgHash->{to}},  @{$msgHash->{cc}},
+			  @{$msgHash->{bcc}},    $msgHash->{from}, $msgHash->{replyTo} );
+	log( 'info', "Created new message with id $id" );
+      } else {
+	log( 'info', "No receiver for this message, did not create one." );
+      }
     }
   }
   return $id;
