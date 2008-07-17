@@ -3,23 +3,18 @@ class MsgTypesController < ApplicationController
   # GET /msgtypes.xml
 
   def index
-
     @message_view = true
 
-    if ! params['msgtype'].nil?
-      if ! params['msgtype']['search'].empty?
-	puts "seraching for : #{params['msgtype']['search']}"
-        #  search_string = params['msgtype']['search']
-		
-        #  if serach_string.include?('*')
-		
-	@showtypes = MsgType.find( :all, :conditions => "msg_types.msgtype = '#{params['msgtype']['search']}'")
-      else
-	@showtypes = MsgType.find :all #, { :include => :messages }
-      end
+    if params['filter']
+      @filter = params['filter']
+      @msg_types = Message.count(:include => :msg_type, :group => :msg_type,
+        :conditions => ["msg_types.msgtype like ?", "%#@filter%"])
     else
-      @showtypes = MsgType.find :all #, { :include => :messages }
+      @msg_types = Message.count(:group => :msg_type)
     end
+
+    #FIXME: @showtypes is needed in application.rb.erb layout
+    @showtypes = @msg_types.collect {|x| x[0]}
 
     respond_to do |format|
       format.html # 
@@ -32,16 +27,15 @@ class MsgTypesController < ApplicationController
   def show
 
     @message_view = true
-
     @showtypes = MsgType.find :all #, { :include => :messages }
-    @showtype = MsgType.find( :first,
-                             :conditions => "msg_types.id = #{params[:id]}", 
-                            :include => :messages )
+
+    @showtype = MsgType.find( :first, :include => :messages,
+      :conditions => ["msg_types.id = ?", params[:id]])
 
     if params[:menu] == "expanded"
-		@menu_expand = true
+      @menu_expand = true
     else
-		@menu_expand = false
+      @menu_expand = false
     end	
 
     respond_to do |format|

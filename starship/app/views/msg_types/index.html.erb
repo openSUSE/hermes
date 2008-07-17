@@ -1,21 +1,22 @@
 <% form_tag({:action=>'index'}, :method => :get) do -%>
-	Search: <%= text_field 'msgtype', 'search' %>
-	<%= submit_tag "OK" %>
+  <%= label 'filter', 'Filter Message Type' %>
+  <%= text_field_tag 'filter', @filter %>
+  <%= submit_tag "OK" %>
 <% end -%>
 
 
 <h1>Message Overview</h1>
 <table class="defaultTable">
 <tr>
-<th>Types</th>
+<th>Message Types</th>
 <th>Count</th>
 </tr>
 	
-<% for showtype in @showtypes %>
-	<tr>
-	<td><%= link_to showtype.msgtype, {:action => "show", :controller => "msg_types", :id => showtype.id} %></td>
-	<td><%= showtype.messages.count %></td>
-	</tr>
+<% for type in @msg_types %>
+<tr>
+  <td><%= link_to type[0].msgtype, {:action => "show", :controller => "msg_types", :id => type[0].id} %></td>
+  <td><%= type[1] %></td>
+</tr>
 <% end %>
 </table>
 <p>

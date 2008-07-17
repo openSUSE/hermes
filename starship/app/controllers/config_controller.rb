@@ -7,7 +7,8 @@ def index
   @subscribedMsgs = @myUser.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
   
   @latestMsgsTypes = @subscribedMsgs.map {|msg| msg.msg_type_id}.uniq
-  @latestMsgs = Message.find(:all, :conditions => ["msg_type_id in (?)", @latestMsgsTypes] , :order => "created DESC", :limit => 10)
+  @latestMsgs = Message.find(:all, :include => :msg_type,
+    :conditions => ["msg_type_id in (?)", @latestMsgsTypes], :order => "created DESC", :limit => 10)
 
   #XXX: only shows messages received after user was subscribed, isn't that what was intended?
   #@latestMsgs = @myUser.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)

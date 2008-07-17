@@ -3,7 +3,7 @@
 
 class ApplicationController < ActionController::Base
   helper :all # include all helpers, all the time
-  before_filter :login_via_ichain, :require_auth, :except => :privacy
+  before_filter :login_via_ichain, :require_auth
   
   def login_via_ichain
     logger.debug('login_via_ichain called!')
@@ -15,8 +15,11 @@ class ApplicationController < ActionController::Base
     # extract the email address when we switched to ichain
 
     # ======================= TEST
-    user_name = "termite"
-    http_email = "termite@suse.de"
+    if Object.const_defined? :ICHAIN_TEST
+      user_name = "termite"
+      http_email = "termite@suse.de"
+      http_real_name = "Hans Peter Termitenhans"
+    end
 
     if user_name
       loggedin_user = Person.find_or_initialize_by_stringid( user_name )
@@ -37,6 +40,13 @@ class ApplicationController < ActionController::Base
 
   def require_auth
     logger.debug('require_auth called!')
+    # store current location
+    if request.get?
+      session[:redirect_to] = request.request_uri
+    else
+      session[:redirect_to] = "/"
+    end
+
     unless session[:user]
       #render(:text => "Authentication required", :status => 401 ) and return false
       redirect_to(:controller => 'privacy', :action => 'ichain_login' )
