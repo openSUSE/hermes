@@ -3,7 +3,6 @@ class MessagesController < ApplicationController
   # GET /messages.xml
 
   def index
-    debugger
     @showtypes = MsgType.search( params[:search], params[:page], 50 )
     
     respond_to do |format|
