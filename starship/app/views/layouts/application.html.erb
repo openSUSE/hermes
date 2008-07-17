@@ -188,7 +188,7 @@
          <div class="box_content" id="banner_content">
           <div id="pt-personal">
           <% if session[:user] %>
-            Logged in as <a href="https://users.opensuse.org"><%= session[:user].name %></a>
+            Logged in as <a href="https://users.opensuse.org"><%= session[:user].stringid %></a>
           <% else %>
            <!-- Begin Personal links (Login, etc.) -->
            <a href="/">Create an account or log in</a>
