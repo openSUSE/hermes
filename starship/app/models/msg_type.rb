@@ -1,6 +1,7 @@
 class MsgType < ActiveRecord::Base
   has_many :messages
-  has_and_belongs_to_many :persons
+  has_many :people, :through => :subscriptions
+  has_many :subscriptions
 
   def self.search( search, page, perpage )
       paginate :per_page => perpage, :page => page,

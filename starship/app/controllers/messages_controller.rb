@@ -15,19 +15,11 @@ class MessagesController < ApplicationController
   # GET /messages/1.xml
 
   def show
-    @to_save_comment = Array.new
-
     @message = Message.find(params[:id])
-    @showtypes = MsgType.find :all #, { :include => :messages }
-
     user = session[:user]
 
-    subscribed = MsgTypesPeople.find( :all, :conditions => { :person_id => user.id , 
-		:msg_type_id => @message.msg_type_id})
-
-    if subscribed.size > 0
-        @is_subscribed = true
-	@to_save_comment = MessagesPeople.find( :first, :conditions => { :person_id => user.id , :message_id => @message.id})
+    if user.subscribed_to(@message.msg_type)
+      @to_save_comment = MessagesPeople.find( :first, :conditions => { :person_id => user.id , :message_id => @message.id})
     end
 
     if params[:menu] == "expanded"
@@ -48,7 +40,6 @@ class MessagesController < ApplicationController
 
 	postArg = params[:comm]
 	msg = Message.find(postArg['message_id'])
-	puts "The post ARGS are: #{postArg}"
 	user = session[:user]
 	msgs_to_save_comment = MessagesPeople.find( :all, :conditions => { :person_id => user.id ,
                                             :message_id => msg.id})	

@@ -18,31 +18,21 @@
   <%= @message.body %>
 </p>
 
-<%# if @to_save_comment.size > 0 and @to_save_comment[0].comment.nil? and @is_subscribed %>
-<% if @to_save_comment and @is_subscribed %>
-	<% if !@to_save_comment.comment.nil? %>
-		<p>
-			  <b>Comment:</b>
-			  <%=h @to_save_comment.comment %>
-		</p>
-	<% end %>
-
+<% if @to_save_comment %>
+  <% if @to_save_comment.comment.blank? %>
+  <%= link_to_function "Add Comment", "$('commentBox').toggle()" %>
+  <% else %>
+  <p>
+    <b>Comment:</b>
+    <%=h @to_save_comment.comment %>
+  </p>
+  <%= link_to_function "Edit Comment", "$('commentBox').toggle()" %>
+  <% end %>
+  <div id="commentBox" style="display: none;">
+    <%= render(:partial => "commentBox", :object => @to_save_comment) %>
+  </div>
 <% end %>
 
-
-<%# if @to_save_comment.size > 0 and @is_subscribed %>
-<% if @to_save_comment and @is_subscribed %>
-	<% if @to_save_comment.comment.nil? %>
-		<%= link_to_remote "Add Comment", :url => { :action => :show_comment_box } %>
-	<% else %>
-		<%= link_to_remote "Edit Comment", :url => { :action => :show_comment_box } %>
-	<% end %>
-
-	<div id="commentBox" style="display: none;">
-		<%= render(:partial => "commentBox", :object => @to_save_comment) %>
-	</div>
-
-<% end %>
 
 <%= link_to 'Index', :controller => 'msg_types', :action => "show", :id => @message.msg_type.id %>
 
