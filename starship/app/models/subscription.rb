@@ -4,4 +4,6 @@ class Subscription < ActiveRecord::Base
   belongs_to :msg_type
   belongs_to :delay
   belongs_to :delivery
+
+  has_many :messages, :foreign_key => :msg_type_id
 end

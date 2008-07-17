@@ -10,20 +10,18 @@
 <th>Message Type</th>
 <th>Delay </th>
 <th>Delivery</th>
+<th></th>
 </tr>
 <% for subs in @subscribedMsgs %>
 <tr>
 <td><%= link_to subs.msg_type.msgtype, :action => 'editSubscr', :id => subs %></td>
 <td><%= subs.delay.name %></td>
-<td><%= if subs.delivery
-		  subs.delivery.name  
-		else '' end
-		%></td>
+<td><%= subs.delivery ? subs.delivery.name : '' %></td>
 <td><%= link_to image_tag("delete.png"), :action => 'delSubscr', :id => subs %>
 </tr>
 <% end %>
 </table>
-<%= link_to 'New Subscription', :action => "addSubscr", :user => @myUser.id %> 
+<%= link_to 'New Subscription', :action => "addSubscr" %> 
 </td>
 <td valign=top>
 <table class="defaultTable">
@@ -37,8 +35,8 @@
 <tr>
 <td><%= link_to msg.sender, msg %></td>
 <td><%= msg.subject %></td>
-<td><%= h(msg.created)	%></td>
-<td><%= MsgType.find(msg.msg_type_id).msgtype	%></td>
+<td><%= h(msg.created) %></td>
+<td><%= msg.msg_type.msgtype %></td>
 </tr>
 <% end %>
 </table>
