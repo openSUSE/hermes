@@ -15,7 +15,6 @@ class AddNotification < ActiveRecord::Migration
     add_index "notification_parameters", "msg_type_parameter_id"
 
     create_table "msg_type_parameters", :force => true do |t|
-      t.integer "msg_type_id"
       t.string  "name", :limit => 64
     end
   end
