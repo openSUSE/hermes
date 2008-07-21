@@ -33,7 +33,7 @@ use Cwd;
 use vars qw(@ISA @EXPORT $dbh %delayHash);
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( newMessage sendNotification delayStringToValue 
+@EXPORT	    = qw( newMessage sendNotification notificationToInbox delayStringToValue
 		  SendNow SendMinutely SendHourly SendDaily SendWeekly
 		  SendMonthly );
 
@@ -355,7 +355,68 @@ sub sendNotification( $$ )
   return $id;
 }
 
+sub notificationToInbox( $$ )
+{
+  my ( $msgType, $params ) = @_;
 
+  my $id;
+  my $msgTypeId = createMsgType( $msgType );
+  if( $msgTypeId ) {
+    my $sender = $params->{sender} || "unknown";
+    my $sql = "INSERT into notifications (msg_type_id, received, sender) VALUES (?, NOW(), ?)";
+    my $sth = $dbh->prepare( $sql );
+    $sth->execute( $msgTypeId, $sender );
+    $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+
+    my $cnt = storeNotificationParameters( $id, $params );
+    log( 'info', "Notification of type <$msgType> added with $cnt parameters" );
+  }
+  return $id;
+}
+
+#
+# create the notification parameters
+#
+sub storeNotificationParameters($$) 
+{
+  my ($notiId, $params) = @_;
+
+  my $cnt = 0;
+
+  foreach my $param  ( keys %{$params} ) {
+    my $paramId = createMsgTypeParam( $param );
+
+    if( $paramId ) {
+      my $sth1 = $dbh->prepare( 'INSERT INTO notification_parameters(notification_id, msg_type_parameter_id, value ) VALUES (?,?,?)' );
+      $sth1->execute( $notiId, $paramId, $params->{$param} );
+      $cnt++;
+      # $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+    }
+  }
+  return $cnt;
+}
+
+#
+# return or create entries in table msg_type_parameters
+#
+sub createMsgTypeParam( $ )
+{
+  my ($name) = @_;
+
+  my $sth = $dbh->prepare( 'SELECT id FROM msg_type_parameters WHERE name=?' );
+  $sth->execute( $name );
+
+  my ($id) = $sth->fetchrow_array();
+
+  unless( $id ) {
+    my $sth1 = $dbh->prepare( 'INSERT INTO msg_type_parameters (name) VALUES (?)' );
+    $sth1->execute( $name );
+    $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+  }
+
+  log( 'info', "Returning id <$id> for msg_type_parameter <$name>" );
+  return $id;
+}
 
 ######################################################################
 # sub userTypeSettings
@@ -406,7 +467,7 @@ sub SendMonthly
 
 sub createMsgType( $;$ )
 {
-  my ($msgType, $defaultDelay) = @_;
+  my ($msgType, $delay ) = @_;
 
   $msgType = "straycat" unless( $msgType );
 
@@ -416,11 +477,12 @@ sub createMsgType( $;$ )
   my ($id) = $sth->fetchrow_array();
 
   unless( $id ) {
-    $defaultDelay = $Hermes::Config::NotifyDefaultDelay;
-    my $sth1 = $dbh->prepare( 'INSERT INTO msg_types (msgtype, defaultdelay,added) VALUES (?, ?, now())' );
+    my $defaultDelay = $delay || $Hermes::Config::NotifyDefaultDelay;
+    my $sth1 = $dbh->prepare( 'INSERT INTO msg_types (msgtype, defaultdelay, added) VALUES (?, ?, now())' );
     $sth1->execute( $msgType, $defaultDelay );
     $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
   }
+
   log( 'info', "Returning id <$id> for msg_type <$msgType>" );
   return $id;
 }

@@ -110,7 +110,7 @@ sub postNotification {
   my $type = $q->param( '_type' );
   my $params = $q->Vars;
 
-  my $id = sendNotification( $type, $params );
+  my $id = notificationToInbox( $type, $params );
 
   return "$id";
 }

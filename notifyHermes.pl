@@ -28,7 +28,7 @@ use Getopt::Std;
 
 use Hermes::Message;
 
-use vars qw ( $opt_o $opt_h );
+use vars qw ( $opt_o $opt_h $opt_r );
 
 sub help 
 {
@@ -50,6 +50,7 @@ DESCRIPTION
     Options:
       -o string: The parameter that gets processed to the message template
                  later on. Multiple parameter can be added comma separated.
+      -r:        Create raw notification, ie. in notification inbox tables
       -h: This help
 
 EXAMPLE:
@@ -70,7 +71,7 @@ END
 
 # ======================================================================
 
-getopts( 'o:h' );
+getopts( 'ro:h' );
 
 my ($type) = @ARGV;
 
@@ -89,7 +90,13 @@ if( $opt_o ) {
 
 die "No notification type specified" unless( defined $type );
 
-my $id = sendNotification( $type, \%params );
+my $id;
+if( $opt_r ) {
+    print "Creating raw notification!\n";
+    $id = notificationToInbox( $type, \%params );
+} else {
+    $id = sendNotification( $type, \%params );
+}
 
 if( $id ) {
     print "Message created: $id\n";
