@@ -142,8 +142,8 @@ sub expandFromMsgType( $$ )
   }
 
   my $hermesid = $hermesUserInfoRef ? $hermesUserInfoRef->{id} : undef;
-  if( $hermesUserInfoRef ) {
-    $re->{bcc}     = [ $hermesUserInfoRef->{id} ];
+  if( $hermesUserInfoRef && $hermesUserInfoRef->{id} ) {
+    $re->{bcc} = [ $hermesUserInfoRef->{id} ];
   }
 
   my $receiverCnt = 0;
@@ -222,6 +222,8 @@ sub extractUserFromMeta( $ )
 $dbh = Hermes::DBI->connect();
 
 $hermesUserInfoRef = personInfo( 'hermes2' ); # Get the hermes user info
-log( 'info', "The hermes user id is " . $hermesUserInfoRef->{id} );
+if( $hermesUserInfoRef->{id} ) {
+  log( 'info', "The hermes user id is " . $hermesUserInfoRef->{id} );
+}
 
 1;
