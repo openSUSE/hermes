@@ -328,6 +328,7 @@ sub sendNotification( $$ )
   my $module = 'Hermes::Buildservice'; # FIXME - better plugin handling
 
   push @INC, "..";
+  push @INC, ".";
 
   my $id;
   unless( eval "use $module; 1" ) {
@@ -397,24 +398,24 @@ sub storeNotificationParameters($$)
 }
 
 #
-# return or create entries in table msg_type_parameters
+# return or create entries in table parameters
 #
 sub createMsgTypeParam( $ )
 {
   my ($name) = @_;
 
-  my $sth = $dbh->prepare( 'SELECT id FROM msg_type_parameters WHERE name=?' );
+  my $sth = $dbh->prepare( 'SELECT id FROM parameters WHERE name=?' );
   $sth->execute( $name );
 
   my ($id) = $sth->fetchrow_array();
 
   unless( $id ) {
-    my $sth1 = $dbh->prepare( 'INSERT INTO msg_type_parameters (name) VALUES (?)' );
+    my $sth1 = $dbh->prepare( 'INSERT INTO parameters (name) VALUES (?)' );
     $sth1->execute( $name );
     $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
   }
 
-  log( 'info', "Returning id <$id> for msg_type_parameter <$name>" );
+  log( 'info', "Returning id <$id> for parameter <$name>" );
   return $id;
 }
 
@@ -464,7 +465,9 @@ sub SendMonthly
   return $delayHash{'PER_MONTH'};
 }
 
-
+#
+# Creates an entry in the msg_types table if it does not yet exist.
+#
 sub createMsgType( $;$ )
 {
   my ($msgType, $delay ) = @_;

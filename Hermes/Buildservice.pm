@@ -105,7 +105,7 @@ sub expandFromMsgType( $$ )
   $re->{body} = $text;
 
   # query the receivers
-  my $sql = "SELECT mtp.person_id, p.stringid, mtp.private FROM ";
+  my $sql = "SELECT mtp.id, mtp.person_id, p.stringid FROM ";
   $sql .= "msg_types_people mtp, msg_types mt, persons p WHERE ";
   $sql .= "mtp.msg_type_id = mt.id AND mt.msgtype=? AND mtp.person_id=p.id";
 
@@ -114,33 +114,29 @@ sub expandFromMsgType( $$ )
   my $userListRef = undef;
 
   #
-  while( my ($personId, $stringId, $private) = $query->fetchrow_array()) {
+  while( my ($subscriptId, $personId, $personString) = $query->fetchrow_array()) {
     # do that only if not private or if the project param is there 
     # and the personId is user in the project.
-    if( !$private ) {
-      push @{$re->{to}}, $personId;
-    } else {
-      # Privacy is requested.
-      if( $paramHash->{'project'} ) {
-	# We have a project.
-	if( ! $userListRef ) {
-	  my $meta = callOBSAPI( 'prjMetaRef', $paramHash->{'project'} );
-	  $userListRef = extractUserFromMeta( $meta );
-	  log( 'info', "These users are in project <" . $paramHash->{'project'} . 
-	       ">: " . join( ', ', keys %{$userListRef} ) );
-	}
-	# add to the to-list if the userlist contains the stringid of the subscribed user.
-	if( $userListRef && $userListRef->{$stringId} ) {
-	  push @{$re->{to}}, $personId;
-	}
-      } else {
-	# unfortunately no project param, but privacy is requested.
-	# -> problem
-	log( 'warning', "Problem: Privacy is requested, but <$type> does not have param project" );
+    my @filters = getFilters( $subscriptId );
+    $paramHash->{_userId} = $personString;
+
+    # loop over all filters. Since these filter are implicit AND connected, all
+    # filters have to apply.
+    my $filterOk = 1;
+    foreach my $filterRef ( @filters ) {
+      log( 'info', "Filtering type <$type> on param. " . $filterRef->{param} );
+      $filterOk = applyFilter( $paramHash, $filterRef );
+      if( ! $filterOk ) {
+	log( 'info', "Filter failed!" );
+	last;
       }
+    }
+    if( $filterOk ) {
+      push @{$re->{to}}, $personId;
     }
   }
 
+  # Take the hermes user into bcc 
   my $hermesid = $hermesUserInfoRef ? $hermesUserInfoRef->{id} : undef;
   if( $hermesUserInfoRef && $hermesUserInfoRef->{id} ) {
     $re->{bcc} = [ $hermesUserInfoRef->{id} ];
@@ -156,6 +152,79 @@ sub expandFromMsgType( $$ )
   }
   $re->{receiverCnt} = $receiverCnt;
   return $re;
+}
+
+sub getFilters( $ ) 
+{
+  my( $subscriptId ) = @_;
+
+  my $sql = "SELECT p.name, filter.operator, filter.filterstring FROM ";
+  $sql   .= "subscription_filter filter, parameters p WHERE "; 
+  $sql   .= "filter.parameter_id=p.id AND filter.subscription_id=?";
+
+  my $query = $dbh->prepare( $sql );
+  $query->execute( $subscriptId );
+
+  my @re;
+  while( my ($param, $operator, $string) = $query->fetchrow_array()) {
+    push @re, { param => $param, operator => $operator, string => $string };
+    log('info', "Filter added: param <$param>, operator <$operator>, value <$string>" );
+  }
+  return @re;
+}
+
+sub applyFilter( $$) 
+{
+  my( $paramHash, $filterRef ) = @_;
+  my $res = 1;
+
+  if( $filterRef->{operator} eq "special" ) {
+    if( $filterRef->{string} eq "_myprojects" ) {
+      # user must be involved in the project.
+      my $user = $paramHash->{_userId};
+      my $prj = $paramHash->{project};
+      my $prjStr = $prj || 'unknown';
+
+      log( 'info', "Checking for user <$user> involved in prj <$prjStr>" );
+      my $userHashRef = usersOfProject( $prj );
+      if( ! $userHashRef->{$user} ) {
+	log( 'info', "User <$user> is NOT in the maintainer group for <$prjStr>" );
+	$res = 0;
+      } else {
+	log( 'info', "User <$user> is in the maintainer group for <$prjStr>" );
+      }
+    } else {
+      log( 'error', "Unknown special filter type " . $filterRef->{string} );
+    }
+  } elsif( $filterRef->{operator} eq "oneof" ) {
+
+  } elsif( $filterRef->{operator} eq "regexp" ) {
+
+  } else {
+    log( 'error', "Invalid operator string: <$filterRef->{operator}" );
+    $res = 0;
+  }
+
+  return $res;
+}
+
+sub usersOfProject( $ )
+{
+  my ($project) = @_;
+
+  my $userHashRef;
+
+  if( $project ) {
+    my $meta = callOBSAPI( 'prjMetaRef', $project );
+    $userHashRef = extractUserFromMeta( $meta );
+    log( 'info', "These users are in project <$project>: " . join( ', ', keys %{$userHashRef} ) );
+  } else {
+    # unfortunately no project param, but privacy is requested.
+    # -> problem
+    log( 'warning', "Problem: Privacy is requested, but no param project" );
+  }
+
+  return $userHashRef;
 }
 
 #

@@ -67,12 +67,14 @@ my $limit = $opt_l || 100;
 
 my $dbh = Hermes::DBI->connect();
 
+log( 'info', "#################################### generator rocks the show" );
+
 my $sql = "SELECT n.*, msgt.msgtype FROM notifications n, msg_types msgt WHERE ";
 $sql   .= "n.msg_type_id=msgt.id order by n.received limit $limit";
-log( 'info', "SQL " );
+log( 'info', "SQL: $sql " );
 my $notiSth = $dbh->prepare( $sql );
 
-$sql = "SELECT np.*, mtp.name FROM notification_parameters np, msg_type_parameters mtp ";
+$sql = "SELECT np.*, mtp.name FROM notification_parameters np, parameters mtp ";
 $sql .= "WHERE np.msg_type_parameter_id=mtp.id AND np.notification_id=?";
 my $paramSth = $dbh->prepare( $sql );
 
