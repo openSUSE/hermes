@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 6) do
+ActiveRecord::Schema.define(:version => 11) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -46,6 +46,7 @@ ActiveRecord::Schema.define(:version => 6) do
   end
 
   add_index "messages_people", ["message_id", "person_id", "header"], :name => "msg_id"
+  add_index "messages_people", ["sent"], :name => "sent_idx"
 
   create_table "msg_types", :force => true do |t|
     t.string   "msgtype",      :limit => 64
@@ -55,15 +56,43 @@ ActiveRecord::Schema.define(:version => 6) do
 
   add_index "msg_types", ["msgtype"], :name => "msgtype"
 
+  create_table "msg_types_parameters", :id => false, :force => true do |t|
+    t.integer "msg_type_id",  :null => false
+    t.integer "parameter_id", :null => false
+  end
+
+  add_index "msg_types_parameters", ["msg_type_id", "parameter_id"], :name => "msg_type_parameter_id", :unique => true
+
   create_table "msg_types_people", :force => true do |t|
     t.integer "msg_type_id", :null => false
     t.integer "person_id",   :null => false
     t.integer "delay_id"
     t.integer "delivery_id"
     t.text    "comment"
+    t.boolean "private"
   end
 
+  add_index "msg_types_people", ["person_id", "msg_type_id", "delivery_id"], :name => "person_msg_type_delivery_idx", :unique => true
   add_index "msg_types_people", ["person_id", "msg_type_id"], :name => "person_id"
+
+  create_table "notification_parameters", :force => true do |t|
+    t.integer "notification_id",       :null => false
+    t.integer "msg_type_parameter_id"
+    t.string  "value"
+  end
+
+  add_index "notification_parameters", ["notification_id"], :name => "index_notification_parameters_on_notification_id"
+  add_index "notification_parameters", ["msg_type_parameter_id"], :name => "index_notification_parameters_on_msg_type_parameter_id"
+
+  create_table "notifications", :force => true do |t|
+    t.integer  "msg_type_id",               :null => false
+    t.datetime "received"
+    t.string   "sender",      :limit => 64
+  end
+
+  create_table "parameters", :force => true do |t|
+    t.string "name", :limit => 64
+  end
 
   create_table "persons", :force => true do |t|
     t.string "email"
@@ -71,5 +100,15 @@ ActiveRecord::Schema.define(:version => 6) do
     t.string "jid"
     t.string "stringid"
   end
+
+  create_table "subscription_filters", :force => true do |t|
+    t.integer "subscription_id", :null => false
+    t.integer "parameter_id",    :null => false
+    t.string  "operator",        :null => false
+    t.string  "filterstring",    :null => false
+  end
+
+  add_index "subscription_filters", ["subscription_id"], :name => "subscription_id"
+  add_index "subscription_filters", ["parameter_id"], :name => "parameter_id"
 
 end

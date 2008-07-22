@@ -6,4 +6,5 @@ class Subscription < ActiveRecord::Base
   belongs_to :delivery
 
   has_many :messages, :foreign_key => :msg_type_id
+  has_many :filters, :class_name => "SubscriptionFilter"
 end
