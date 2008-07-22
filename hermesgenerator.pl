@@ -68,7 +68,8 @@ my $limit = $opt_l || 100;
 my $dbh = Hermes::DBI->connect();
 
 my $sql = "SELECT n.*, msgt.msgtype FROM notifications n, msg_types msgt WHERE ";
-$sql .= "n.msg_type_id=msgt.id order by n.received limit $limit";
+$sql   .= "n.msg_type_id=msgt.id order by n.received limit $limit";
+log( 'info', "SQL " );
 my $notiSth = $dbh->prepare( $sql );
 
 $sql = "SELECT np.*, mtp.name FROM notification_parameters np, msg_type_parameters mtp ";
@@ -84,19 +85,27 @@ while( 1 ) {
 
     my $cnt = 0;
     while( my ($id, $msgTypeId, $received, $sender, $type) = $notiSth->fetchrow_array() ) {
-	print "> $msgTypeId [$type]\n";
+	print "> $msgTypeId [$type]" unless( $silent );
 	$paramSth->execute( $id );
 	my %params;
+	my $pCount = 0;
 	while( my ($id, $notiId, $paramId, $val, $name) = $paramSth->fetchrow_array()) {
-	    print "$name = $val\n";
+	    # print "$name = $val\n" unless( $silent );
 	    $params{$name} = $val;
+	    $pCount++;
 	}
-	sendNotification( $type, \%params );
+	my $id = sendNotification( $type, \%params );
+	print " with $pCount Arguments";
+	if( $id ) {
+	    print ", message $id created!\n";
+	} else {
+	    print ", no message created!\n";
+	}
     }
 
     my $elapsed = tv_interval ($t0);
     log 'info', "Sent due messages: $cnt in $elapsed sec.\n";
-    print "Sent immediate due messages: $cnt in $elapsed sec.\n";
+    print "Sent immediate due messages: $cnt in $elapsed sec.\n" unless( $silent );
 
     exit;
 }
