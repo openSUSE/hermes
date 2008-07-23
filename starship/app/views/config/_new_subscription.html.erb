@@ -1,28 +1,37 @@
 <% form_for :subscr, :url => { :action => :addSubscr } do |f| %>
 
-	<table class="defaultTable">
-	  <tr>
-		<td><b>Msgtype: </b></td>
-		<td><b>Delay: </b></td>
-		<td><b>Delivery: </b></td>
-	  </tr>
-	  <tr>
-		<td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id','msgtype') %></td>
-		<%= #observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'type_id='+value") 
-		%>
-		<td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
-		<td><%= collection_select('subscr','delivery_id', @avail_deliveries, 'id','name') %></td>
+  <script type="text/javascript">
+    function add_filter_form() {
+      var msg_type = $('subscr_msg_type_id').value;
+      var ajax_options = <%= options_for_ajax Hash.new %>;
+      ajax_options['insertion'] = Insertion.Before;
 
-		<%= #link_to_function "Add Filter", update_page { |page| page.insert_html(:before, 'submit', :partial => 'new_filter', :locals => { :params => @avail_params } )} 
-		%>
+      new Ajax.Updater('submit', '/config/add_filter?msg_type='+msg_type, ajax_options);
+    }
+  </script>
 
-		<td><%= link_to_remote "Add Filter", :url => {:action => "add_filter" }  %></td>
 
-	  </tr>
+  <table class="defaultTable">
+    <tr>
+    <td><b>Msgtype: </b></td>
+    <td><b>Delay: </b></td>
+    <td><b>Delivery: </b></td>
+    </tr>
+    <tr>
+    <td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id','msgtype') %></td>
+    <%= observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'msg_type='+value") %>
+    <td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
+    <td><%= collection_select('subscr','delivery_id', @avail_deliveries, 'id','name') %></td>
 
-	</table>
+    <%= #link_to_function "Add Filter", update_page { |page| page.insert_html(:before, 'submit', :partial => 'new_filter', :locals => { :params => @avail_params } )} 
+    %>
 
-	<div id='submit'><%= submit_tag %></div>
+    <td><%= link_to_function "Add Filter", "add_filter_form()" %></td>
+
+    </tr>
+  </table>
+
+  <div id='submit'><%= submit_tag %></div>
 
 <% end %>
 

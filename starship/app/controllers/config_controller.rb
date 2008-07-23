@@ -82,24 +82,22 @@ def editSubscr
 end
 
 def get_type_params
-  msgtype = MsgType.find(params[:type_id])
+  msgtype = MsgType.find(params[:msg_type])
   
   render :update do |page|
-      page.replace_html 'filter', :partial => 'filter', :object => msgtype.parameters
+    0.upto session[:filter_count]-1 do |fc|
+      page.replace_html "filter_#{fc}", :partial => 'filter', :locals => {:param_list => msgtype.parameters, :count => fc}
+    end
   end
-
 end
 
 
 def add_filter
+  avail_params = MsgType.find(params[:msg_type]).parameters
 
-  avail_params = Parameter.find(:all)
-  render :update do |page|
-    page.insert_html :before, 'submit', :partial => 'new_filter', :locals => { :params => avail_params, :count => session[:filter_count] }
-  end
+  render :partial => 'new_filter', :locals => {:param_list => avail_params, :count => session[:filter_count]}
 
-session[:filter_count] += 1
-
+  session[:filter_count] += 1
 end
 
 end
