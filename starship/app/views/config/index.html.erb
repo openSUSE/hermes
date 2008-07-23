@@ -15,15 +15,14 @@
 <th></th>
 </tr>
 <% for subs in @subscribedMsgs %>
-  <tr>
-	<td><%= link_to subs.msg_type.msgtype, :action => 'editSubscr', :id => subs %></td>
-	<td><%= subs.delay.name %></td>
-	<td><%= subs.delivery ? subs.delivery.name : '' %></td>
-	<td><%= link_to image_tag("delete.png"), :action => 'delSubscr', :id => subs %></td>
-  </tr>
+<tr>
+  <td><%= link_to subs.msg_type.msgtype, :action => 'editSubscr', :id => subs %></td>
+  <td><%= subs.delay.name %></td>
+  <td><%= subs.delivery ? subs.delivery.name : '' %></td>
+  <td><%= link_to image_tag("delete.png"), :action => 'delSubscr', :id => subs %></td>
+</tr>
 <% end %>
-	</table>
-
+</table>
 
 
 
