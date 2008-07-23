@@ -17,7 +17,6 @@ def index
   @avail_types = MsgType.find(:all)
   @avail_deliveries = Delivery.find(:all)
   @avail_delays = Delay.find(:all)
-  @avail_params = @avail_types[0].parameters
   
   session[:filter_count] = 0
 
@@ -90,6 +89,7 @@ def get_type_params
   end
 
 end
+
 
 def add_filter
 

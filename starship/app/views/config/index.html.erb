@@ -24,7 +24,7 @@
 <% end %>
 	</table>
 
-  <%= link_to_function "New Subscription", "$('new_subscr').toggle()" %>
+
 
 
 </td>
@@ -50,6 +50,8 @@
 </tr>
 </table>
 
+
+<%= link_to_function "New Subscription", "$('new_subscr').toggle()" %>
 
 <div id='new_subscr' style="display: none;">
   <%= render(:partial => 'new_subscription', :locals => { :delays => @avail_delays, :deliveries => @avail_deliveries, :types => @avail_types } ) %>

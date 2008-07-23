@@ -1,0 +1,9 @@
+<table class='defaultTable'>
+  <tr>
+	<td><b>Filter: </b></td>
+	<td><%= select_tag("param_id_#{count}", options_from_collection_for_select(params,'id','name')) %></td>
+    <td><b>Value: </b></td>
+	<td><%= text_field_tag "filter_value_#{count}" %>
+  </tr>
+</table>
+

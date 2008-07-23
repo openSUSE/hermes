@@ -1,0 +1,28 @@
+<% form_for :subscr, :url => { :action => :addSubscr } do |f| %>
+
+	<table class="defaultTable">
+	  <tr>
+		<td><b>Msgtype: </b></td>
+		<td><b>Delay: </b></td>
+		<td><b>Delivery: </b></td>
+	  </tr>
+	  <tr>
+		<td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id','msgtype') %></td>
+		<%= #observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'type_id='+value") 
+		%>
+		<td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
+		<td><%= collection_select('subscr','delivery_id', @avail_deliveries, 'id','name') %></td>
+
+		<%= #link_to_function "Add Filter", update_page { |page| page.insert_html(:before, 'submit', :partial => 'new_filter', :locals => { :params => @avail_params } )} 
+		%>
+
+		<td><%= link_to_remote "Add Filter", :url => {:action => "add_filter" }  %></td>
+
+	  </tr>
+
+	</table>
+
+	<div id='submit'><%= submit_tag %></div>
+
+<% end %>
+
