@@ -7,11 +7,20 @@ def index
   @subscribedMsgs = @myUser.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
   
   @latestMsgsTypes = @subscribedMsgs.map {|msg| msg.msg_type_id}.uniq
-  @latestMsgs = Message.find(:all, :include => :msg_type,
-    :conditions => ["msg_type_id in (?)", @latestMsgsTypes], :order => "created DESC", :limit => 10)
+  #@latestMsgs = Message.find(:all, :include => :msg_type,
+  #  :conditions => ["msg_type_id in (?)", @latestMsgsTypes], :order => "created DESC", :limit => 10)
 
   #XXX: only shows messages received after user was subscribed, isn't that what was intended?
-  #@latestMsgs = @myUser.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
+  @latestMsgs = @myUser.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
+
+  @person = session[:user]
+  @avail_types = MsgType.find(:all)
+  @avail_deliveries = Delivery.find(:all)
+  @avail_delays = Delay.find(:all)
+  @avail_params = @avail_types[0].parameters
+  
+  session[:filter_count] = 0
+
 end
 
 def addSubscr
@@ -23,6 +32,7 @@ def addSubscr
       redirect_to_index("Subscription entry already exists.")
     else
       sub = Subscription.new(sub_param)
+	  sub.filters <<  SubscriptionFilter.new( :parameter_id => params[:param_id], :operator => 'oneof',:filterstring => params[:filter_value] )
       if sub.save
         redirect_to_index()
       else
@@ -35,6 +45,7 @@ def addSubscr
     @availTypes = MsgType.find(:all)
     @availDeliveries = Delivery.find(:all)
     @availDelay = Delay.find(:all)
+    @availParams = @availTypes[0].parameters
   end
 end
 	
@@ -69,6 +80,26 @@ def editSubscr
     @availDelay = Delay.find(:all)
     @availDeliveries = Delivery.find(:all)
   end
+end
+
+def get_type_params
+  msgtype = MsgType.find(params[:type_id])
+  
+  render :update do |page|
+      page.replace_html 'filter', :partial => 'filter', :object => msgtype.parameters
+  end
+
+end
+
+def add_filter
+
+
+  render :update do |page|
+    page.insert_html :before, 'submit', :partial => 'new_filter', :locals => { :params => @avail_params, :count => session[:filter_count] }
+	  end
+
+session[:filter_count] += 1
+
 end
 
 end

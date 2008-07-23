@@ -93,3 +93,14 @@ ul {
 #pt-personal a {
     color: #D9E5BF;
 }
+
+/*-------------------
+* Starship layout
+*-------------------*/
+#new_subscr {
+    background: #ddd;
+}
+#new_subscr input, #new_subscr select {
+	border: 1px solid #999;
+	
+}

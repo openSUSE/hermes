@@ -1,3 +1,5 @@
+<% javascript_include_tag :defaults %>
+
 <h1>Message Type Handling for <%= @myUser.name %></h1>
 <table>
 <tr>
@@ -13,15 +15,18 @@
 <th></th>
 </tr>
 <% for subs in @subscribedMsgs %>
-<tr>
-<td><%= link_to subs.msg_type.msgtype, :action => 'editSubscr', :id => subs %></td>
-<td><%= subs.delay.name %></td>
-<td><%= subs.delivery ? subs.delivery.name : '' %></td>
-<td><%= link_to image_tag("delete.png"), :action => 'delSubscr', :id => subs %>
-</tr>
+  <tr>
+	<td><%= link_to subs.msg_type.msgtype, :action => 'editSubscr', :id => subs %></td>
+	<td><%= subs.delay.name %></td>
+	<td><%= subs.delivery ? subs.delivery.name : '' %></td>
+	<td><%= link_to image_tag("delete.png"), :action => 'delSubscr', :id => subs %></td>
+  </tr>
 <% end %>
-</table>
-<%= link_to 'New Subscription', :action => "addSubscr" %> 
+	</table>
+
+  <%= link_to_function "New Subscription", "$('new_subscr').toggle()" %>
+
+
 </td>
 <td valign=top>
 <table class="defaultTable">
@@ -32,17 +37,24 @@
 <th>Type</th>
 </tr>
 <% for msg in @latestMsgs %>
-<tr>
-<td><%= link_to msg.sender, msg %></td>
-<td><%= msg.subject %></td>
-<td><%= h(msg.created) %></td>
-<td><%= msg.msg_type.msgtype %></td>
-</tr>
+  <tr>
+    <td><%= link_to msg.sender, msg %></td>
+    <td><%= msg.subject %></td>
+    <td><%= h(msg.created) %></td>
+    <td><%= msg.msg_type.msgtype %></td>
+  </tr>
 <% end %>
+
 </table>
 </td>
 </tr>
 </table>
+
+
+<div id='new_subscr' style="display: none;">
+  <%= render(:partial => 'new_subscription', :locals => { :delays => @avail_delays, :deliveries => @avail_deliveries, :types => @avail_types } ) %>
+</div>
+
 
 
 
