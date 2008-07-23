@@ -1,6 +1,24 @@
 
+<h2>Current Raw Notifications:</h2>
+<div id="box">
+<TMPL_IF NAME=CntRawNotifications>
+<table>
+<tr><th>Id</th><th>Message Type</th><th>Generated</th></tr>
+<TMPL_LOOP NAME="RawNotifications">
+<tr>
+<td><TMPL_VAR NAME=id></td>
+<td><TMPL_VAR NAME=type></td>
+<td><TMPL_VAR NAME=received></td>
+</tr>
+</TMPL_LOOP>
+</table>
+<TMPL_ELSE>
+none.
+</TMPL_IF>
+</div>
+
 <h2>The latest Messages added:</h2>
-<p>
+<div id="box">
 <table>
 <tr><th>Id</th><th>Subject</th><th>Msg Type</th><th>created at</th></tr>
 <TMPL_LOOP NAME="LatestMessages">
@@ -11,8 +29,8 @@
 </tr>
 </TMPL_LOOP>
 </table>
-</p>
 
 <p>
-Overall message count: <TMPL_VAR NAME=countMessages>
+Overall message count in the database: <TMPL_VAR NAME=countMessages>
 </p>
+</div>

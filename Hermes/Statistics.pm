@@ -34,7 +34,20 @@ use Hermes::Log;
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh %delayHash);
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( latestNMessages countMessages );
+@EXPORT	    = qw( latestNMessages countMessages latestNRawNotifications);
+
+sub latestNRawNotifications( ;$ )
+{
+  my ($cnt) = @_;
+  $cnt = 20 unless( $cnt );
+  $cnt = 20 unless( $cnt =~ /^\d+$/ );
+
+  my $sql = "SELECT n.id as id, msgtypes.msgtype as type, n.received AS received ";
+  $sql .= "FROM notifications n, msg_types msgtypes ";
+  $sql .= "WHERE n.msg_type_id=msgtypes.id AND generated IS NULL limit $cnt";
+
+  return $dbh->selectall_arrayref( $sql, { Slice => {} } );
+}
 
 
 sub latestNMessages( ;$ )

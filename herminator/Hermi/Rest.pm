@@ -66,7 +66,7 @@ sub cgiapp_prerun
   }
 
   my $post = $q->param( 'POSTDATA' );
-  log( 'info', "POST data in prerun: <$post>" );
+  log( 'info', "POST data in prerun: <$post>" ) if( $post );
 }
 
 sub sayHello
@@ -80,8 +80,14 @@ sub sayHello
   my $detailTmpl = $self->load_tmpl( 'info.tmpl', die_on_bad_params => 1, cache => 0 );
 
   my $msgList = latestNMessages(10);
+  my $notiList = latestNRawNotifications( 25 );
+  my $cnt = @{$notiList};
+
+  $detailTmpl->param( CntRawNotifications => $cnt );
+
   $detailTmpl->param( LatestMessages => $msgList );
   $detailTmpl->param( countMessages => countMessages() );
+  $detailTmpl->param( RawNotifications => $notiList );
 
   $htmlTmpl->param( Content => $detailTmpl->output );
   return $htmlTmpl->output;

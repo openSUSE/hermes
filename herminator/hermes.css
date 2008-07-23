@@ -38,8 +38,8 @@ ul#Navigation a:active {
 
 div#Inhalt {
   margin-left: 14em;
-  padding: 0 1em;
-  border: 1px dashed silver;
+  padding: 0em 0em 0em 0em;
+  /* border: 1px dashed silver; */
   min-width: 16em; /* Mindestbreite (der Ueberschrift) verhindert Anzeigefehler in modernen Browsern */
 }
 div#Inhalt h1 {
@@ -48,11 +48,15 @@ div#Inhalt h1 {
 }
 div#Inhalt h2 {
   font-size: 1.2em;
-  margin: 0 0 1em;
+  margin: 10pt 0pt 0pt;
 }
 div#Inhalt p {
   font-size:1em;
   margin: 1em 0;
+}
+
+div#box {
+  border: 1px dashed silver;
 }
 
 table {
