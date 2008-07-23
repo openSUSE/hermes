@@ -1,26 +1,49 @@
 class ConfigController < ApplicationController
 
 def index
-  @myUser = session[:user]
-  @myUser.name ||= "unknown"
-	      
-  @subscribedMsgs = @myUser.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
-  
-  @latestMsgsTypes = @subscribedMsgs.map {|msg| msg.msg_type_id}.uniq
-  #@latestMsgs = Message.find(:all, :include => :msg_type,
-  #  :conditions => ["msg_type_id in (?)", @latestMsgsTypes], :order => "created DESC", :limit => 10)
+  if request.post?
+    sub_param = params[:subscr]
+    sub_param[:person_id] = session[:user].id
+   
+    if Subscription.find(:first, :conditions => sub_param)
+      redirect_to_index("Subscription entry already exists.")
+    else
+      sub = Subscription.new(sub_param)
+      0.upto(session[:filter_count] -1) { |counter|
+        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => 'oneof',:filterstring => params["filter_value_#{counter}"] )
+      }
 
-  #XXX: only shows messages received after user was subscribed, isn't that what was intended?
-  @latestMsgs = @myUser.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
+      if sub.save
+        redirect_to_index()
+      else
+        redirect_to_index(sub.errors.full_messages())
+        sub.errors.clear()
+      end
+    end
+  else
 
-  @person = session[:user]
-  @avail_types = MsgType.find(:all)
-  @avail_deliveries = Delivery.find(:all)
-  @avail_delays = Delay.find(:all)
-  
-  session[:filter_count] = 0
+    @myUser = session[:user]
+    @myUser.name ||= "unknown"
+                
+    @subscribedMsgs = @myUser.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
+    
+    @latestMsgsTypes = @subscribedMsgs.map {|msg| msg.msg_type_id}.uniq
+    #@latestMsgs = Message.find(:all, :include => :msg_type,
+    #  :conditions => ["msg_type_id in (?)", @latestMsgsTypes], :order => "created DESC", :limit => 10)
+
+    #XXX: only shows messages received after user was subscribed, isn't that what was intended?
+    @latestMsgs = @myUser.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
+
+    @person = session[:user]
+    @avail_types = MsgType.find(:all)
+    @avail_deliveries = Delivery.find(:all)
+    @avail_delays = Delay.find(:all)
+    
+    session[:filter_count] = 0
+  end
 
 end
+
 
 def addSubscr
   if request.post?
