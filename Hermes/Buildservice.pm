@@ -159,7 +159,7 @@ sub getFilters( $ )
   my( $subscriptId ) = @_;
 
   my $sql = "SELECT p.name, filter.operator, filter.filterstring FROM ";
-  $sql   .= "subscription_filter filter, parameters p WHERE "; 
+  $sql   .= "subscription_filters filter, parameters p WHERE "; 
   $sql   .= "filter.parameter_id=p.id AND filter.subscription_id=?";
 
   my $query = $dbh->prepare( $sql );

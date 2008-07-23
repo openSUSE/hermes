@@ -30,7 +30,7 @@ use Hermes::Log;
 use Time::HiRes qw( gettimeofday tv_interval );
 use Hermes::Message;
 
-use vars qw ( $opt_h $opt_s $opt_l $opt_w $opt_d $opt_o $opt_m );
+use vars qw ( $opt_h $opt_s $opt_l $opt_w $opt_o );
 
 
 sub usage()
@@ -39,13 +39,17 @@ sub usage()
 
   hermesgenerator.pl
 
-  Script to generate hermes messages from raw notifications
+  Script to generate hermes messages from raw notifications.
 
-  -o:  create only a few messages and stop after that
+  This script runs forever, make sure it is started as weak user in an 
+  environment that makes sure that this script is running.
+
+  -o:  create only l messages and stop after that
   -h:  help text
-  -d:  switch on debug
   -s:  silent, no output is generated.
   -l limit: limit processing to limit notifications
+  -w delay: sleeping time in seconds, default 10
+
 END
 ;
   exit;
@@ -54,29 +58,32 @@ END
 # ---------------------------------------------------------------------------
 
 # Process the commandline arguments.
-getopts('odhl:');
+getopts('odhl:w:');
 
 usage() if ($opt_h );
 
 my $silent = 0;
 $silent = 1 if( $opt_s );
 
-my $debug = 0;
-$debug = 1 if( $opt_d );
 my $limit = $opt_l || 100;
+
+my $delay = $opt_w || 10; # ten seconds default delay
 
 my $dbh = Hermes::DBI->connect();
 
 log( 'info', "#################################### generator rocks the show" );
 
 my $sql = "SELECT n.*, msgt.msgtype FROM notifications n, msg_types msgt WHERE ";
-$sql   .= "n.msg_type_id=msgt.id order by n.received limit $limit";
+$sql   .= "n.generated IS NULL AND n.msg_type_id=msgt.id order by n.received limit $limit";
 log( 'info', "SQL: $sql " );
 my $notiSth = $dbh->prepare( $sql );
 
 $sql = "SELECT np.*, mtp.name FROM notification_parameters np, parameters mtp ";
 $sql .= "WHERE np.msg_type_parameter_id=mtp.id AND np.notification_id=?";
 my $paramSth = $dbh->prepare( $sql );
+
+$sql = "UPDATE notifications SET generated=NOW() WHERE id=?";
+my $updateSth = $dbh->prepare( $sql );
 
 while( 1 ) {
     # my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -86,8 +93,8 @@ while( 1 ) {
     $notiSth->execute();
 
     my $cnt = 0;
-    while( my ($id, $msgTypeId, $received, $sender, $type) = $notiSth->fetchrow_array() ) {
-	print "> $msgTypeId [$type]" unless( $silent );
+    while( my ($id, $msgTypeId, $received, $sender, $gen, $type ) = $notiSth->fetchrow_array() ) {
+	print " Type [$type]" unless( $silent );
 	$paramSth->execute( $id );
 	my %params;
 	my $pCount = 0;
@@ -96,20 +103,30 @@ while( 1 ) {
 	    $params{$name} = $val;
 	    $pCount++;
 	}
-	my $id = sendNotification( $type, \%params );
-	print " with $pCount Arguments";
-	if( $id ) {
+	my $msgId = sendNotification( $type, \%params );
+	print " with $pCount Arguments <$msgId>";
+	if( $msgId ) {
 	    print ", message $id created!\n";
-	} else {
+	} elsif( $msgId == 0 ) {
 	    print ", no message created!\n";
+	} else {
+	    print ", ERROR happened, check logfile!\n";
+	}
+
+	if( defined $msgId && $msgId =~ /^\d+$/ ) {
+	    $dbh->do( 'LOCK TABLES notifications WRITE' );
+	    $updateSth->execute( $id );
+	    $dbh->do( 'UNLOCK TABLES' );
 	}
     }
 
     my $elapsed = tv_interval ($t0);
-    log 'info', "Sent due messages: $cnt in $elapsed sec.\n";
-    print "Sent immediate due messages: $cnt in $elapsed sec.\n" unless( $silent );
+    log 'info', "Created $cnt messages in $elapsed sec.\n";
+    print "Created $cnt messages in $elapsed sec.\n" unless( $silent );
+    
+    exit if( $opt_o );
 
-    exit;
+    sleep( $delay );
 }
 
 

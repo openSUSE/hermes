@@ -350,6 +350,7 @@ sub sendNotification( $$ )
 	log( 'info', "Created new message with id $id" );
       } else {
 	log( 'info', "No receiver for this message, did not create one." );
+	$id = 0;
       }
     }
   }
@@ -364,12 +365,14 @@ sub notificationToInbox( $$ )
   my $msgTypeId = createMsgType( $msgType );
   if( $msgTypeId ) {
     my $sender = $params->{sender} || "unknown";
+    $dbh->do( 'LOCK TABLES notifications WRITE, parameters WRITE, notification_parameters WRITE' );
     my $sql = "INSERT into notifications (msg_type_id, received, sender) VALUES (?, NOW(), ?)";
     my $sth = $dbh->prepare( $sql );
     $sth->execute( $msgTypeId, $sender );
     $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
 
     my $cnt = storeNotificationParameters( $id, $params );
+    $dbh->do( 'UNLOCK TABLES' );
     log( 'info', "Notification of type <$msgType> added with $cnt parameters" );
   }
   return $id;
