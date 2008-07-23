@@ -197,9 +197,43 @@ sub applyFilter( $$)
       log( 'error', "Unknown special filter type " . $filterRef->{string} );
     }
   } elsif( $filterRef->{operator} eq "oneof" ) {
+    # the parameter value must be contained in the filter string
+    if( $paramHash->{ $filterRef->{param} } ) {
+      # the parameter named in the filter exists
+      my $searchStr = $paramHash->{ $filterRef->{param} };
+      $searchStr =~ s/^\s*//; # wipe whitespaces
+      $searchStr =~ s/\s*$//;
 
+      my $str = $filterRef->{string};
+      log( 'info', "Filtering oneof <$searchStr> in <$str>?" );
+
+      my @possibleValues = split( /\s*,\s*/, $str );
+      if( grep /$searchStr/, @possibleValues ) {
+	$res = 1;
+      } else {
+	$res = 0;
+      }
+    } else {
+      log( 'warning', "Filter references on non existing param <$filterRef->{param}>" );
+      $res = 0;
+    }
   } elsif( $filterRef->{operator} eq "regexp" ) {
+    # the parameter value must match the regexp in the filter
+    if( $paramHash->{ $filterRef->{param} } ) {
+      my $searchStr = $paramHash->{ $filterRef->{param} };
+      $searchStr =~ s/^\s*//; # wipe whitespaces
+      $searchStr =~ s/\s*$//;
 
+      my $regexp = $filterRef->{string};
+
+      log( 'info', "Filtering regexp <$regexp> on <$searchStr>?" );
+
+      unless( $searchStr && $regexp && $searchStr =~ /$regexp/ ) {
+	$res = 0;
+      }
+    } else {
+      $res = 0;
+    }
   } else {
     log( 'error', "Invalid operator string: <$filterRef->{operator}" );
     $res = 0;
