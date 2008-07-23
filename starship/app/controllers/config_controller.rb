@@ -93,10 +93,10 @@ end
 
 def add_filter
 
-
+  avail_params = Parameter.find(:all)
   render :update do |page|
-    page.insert_html :before, 'submit', :partial => 'new_filter', :locals => { :params => @avail_params, :count => session[:filter_count] }
-	  end
+    page.insert_html :before, 'submit', :partial => 'new_filter', :locals => { :params => avail_params, :count => session[:filter_count] }
+  end
 
 session[:filter_count] += 1
 
