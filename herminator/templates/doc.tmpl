@@ -44,10 +44,11 @@ be sent along with the notification that can be put into the message.
 <pre>
   http://<TMPL_VAR NAME=urlbase>/index.cgi?rm=notify&\
                                           type=Type&
+                                          sender=Sender&
                                           param1=...&param2=...
 </pre>
 
 <p>Note that it is not garanteed who will receive the message because
-that depends on who is subscribed on the type.
+that depends on who is subscribed on the type and used filters.
 </p>
 <p>Posting to new types automatically creates the type</p>

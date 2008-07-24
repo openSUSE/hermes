@@ -34,8 +34,18 @@ use Hermes::Log;
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh %delayHash);
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( latestNMessages countMessages latestNRawNotifications);
+@EXPORT	    = qw( latestNMessages countMessages latestNRawNotifications countRawNotificationsInHours);
 
+sub countRawNotificationsInHours( ;$ )
+{
+  my ($hours) = @_;
+
+  $hours = 1 unless( $hours && 0+$hours >0 && 0+$hours < 128 );
+  my $sql = "SELECT count(id) FROM notifications WHERE received > NOW() - INTERVAL $hours HOUR";
+
+  my ($cnt) = $dbh->selectrow_array( $sql );
+  return $cnt;
+}
 sub latestNRawNotifications( ;$ )
 {
   my ($cnt) = @_;

@@ -84,7 +84,7 @@ sub sayHello
   my $cnt = @{$notiList};
 
   $detailTmpl->param( CntRawNotifications => $cnt );
-
+  $detailTmpl->param( RawNotiLastHour => countRawNotificationsInHours( 1 ) );
   $detailTmpl->param( LatestMessages => $msgList );
   $detailTmpl->param( countMessages => countMessages() );
   $detailTmpl->param( RawNotifications => $notiList );
