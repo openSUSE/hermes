@@ -15,56 +15,57 @@ end
 def add_subscr
   if request.post?
     sub_param = params[:subscr]
-    sub_param[:person_id] = session[:user].id
+      sub_param[:person_id] = session[:user].id
 
-    if Subscription.find(:first, :conditions => sub_param)
-      redirect_to_index("Subscription entry already exists.")
-    else
-      sub = Subscription.new(sub_param)
-      0.upto(params[:filter_count].to_i-1) { |counter|
-        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],:filterstring => params["filter_value_#{counter}"] )
-      }
-      if sub.save
-        redirect_to_index()
+      if Subscription.find(:first, :conditions => sub_param)
+        redirect_to_index("Subscription entry already exists.")
       else
-        redirect_to_index(sub.errors.full_messages())
-        sub.errors.clear()
+        sub = Subscription.new(sub_param)
+        0.upto(params[:filter_count].to_i-1) { |counter|
+          sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],:filterstring => params["filter_value_#{counter}"] )
+        }
+        if sub.save
+          redirect_to_index()
+        else
+          redirect_to_index(sub.errors.full_messages())
+          sub.errors.clear()
+        end
       end
     end
   end
-end
 
 
-def redirect_to_index(msg = nil)
-  flash[:notice] = msg
-  redirect_to :action => :index
-end
-
-def delSubscr
-  curr_subscr = session[:user].subscriptions.find(:first, :conditions => {:id => params[:id]})
-
-  if curr_subscr
-    curr_subscr.destroy
-    redirect_to_index "Subscription for #{curr_subscr.msg_type.msgtype} deleted"
-  else
-    redirect_to_index "Only your own subscriptions can be deleted."
+  def redirect_to_index(msg = nil)
+    flash[:notice] = msg
+    redirect_to :action => :index
   end
-end
 
-def editSubscr
-  @subscr = Subscription.find(params[:id])
+  def del_subscr
+    curr_subscr = session[:user].subscriptions.find(:first, :conditions => {:id => params[:id]})
 
-  if request.post?
-    if @subscr.update_attributes params[:subscr]
-      redirect_to_index()
+    if curr_subscr
+      curr_subscr.destroy
+      redirect_to_index "Subscription for #{curr_subscr.msg_type.msgtype} deleted"
     else
-      redirect_to_index(@subscr.errors.full_messages())
-      @subscr.errors.clear()
+      redirect_to_index "Only your own subscriptions can be deleted."
     end
-  else
-    @msgs_for_type = @subscr.messages.find(:all, :include => :msg_type)
-    @availDelay = Delay.find(:all)
-    @availDeliveries = Delivery.find(:all)
+  end
+
+  def edit_subscr
+    @subscr = Subscription.find(params[:id])
+    @filter = @subscr.filters
+
+    if request.post?
+      if @subscr.update_attributes params[:subscr]
+        redirect_to_index()
+      else
+        redirect_to_index(@subscr.errors.full_messages())
+        @subscr.errors.clear()
+      end
+    else
+      @msgs_for_type = @subscr.messages.find(:all, :include => :msg_type)
+      @availDelay = Delay.find(:all)
+      @availDeliveries = Delivery.find(:all)
   end
 end
 
