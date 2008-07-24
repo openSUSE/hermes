@@ -1,16 +1,69 @@
-<% form_for :subscr, :url => { :action => :index } do |f| %>
+<script type="text/javascript">
 
-  <script type="text/javascript">
-    function add_filter_form() {
-      var msg_type = $('subscr_msg_type_id').value;
-      var ajax_options = <%= options_for_ajax Hash.new %>;
-      ajax_options['insertion'] = Insertion.Before;
+// adds a new filter selector to the list
+// new filters are cloned from the first one in the list
+function add_filter() {
+  msg_type = $('subscr_msg_type_id').value;
+  filter_table = $('filter_table');
+  forgery_string = '<%=request_forgery_protection_token%>=<%=form_authenticity_token%>';
+  if(filter_table.style.display == "none") {
+    new Ajax.Request('/config/get_type_params', {
+      parameters: forgery_string+'&msg_type='+msg_type,
+      onSuccess: function(response) {
+        update_filter_params(response.responseText);
+        filter_table.show();
+        recalc_filter_ids();
+      }
+    });
+  } else {
+    filter_dom = filter_table.childElements()[0].cloneNode(true);
+    filter_table.insert(filter_dom);
+    recalc_filter_ids();
+  }
+}
 
-      new Ajax.Updater('submit', '/config/add_filter?msg_type='+msg_type, ajax_options);
-    }
-  </script>
+// removes filter and updates filter ids
+// last filter gets hidden to ensure there's always a filter to
+// clone for add_filter()
+function remove_filter(element) {
+  if(filter_count() == 1) {
+    $('filter_table').hide();
+  } else {
+    element.parentNode.parentNode.remove();
+  }
+  recalc_filter_ids();
+}
 
+// updates all parameter select boxes with the passed html
+function update_filter_params(html) {
+  $('filter_table').adjacent('select').each(function(item) {
+      item.replace(html);
+  });
+  recalc_filter_ids();
+}
 
+// updates all filter ids to be in the range [0..filter_count()[
+function recalc_filter_ids() {
+  fc = $('filter_count').value = filter_count();
+  for(var i=0; i<fc; i++) {
+    filter = $('filter_table').childElements()[i];
+    filter.adjacent('select')[0].id = 'param_id_'+i;
+    filter.adjacent('select')[0].name = 'param_id_'+i;
+    filter.adjacent('input')[0].id = 'filter_value_'+i;
+    filter.adjacent('input')[0].name = 'filter_value_'+i;
+  }
+}
+
+function filter_count() {
+  if($('filter_table').style.display == "none") {
+    return 0;
+  } else {
+    return $('filter_table').childElements().length;
+  }
+}
+</script>
+
+<% form_for :subscr, :url => { :action => :add_subscr } do |f| %>
   <table class="defaultTable">
     <tr>
     <td><b>Msgtype: </b></td>
@@ -19,19 +72,29 @@
     </tr>
     <tr>
     <td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id','msgtype') %></td>
-    <%= observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'msg_type='+value") %>
+    <%= observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'msg_type='+value", :success => 'update_filter_params(request.responseText)') %>
     <td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
     <td><%= collection_select('subscr','delivery_id', @avail_deliveries, 'id','name') %></td>
 
     <%= #link_to_function "Add Filter", update_page { |page| page.insert_html(:before, 'submit', :partial => 'new_filter', :locals => { :params => @avail_params } )} 
     %>
 
-    <td><%= link_to_function "Add Filter", "add_filter_form()" %></td>
+    <td><%= link_to_function "Add Filter", "add_filter()" %></td>
 
     </tr>
   </table>
-
+  <table class="defaultTable">
+    <tbody id="filter_table" style="display:none">
+      <tr>
+        <td><b>Filter: </b></td>
+        <td><%= render :partial => 'filter', :locals => {:param_list => []} %></td>
+        <td><b>Value: </b></td>
+        <td><%= text_field_tag "filter_value" %></td>
+        <td><%= link_to_function "Remove", "remove_filter(this)" %></td>
+      </tr>
+    </tbody>
+  </table>
+  <%= hidden_field_tag 'filter_count', 0 %>
   <div id='submit'><%= submit_tag %></div>
-
 <% end %>
 

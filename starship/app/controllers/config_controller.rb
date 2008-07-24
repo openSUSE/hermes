@@ -1,76 +1,38 @@
 class ConfigController < ApplicationController
 
 def index
-  if request.post?
-    sub_param = params[:subscr]
-    sub_param[:person_id] = session[:user].id
-   
-    if Subscription.find(:first, :conditions => sub_param)
-      redirect_to_index("Subscription entry already exists.")
-    else
-      sub = Subscription.new(sub_param)
-      0.upto(session[:filter_count] -1) { |counter|
-        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => 'oneof',:filterstring => params["filter_value_#{counter}"] )
-      }
+  @person = session[:user]
+  @person.name ||= "unknown"
 
-      if sub.save
-        redirect_to_index()
-      else
-        redirect_to_index(sub.errors.full_messages())
-        sub.errors.clear()
-      end
-    end
-  else
+  @subscribedMsgs = @person.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
+  @latestMsgs = @person.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
 
-    @myUser = session[:user]
-    @myUser.name ||= "unknown"
-                
-    @subscribedMsgs = @myUser.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
-    
-    @latestMsgsTypes = @subscribedMsgs.map {|msg| msg.msg_type_id}.uniq
-    #@latestMsgs = Message.find(:all, :include => :msg_type,
-    #  :conditions => ["msg_type_id in (?)", @latestMsgsTypes], :order => "created DESC", :limit => 10)
-
-    #XXX: only shows messages received after user was subscribed, isn't that what was intended?
-    @latestMsgs = @myUser.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
-
-    @person = session[:user]
-    @avail_types = MsgType.find(:all)
-    @avail_deliveries = Delivery.find(:all)
-    @avail_delays = Delay.find(:all)
-    
-    session[:filter_count] = 0
-  end
-
+  @avail_types = MsgType.find(:all)
+  @avail_deliveries = Delivery.find(:all)
+  @avail_delays = Delay.find(:all)
 end
 
+def add_subscr
+  sub_param = params[:subscr]
+  sub_param[:person_id] = session[:user].id
 
-def addSubscr
-  if request.post?
-    sub_param = params[:subscr]
-    sub_param[:person_id] = session[:user].id
-   
-    if Subscription.find(:first, :conditions => sub_param)
-      redirect_to_index("Subscription entry already exists.")
-    else
-      sub = Subscription.new(sub_param)
-	  sub.filters <<  SubscriptionFilter.new( :parameter_id => params[:param_id], :operator => 'oneof',:filterstring => params[:filter_value] )
-      if sub.save
-        redirect_to_index()
-      else
-        redirect_to_index(sub.errors.full_messages())
-        sub.errors.clear()
-      end
-    end
+  if Subscription.find(:first, :conditions => sub_param)
+    redirect_to_index("Subscription entry already exists.")
   else
-    @person = session[:user]
-    @availTypes = MsgType.find(:all)
-    @availDeliveries = Delivery.find(:all)
-    @availDelay = Delay.find(:all)
-    @availParams = @availTypes[0].parameters
+    sub = Subscription.new(sub_param)
+    0.upto(params[:filter_count].to_i-1) { |counter|
+      sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => 'oneof',:filterstring => params["filter_value_#{counter}"] )
+    }
+    if sub.save
+      redirect_to_index()
+    else
+      redirect_to_index(sub.errors.full_messages())
+      sub.errors.clear()
+    end
   end
 end
-	
+
+
 def redirect_to_index(msg = nil)
   flash[:notice] = msg
   redirect_to :action => :index
@@ -105,22 +67,8 @@ def editSubscr
 end
 
 def get_type_params
-  msgtype = MsgType.find(params[:msg_type])
-  
-  render :update do |page|
-    0.upto session[:filter_count]-1 do |fc|
-      page.replace_html "filter_#{fc}", :partial => 'filter', :locals => {:param_list => msgtype.parameters, :count => fc}
-    end
-  end
-end
-
-
-def add_filter
-  avail_params = MsgType.find(params[:msg_type]).parameters
-
-  render :partial => 'new_filter', :locals => {:param_list => avail_params, :count => session[:filter_count]}
-
-  session[:filter_count] += 1
+  param_list = MsgType.find(params[:msg_type]).parameters
+  render :partial => 'filter', :locals => {:param_list => param_list}
 end
 
 end
