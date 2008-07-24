@@ -13,21 +13,23 @@ def index
 end
 
 def add_subscr
-  sub_param = params[:subscr]
-  sub_param[:person_id] = session[:user].id
+  if request.post?
+    sub_param = params[:subscr]
+    sub_param[:person_id] = session[:user].id
 
-  if Subscription.find(:first, :conditions => sub_param)
-    redirect_to_index("Subscription entry already exists.")
-  else
-    sub = Subscription.new(sub_param)
-    0.upto(params[:filter_count].to_i-1) { |counter|
-      sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => 'oneof',:filterstring => params["filter_value_#{counter}"] )
-    }
-    if sub.save
-      redirect_to_index()
+    if Subscription.find(:first, :conditions => sub_param)
+      redirect_to_index("Subscription entry already exists.")
     else
-      redirect_to_index(sub.errors.full_messages())
-      sub.errors.clear()
+      sub = Subscription.new(sub_param)
+      0.upto(params[:filter_count].to_i-1) { |counter|
+        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],:filterstring => params["filter_value_#{counter}"] )
+      }
+      if sub.save
+        redirect_to_index()
+      else
+        redirect_to_index(sub.errors.full_messages())
+        sub.errors.clear()
+      end
     end
   end
 end

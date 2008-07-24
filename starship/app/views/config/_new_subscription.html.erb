@@ -37,7 +37,9 @@ function remove_filter(element) {
 // updates all parameter select boxes with the passed html
 function update_filter_params(html) {
   $('filter_table').adjacent('select').each(function(item) {
+    if(item.name.match("param")) {
       item.replace(html);
+    }
   });
   recalc_filter_ids();
 }
@@ -46,11 +48,15 @@ function update_filter_params(html) {
 function recalc_filter_ids() {
   fc = $('filter_count').value = filter_count();
   for(var i=0; i<fc; i++) {
-    filter = $('filter_table').childElements()[i];
-    filter.adjacent('select')[0].id = 'param_id_'+i;
-    filter.adjacent('select')[0].name = 'param_id_'+i;
-    filter.adjacent('input')[0].id = 'filter_value_'+i;
-    filter.adjacent('input')[0].name = 'filter_value_'+i;
+//    filter = $('filter_table').childElements()[i];
+    filter = $('filter_table').childElements()[i].childElements()[0];
+    filter.adjacent('select.param_select')[0].name = 'param_id_'+i;
+    filter.adjacent('select.param_select')[0].id = 'param_id_'+i;
+    filter.adjacent('select.filter_select')[0].name = 'filter_operator_'+i;
+    filter.adjacent('select.filter_select')[0].id = 'filter_operator_'+i;
+    filter.adjacent('input.filter_value_input')[0].name = 'filter_value_'+i;
+    filter.adjacent('input.filter_value_input')[0].id = 'filter_value_'+i;
+
   }
 }
 
@@ -88,8 +94,9 @@ function filter_count() {
       <tr>
         <td><b>Filter: </b></td>
         <td><%= render :partial => 'filter', :locals => {:param_list => []} %></td>
+        <td><%= select_tag 'filter_operator', "<option>oneof</option><option>regex</option><option>special</option>", :class => 'filter_select' %><td>
         <td><b>Value: </b></td>
-        <td><%= text_field_tag "filter_value" %></td>
+        <td><%= text_field_tag "filter_value", nil, :class => 'filter_value_input' %></td>
         <td><%= link_to_function "Remove", "remove_filter(this)" %></td>
       </tr>
     </tbody>
