@@ -215,6 +215,7 @@ sub newMessage($$$$\@;\@\@$$)
     # check for a user
 
     # Add the new message to the database.
+    $dbh->do( 'LOCK TABLES messages WRITE, messages_people WRITE, msg_types_people READ' );
     my $sql = 'INSERT INTO messages( msg_type_id, sender, subject, body, created) ' .
 	'VALUES (?, ?, ?, ?, NOW())';
     $dbh->do( $sql, undef, ( $typeId, $from, $subject, $text ) );
@@ -277,7 +278,7 @@ sub newMessage($$$$\@;\@\@$$)
 	log( 'error', "Unknown or invalid person, can not store message!" );
       }
     }
-
+    $dbh->do( 'UNLOCK TABLES' );
     # some of the receipients might want the message immediately.
     # sendMessage( $id );
 
@@ -363,15 +364,16 @@ sub notificationToInbox( $$ )
 
   my $id;
   my $msgTypeId = createMsgType( $msgType );
+
   if( $msgTypeId ) {
     my $sender = $params->{sender} || "unknown";
-    $dbh->do( 'LOCK TABLES notifications WRITE, parameters WRITE, notification_parameters WRITE' );
+    $dbh->do( 'LOCK TABLES notifications WRITE, parameters WRITE, notification_parameters WRITE, msg_types_parameters WRITE' );
     my $sql = "INSERT into notifications (msg_type_id, received, sender) VALUES (?, NOW(), ?)";
     my $sth = $dbh->prepare( $sql );
     $sth->execute( $msgTypeId, $sender );
     $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
 
-    my $cnt = storeNotificationParameters( $id, $params );
+    my $cnt = storeNotificationParameters( $id, $msgTypeId, $params );
     $dbh->do( 'UNLOCK TABLES' );
     log( 'info', "Notification of type <$msgType> added with $cnt parameters" );
   }
@@ -379,47 +381,51 @@ sub notificationToInbox( $$ )
 }
 
 #
-# create the notification parameters
+# create the notification parameters and fill the table msg_types_parameters
+# if needed.
 #
-sub storeNotificationParameters($$) 
+sub storeNotificationParameters($$$ ) 
 {
-  my ($notiId, $params) = @_;
+  my ($notiId, $typeId, $params) = @_;
 
   my $cnt = 0;
 
-  foreach my $param  ( keys %{$params} ) {
-    my $paramId = createMsgTypeParam( $param );
+  return unless( $typeId =~ /^\d+$/ );
 
-    if( $paramId ) {
-      my $sth1 = $dbh->prepare( 'INSERT INTO notification_parameters(notification_id, msg_type_parameter_id, value ) VALUES (?,?,?)' );
-      $sth1->execute( $notiId, $paramId, $params->{$param} );
+  my $paramSth = $dbh->prepare( "SELECT id FROM parameters WHERE name=?" );
+  my $inssth = $dbh->prepare( "INSERT INTO msg_types_parameters VALUES ($typeId, ?)" );
+  my $insparamSth = $dbh->prepare( 'INSERT INTO notification_parameters(notification_id, parameter_id, value ) VALUES (?,?,?)' );
+
+  my $msgTypeSql = "SELECT parameter_id FROM msg_types_parameters WHERE msg_type_id=$typeId";
+
+  # this call returns a ref to an array containing all parameter-ids for that msg_type
+  my $msgTypesRef = $dbh->selectcol_arrayref( $msgTypeSql );
+
+  foreach my $param  ( keys %{$params} ) {
+    # check for the parameter and create if not yet known.
+    $paramSth->execute( $param );
+    my ($param_id) = $paramSth->fetchrow_array();
+
+    unless( $param_id ) {
+      # Create the parameter in the parameters table
+      my $isth = $dbh->prepare( "INSERT INTO parameters (name) VALUES (?)");
+      $isth->execute( $param );
+      $param_id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+    }
+
+    # Check if the parameter is known for 
+    unless( grep( /$param_id/, @{$msgTypesRef} ) ) {
+      log( 'info', "Creating msg_types_parameters-Entry for type <$typeId>, param <$param>" );
+      $inssth->execute( $param_id );
+    }
+
+    # now set the actual parameter value
+    if( $param_id ) {
+      $insparamSth->execute( $notiId, $param_id, $params->{$param} || 'undefined' );
       $cnt++;
-      # $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
     }
   }
   return $cnt;
-}
-
-#
-# return or create entries in table parameters
-#
-sub createMsgTypeParam( $ )
-{
-  my ($name) = @_;
-
-  my $sth = $dbh->prepare( 'SELECT id FROM parameters WHERE name=?' );
-  $sth->execute( $name );
-
-  my ($id) = $sth->fetchrow_array();
-
-  unless( $id ) {
-    my $sth1 = $dbh->prepare( 'INSERT INTO parameters (name) VALUES (?)' );
-    $sth1->execute( $name );
-    $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
-  }
-
-  log( 'info', "Returning id <$id> for parameter <$name>" );
-  return $id;
 }
 
 ######################################################################

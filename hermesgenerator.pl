@@ -79,7 +79,7 @@ log( 'info', "SQL: $sql " );
 my $notiSth = $dbh->prepare( $sql );
 
 $sql = "SELECT np.*, mtp.name FROM notification_parameters np, parameters mtp ";
-$sql .= "WHERE np.msg_type_parameter_id=mtp.id AND np.notification_id=?";
+$sql .= "WHERE np.parameter_id=mtp.id AND np.notification_id=?";
 my $paramSth = $dbh->prepare( $sql );
 
 $sql = "UPDATE notifications SET generated=NOW() WHERE id=?";
@@ -104,7 +104,7 @@ while( 1 ) {
 	    $pCount++;
 	}
 	my $msgId = sendNotification( $type, \%params );
-	print " with $pCount Arguments <$msgId>";
+	print " with $pCount Arguments";
 	if( $msgId ) {
 	    print ", message $id created!\n";
 	} elsif( $msgId == 0 ) {
