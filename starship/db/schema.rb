@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 12) do
+ActiveRecord::Schema.define(:version => 13) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -38,10 +38,10 @@ ActiveRecord::Schema.define(:version => 12) do
 
   create_table "messages_people", :force => true do |t|
     t.integer  "message_id"
-    t.integer  "person_id",                                 :null => false
-    t.string   "header",                  :default => "to", :null => false
-    t.integer  "delay",      :limit => 4, :default => 0
-    t.datetime "sent",                                      :null => false
+    t.integer  "person_id",                                  :null => false
+    t.string   "header",     :limit => 16, :default => "to", :null => false
+    t.integer  "delay",      :limit => 4,  :default => 0
+    t.datetime "sent",                                       :null => false
     t.text     "comment"
   end
 
@@ -72,16 +72,17 @@ ActiveRecord::Schema.define(:version => 12) do
     t.boolean "private"
   end
 
+  add_index "msg_types_people", ["person_id", "msg_type_id", "delivery_id"], :name => "person_msg_type_delivery_idx", :unique => true
   add_index "msg_types_people", ["person_id", "msg_type_id"], :name => "person_id"
 
   create_table "notification_parameters", :force => true do |t|
-    t.integer "notification_id",       :null => false
-    t.integer "msg_type_parameter_id"
+    t.integer "notification_id", :null => false
+    t.integer "parameter_id"
     t.string  "value"
   end
 
   add_index "notification_parameters", ["notification_id"], :name => "index_notification_parameters_on_notification_id"
-  add_index "notification_parameters", ["msg_type_parameter_id"], :name => "index_notification_parameters_on_msg_type_parameter_id"
+  add_index "notification_parameters", ["parameter_id"], :name => "index_notification_parameters_on_msg_type_parameter_id"
 
   create_table "notifications", :force => true do |t|
     t.integer  "msg_type_id",               :null => false
@@ -97,6 +98,7 @@ ActiveRecord::Schema.define(:version => 12) do
   create_table "persons", :force => true do |t|
     t.string "email"
     t.string "name"
+    t.string "jid"
     t.string "stringid"
   end
 
