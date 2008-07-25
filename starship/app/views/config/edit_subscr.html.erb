@@ -1,0 +1,48 @@
+<h1>Change Subscription for <%= MsgType.find(@subscr.msg_type_id).msgtype %></h1>
+
+<table class="defaultTable">
+<% form_for :subscr, :url => { :action => :edit_subscr } do |f| %>
+  <tr>
+    <td><strong>Delay: </strong></td>
+    <td><%= collection_select('subscr', 'delay_id', @availDelay, 'id','name') %></td>
+  </tr>
+
+  <tr>
+    <td><strong>Delivery: </strong></td>
+    <td><%= collection_select('subscr','delivery_id', @availDeliveries, 'id','name') %></td>
+  </tr>
+
+  <tr>
+    <td valign=top><strong> <%= link_to_function "Comment", "$('comment_box').toggle()" %></strong></td>
+
+    <%# link_to_function "Comment", "$('comment_box').toggle()" %>
+    <td> <div id="comment_box" style="display: none;"><%= text_area('subscr','comment', :size => "50x5") %></div></td>
+  </tr>
+
+</table>
+
+
+<table>
+    <tr><td><b>Filter: </b></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+
+    <% @filters.each_with_index  { |filt,i| %>
+    <% fields_for :filter, filt do  |fi| %>
+  <tr>
+    <td>Parameter</td>
+    <td><%= select_tag("param_id_#{i}",options_from_collection_for_select(@avail_params,'id','name',filt.parameter_id) ) %></td>
+    <td><%= select_tag("operator_id_#{i}",options_for_select($OPERATORS, filt.operator) ) %></td>
+    <td><%= text_field_tag "filter_value_#{i}", filt.filterstring%></td>
+  </tr>
+    <% end %>
+    <% } %>
+</table>
+<tr><td><%= submit_tag %></td></tr>
+<% end %>
+
+
+
+

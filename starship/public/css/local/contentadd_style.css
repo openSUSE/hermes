@@ -100,7 +100,10 @@ ul {
 #new_subscr {
     background: #ddd;
 }
-#new_subscr input, #new_subscr select {
-	border: 1px solid #999;
+input, 
+select,
+textarea {
+    border: 1px solid #999;
 	
 }
+

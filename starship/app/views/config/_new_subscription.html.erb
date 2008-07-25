@@ -94,7 +94,7 @@ function filter_count() {
       <tr>
         <td><b>Filter: </b></td>
         <td><%= render :partial => 'filter', :locals => {:param_list => []} %></td>
-        <td><%= select_tag 'filter_operator', "<option>oneof</option><option>regex</option><option>special</option>", :class => 'filter_select' %><td>
+        <td><%= select_tag 'filter_operator', options_for_select($OPERATORS), {:class => 'filter_select'} %><td>
         <td><b>Value: </b></td>
         <td><%= text_field_tag "filter_value", nil, :class => 'filter_value_input' %></td>
         <td><%= link_to_function "Remove", "remove_filter(this)" %></td>
