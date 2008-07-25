@@ -48,7 +48,7 @@ sub setup {
 
   $htmlTmpl = $self->load_tmpl( 'hermes.tmpl',
 				die_on_bad_params => 1,
-				cache => 0 );
+				cache => 1 );
 
 }
 
@@ -67,6 +67,15 @@ sub cgiapp_prerun
 
   my $post = $q->param( 'POSTDATA' );
   log( 'info', "POST data in prerun: <$post>" ) if( $post );
+}
+
+sub cgiapp_postrun
+{
+  my $self = shift();
+
+  $self->header_type( 'header' );
+  # $self->header_props( -expires => 'now' );
+  $self->header_props( -Cache-Control => 'no-cache' );
 }
 
 sub sayHello
