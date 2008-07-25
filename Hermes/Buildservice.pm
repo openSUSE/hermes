@@ -79,7 +79,8 @@ sub expandFromMsgType( $$ )
 
   if( -r "$filename" ) {
     my $tmpl = HTML::Template->new(filename => "$filename",
-				   die_on_bad_params => 0 );
+				   die_on_bad_params => 0,
+				   cache => 1 );
     # Fill the template
     $tmpl->param( $paramHash );
     $text = $tmpl->output;
@@ -203,6 +204,7 @@ sub applyFilter( $$)
       my $searchStr = $paramHash->{ $filterRef->{param} };
       $searchStr =~ s/^\s*//; # wipe whitespaces
       $searchStr =~ s/\s*$//;
+      $searchStr = quotemeta( $searchStr );
 
       my $str = $filterRef->{string};
       log( 'info', "Filtering oneof <$searchStr> in <$str>?" );
@@ -223,6 +225,7 @@ sub applyFilter( $$)
       my $searchStr = $paramHash->{ $filterRef->{param} };
       $searchStr =~ s/^\s*//; # wipe whitespaces
       $searchStr =~ s/\s*$//;
+      $searchStr = quotemeta( $searchStr );
 
       my $regexp = $filterRef->{string};
 
