@@ -59,8 +59,12 @@ def edit_subscr
 
   if request.post?
     if @subscr.update_attributes params[:subscr]
-      
-#    filter_attr = {:subscription_id => @subscr.id, :parameter_id => 
+      @subscr.filters.each { |filt| 
+        filt.destroy
+      }
+      0.upto(params[:filter_count].to_i-1) { |counter|
+	    @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, :parameter_id => params["param_id_#{counter}"], :operator => params["operator_id_#{counter}"], :filterstring => params["filter_value_#{counter}"] )
+	  }
       redirect_to_index()
     else
       redirect_to_index(@subscr.errors.full_messages())
