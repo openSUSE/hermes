@@ -194,6 +194,45 @@ sub applyFilter( $$)
       } else {
 	log( 'info', "User <$user> is in the maintainer group for <$prjStr>" );
       }
+    } elsif( $filterRef->{string} eq "_mypackages" ) {
+      # user must be involved in the package.
+      my $user = $paramHash->{_userId};
+      my $pkg = $paramHash->{package};
+      my $pkgStr = $pkg || 'unknown';
+
+      log( 'info', "Checking for user <$user> involved in pkg <$pkgStr>" );
+      my $userHashRef = usersOfPackage( $pkg );
+      if( ! $userHashRef->{$user} ) {
+	log( 'info', "User <$user> is NOT in the maintainer group for <$pkgStr>" );
+	$res = 0;
+      } else {
+	log( 'info', "User <$user> is in the maintainer group for <$pkgStr>" );
+      }
+    } elsif( $filterRef->{string} eq "_myrequests" ) {
+      # user is maintainer of source or target project
+      my $user = $paramHash->{_userId};
+      my $sPrj = $paramHash->{sourceproject};
+      my $tPrj = $paramHash->{targetproject};
+
+      if( $sPrj and $tPrj ) {
+        log( 'info', "Checking if <$user> is interested in request <$paramHash->{id}> " +
+                     "with source project <$sPrj>, target project <$tPrj>");
+        # check source project
+        my $sPrjUsers = usersOfProject( $sPrj );
+        if( ! $sPrjUsers->{$user} ) {
+	  log( 'info', "User <$user> is NOT in the maintainer group for <$sPrj>" );
+          # check target project only if source check failed
+          my $tPrjUsers = usersOfProject( $tPrj );
+          if( ! $tPrjUsers->{$user} ) {
+	    log( 'info', "User <$user> is NOT in the maintainer group for <$tPrj>" );
+            $res = 0;
+          } else {
+	    log( 'info', "User <$user> is in the maintainer group for <$tPrj>" );
+          }
+        } else {
+	  log( 'info', "User <$user> is in the maintainer group for <$sPrj>" );
+        }
+      }
     } else {
       log( 'error', "Unknown special filter type " . $filterRef->{string} );
     }
@@ -264,6 +303,22 @@ sub usersOfProject( $ )
   return $userHashRef;
 }
 
+sub usersOfPackage( $$ )
+{
+  my ($project, $package) = @_;
+  my $userHashRef;
+
+  if($project and $package) {
+    my $meta = callOBSAPI( 'pkgMetaRef', $project, $package );
+    $userHashRef = extractUserFromMeta( $meta );
+    log( 'info', "These users are in package <$project/$package>: " . join( ', ', keys %{$userHashRef} ) );
+  } else {
+    log( 'warning', "Problem: usersOfPackage was called with project <$project>, package <$package>" );
+  }
+
+  return $userHashRef;
+}
+
 #
 # calls the OBS API, uses credentials aus conf/hermes.conf
 # returns the result as plain text or undef, if an error happened
@@ -287,13 +342,16 @@ sub callOBSAPI( $$;$ )
   my $uri;
 
   if( $function eq 'prjMetaRef' ) {
-    $uri = $OBSAPIUrl . "source/$project/_meta";
+    $uri = $OBSAPIUrl . "public/source/$project/_meta";
+  } elsif( $function eq 'pkgMetaRef' ) {
+    $uri = $OBSAPIUrl . "public/source/$project/$package/_meta";
   }
+
   log( 'info', "Asking $uri with GET" );
   my $req = HTTP::Request->new( GET => $uri );
   $req->header( 'Accept' => 'text/xml' );
-  $req->authorization_basic( $Hermes::Config::OBSAPIUser,
-			     $Hermes::Config::OBSAPIPasswd );
+  #$req->authorization_basic( $Hermes::Config::OBSAPIUser,
+  #			      $Hermes::Config::OBSAPIPasswd );
 
   my $res = $ua->request( $req );
 
