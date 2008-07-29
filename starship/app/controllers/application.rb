@@ -55,6 +55,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def redirect_to_index
+    redirect_to :controller => :config, :action => :index
+  end
+
   def current_user
     session[:user]
   end
