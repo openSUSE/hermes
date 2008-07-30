@@ -30,15 +30,13 @@
     </tr>
 
     <% @filters.each_with_index  { |filt,i| %>
-    <%# fields_for :filter, filt do  |fi| %>
   <tr>
     <td>Parameter</td>
     <td><%= select_tag("param_id_#{i}",options_from_collection_for_select(@avail_params,'id','name',filt.parameter_id) ) %></td>
-    <td><%= select_tag("operator_id_#{i}",options_for_select($OPERATORS, filt.operator) ) %></td>
-    <td><%= text_field_tag "filter_value_#{i}", filt.filterstring%></td>
-	<%= hidden_field_tag 'filter_count',@filters.size %>
+    <td><%= select_tag("operator_id_#{i}",options_for_select($OPERATORS, filt.operator ) ) %></td>
+    <td><%= text_field_tag "filter_value_#{i}", filt.filterstring %></td>
+    <td><%= hidden_field_tag 'filter_count',@filters.size %></td>
   </tr>
-    <%# end %>
     <% } %>
 </table>
 <tr><td><%= submit_tag %></td></tr>

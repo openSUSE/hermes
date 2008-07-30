@@ -1,7 +1,6 @@
 class ConfigController < ApplicationController
 
 
-
 def index
   @person = session[:user]
   @person.name ||= "unknown"
@@ -82,6 +81,22 @@ end
 def get_type_params
   param_list = MsgType.find(params[:msg_type]).parameters
   render :partial => 'filter', :locals => {:param_list => param_list}
+end
+
+
+def disable
+  @curr_sub_index = params[:id]
+  @curr_sub = Subscription.find(params[:subs])
+
+  if @curr_sub.enabled
+    @curr_sub.enabled = false
+    flash[:notice] = "Subscription for #{ @curr_sub.msg_type.msgtype } disabled"
+  else 
+    @curr_sub.enabled = true
+    flash[:notice] = "Subscription for #{ @curr_sub.msg_type.msgtype } enabled"
+  end
+  @curr_sub.save
+
 end
 
 end

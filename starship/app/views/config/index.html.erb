@@ -4,7 +4,7 @@
 <table>
 <tr>
 <td><h3>Subscribed Messagtypes</h3></td>
-<td><h3>Latest subscribed Messages</h3></td>
+<!-- <td><h3>Latest subscribed Messages</h3></td> -->
 </tr>
 <tr><td valign=top>
 <table class="defaultTable">
@@ -13,20 +13,22 @@
 <th>Delay </th>
 <th>Delivery</th>
 <th></th>
+<th></th>
 </tr>
-<% for subs in @subscribedMsgs %>
-<tr>
-  <td><%= link_to subs.msg_type.msgtype, :action => 'edit_subscr', :id => subs %></td>
+<% @subscribedMsgs.each_with_index  { |subs,i| %>
+<tr id="filter_<%=i%>" >
+  <td id="edit_link_<%=i%>"><%= link_to subs.msg_type.msgtype, :action => 'edit_subscr', :id => subs %></td>
   <td><%= subs.delay.name %></td>
   <td><%= subs.delivery ? subs.delivery.name : '' %></td>
   <td><%= link_to image_tag("delete.png"), :action => 'del_subscr', :id => subs %></td>
+  <td><%= link_to_remote "Disable",  :url => { :action => 'disable', :id => i, :subs => subs }  %></td>
 </tr>
-<% end %>
+<% } %>
 </table>
 
 
 
-
+<!--
 </td>
 <td valign=top>
 <table class="defaultTable">
@@ -36,20 +38,22 @@
 <th>Date</th>
 <th>Type</th>
 </tr>
-<% for msg in @latestMsgs %>
+<%# for msg in @latestMsgs %>
   <tr>
-    <td><%= link_to msg.sender, msg %></td>
-    <td><%= msg.subject %></td>
-    <td><%= h(msg.created) %></td>
-    <td><%= msg.msg_type.msgtype %></td>
+    <td><%# link_to msg.sender, msg %></td>
+    <td><%# msg.subject %></td>
+    <td><%# h(msg.created) %></td>
+    <td><%# msg.msg_type.msgtype %></td>
   </tr>
-<% end %>
+<%# end %>
 
 </table>
 </td>
 </tr>
-</table>
+-->
 
+
+</table>
 
 <%= link_to_function "New Subscription", "$('new_subscr').toggle()" %>
 

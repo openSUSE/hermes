@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 13) do
+ActiveRecord::Schema.define(:version => 15) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -38,11 +38,10 @@ ActiveRecord::Schema.define(:version => 13) do
 
   create_table "messages_people", :force => true do |t|
     t.integer  "message_id"
-    t.integer  "person_id",                                  :null => false
-    t.string   "header",     :limit => 16, :default => "to", :null => false
-    t.integer  "delay",      :limit => 4,  :default => 0
-    t.datetime "sent",                                       :null => false
-    t.text     "comment"
+    t.integer  "person_id",                                 :null => false
+    t.string   "header",                  :default => "to", :null => false
+    t.integer  "delay",      :limit => 4, :default => 0
+    t.datetime "sent",                                      :null => false
   end
 
   add_index "messages_people", ["message_id", "person_id", "header"], :name => "msg_id"
@@ -64,12 +63,13 @@ ActiveRecord::Schema.define(:version => 13) do
   add_index "msg_types_parameters", ["msg_type_id", "parameter_id"], :name => "msg_type_parameter_id", :unique => true
 
   create_table "msg_types_people", :force => true do |t|
-    t.integer "msg_type_id", :null => false
-    t.integer "person_id",   :null => false
+    t.integer "msg_type_id",                   :null => false
+    t.integer "person_id",                     :null => false
     t.integer "delay_id"
     t.integer "delivery_id"
     t.text    "comment"
     t.boolean "private"
+    t.boolean "enabled",     :default => true
   end
 
   add_index "msg_types_people", ["person_id", "msg_type_id"], :name => "person_id"
@@ -97,7 +97,6 @@ ActiveRecord::Schema.define(:version => 13) do
   create_table "persons", :force => true do |t|
     t.string "email"
     t.string "name"
-    t.string "jid"
     t.string "stringid"
   end
 
