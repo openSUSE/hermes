@@ -1,8 +1,3 @@
 page.visual_effect :highlight, "filter_#{@curr_sub_index}"
-
-#age.replace_html "edit_link_#{@curr_sub_index}", '<a>ENABLE</a>'
-
-#:partial => 'disabled_links', :object => @curr_sub
-
-#"#{@curr_sub.msg_type.msgtype}"
+page.replace_html "disable_link_#{@curr_sub_index}", @status
 

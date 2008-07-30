@@ -12,18 +12,18 @@
 <th>Message Type</th>
 <th>Delay </th>
 <th>Delivery</th>
-<th></th>
+<th>Status</th>
 <th></th>
 </tr>
 <% @subscribedMsgs.each_with_index  { |subs,i| %>
-<tr id="filter_<%=i%>" >
-  <td id="edit_link_<%=i%>"><%= link_to subs.msg_type.msgtype, :action => 'edit_subscr', :id => subs %></td>
-  <td><%= subs.delay.name %></td>
-  <td><%= subs.delivery ? subs.delivery.name : '' %></td>
-  <td><%= link_to image_tag("delete.png"), :action => 'del_subscr', :id => subs %></td>
-  <td><%= link_to_remote "Disable",  :url => { :action => 'disable', :id => i, :subs => subs }  %></td>
-</tr>
-<% } %>
+  <tr id="filter_<%=i%>" >
+    <td id="edit_link_<%=i%>"><%= link_to subs.msg_type.msgtype, :action => 'edit_subscr', :id => subs %></td>
+    <td><%= subs.delay.name %></td>
+    <td><%= subs.delivery ? subs.delivery.name : '' %></td>
+    <td><%= link_to_remote subs.enabled ? "Enabled" : "Disabled", { :url => { :action => 'disable', :id => i, :subs => subs }}, { :id => "disable_link_#{i}" }  %></td>
+    <td><%= link_to image_tag("delete.png"), :action => 'del_subscr', :id => subs %></td>
+  </tr>
+  <% } %>
 </table>
 
 

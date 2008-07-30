@@ -87,13 +87,13 @@ end
 def disable
   @curr_sub_index = params[:id]
   @curr_sub = Subscription.find(params[:subs])
-
+  @status
   if @curr_sub.enabled
     @curr_sub.enabled = false
-    flash[:notice] = "Subscription for #{ @curr_sub.msg_type.msgtype } disabled"
+    @status = "Disabled"
   else 
     @curr_sub.enabled = true
-    flash[:notice] = "Subscription for #{ @curr_sub.msg_type.msgtype } enabled"
+    @status = "Enabled"
   end
   @curr_sub.save
 
