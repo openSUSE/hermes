@@ -15,6 +15,7 @@
 <th>Status</th>
 <th></th>
 </tr>
+
 <% @subscribedMsgs.each_with_index  { |subs,i| %>
   <tr id="filter_<%=i%>" >
     <td id="edit_link_<%=i%>"><%= link_to subs.msg_type.msgtype, :action => 'edit_subscr', :id => subs %></td>
@@ -25,7 +26,6 @@
   </tr>
   <% } %>
 </table>
-
 
 
 <!--

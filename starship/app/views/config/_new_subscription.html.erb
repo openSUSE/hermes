@@ -1,42 +1,20 @@
 <script type="text/javascript">
 
-// adds a new filter selector to the list
-// new filters are cloned from the first one in the list
-function add_filter() {
+function get_valid_params() {
   msg_type = $('subscr_msg_type_id').value;
-  filter_table = $('filter_table');
   forgery_string = '<%=request_forgery_protection_token%>=<%=form_authenticity_token%>';
-  if(filter_table.style.display == "none") {
-    new Ajax.Request('/config/get_type_params', {
-      parameters: forgery_string+'&msg_type='+msg_type,
-      onSuccess: function(response) {
-        update_filter_params(response.responseText);
-        filter_table.show();
-        recalc_filter_ids();
-      }
-    });
-  } else {
-    filter_dom = filter_table.childElements()[0].cloneNode(true);
-    filter_table.insert(filter_dom);
-    recalc_filter_ids();
-  }
-}
-
-// removes filter and updates filter ids
-// last filter gets hidden to ensure there's always a filter to
-// clone for add_filter()
-function remove_filter(element) {
-  if(filter_count() == 1) {
-    $('filter_table').hide();
-  } else {
-    element.parentNode.parentNode.remove();
-  }
-  recalc_filter_ids();
+  new Ajax.Request('/config/get_type_params', {
+    parameters: forgery_string+'&msg_type='+msg_type,
+    onSuccess: function(response) {
+      update_filter_params(response.responseText);
+      recalc_filter_ids();
+    }
+  });
 }
 
 // updates all parameter select boxes with the passed html
 function update_filter_params(html) {
-  $('filter_table').adjacent('select').each(function(item) {
+  $('filter_table').adjacent('select.param_select').each(function(item) {
     if(item.name.match("param")) {
       item.replace(html);
     }
@@ -44,29 +22,7 @@ function update_filter_params(html) {
   recalc_filter_ids();
 }
 
-// updates all filter ids to be in the range [0..filter_count()[
-function recalc_filter_ids() {
-  fc = $('filter_count').value = filter_count();
-  for(var i=0; i<fc; i++) {
-//    filter = $('filter_table').childElements()[i];
-    filter = $('filter_table').childElements()[i].childElements()[0];
-    filter.adjacent('select.param_select')[0].name = 'param_id_'+i;
-    filter.adjacent('select.param_select')[0].id = 'param_id_'+i;
-    filter.adjacent('select.filter_select')[0].name = 'filter_operator_'+i;
-    filter.adjacent('select.filter_select')[0].id = 'filter_operator_'+i;
-    filter.adjacent('input.filter_value_input')[0].name = 'filter_value_'+i;
-    filter.adjacent('input.filter_value_input')[0].id = 'filter_value_'+i;
 
-  }
-}
-
-function filter_count() {
-  if($('filter_table').style.display == "none") {
-    return 0;
-  } else {
-    return $('filter_table').childElements().length;
-  }
-}
 </script>
 
 <% form_for :subscr, :url => { :action => :add_subscr } do |f| %>
@@ -82,26 +38,19 @@ function filter_count() {
     <td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
     <td><%= collection_select('subscr','delivery_id', @avail_deliveries, 'id','name') %></td>
 
-    <%= #link_to_function "Add Filter", update_page { |page| page.insert_html(:before, 'submit', :partial => 'new_filter', :locals => { :params => @avail_params } )} 
-    %>
-
-    <td><%= link_to_function "Add Filter", "add_filter()" %></td>
-
+    <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
+                          page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => [], :selected_param => nil, :selected_oper => nil, :value => nil } ) 
+                          page << "get_valid_params();"
+                        end %></td>
     </tr>
   </table>
+  <hr/>
   <table class="defaultTable">
-    <tbody id="filter_table" style="display:none">
-      <tr>
-        <td><b>Filter: </b></td>
-        <td><%= render :partial => 'filter', :locals => {:param_list => []} %></td>
-        <td><%= select_tag 'filter_operator', options_for_select($OPERATORS), {:class => 'filter_select'} %><td>
-        <td><b>Value: </b></td>
-        <td><%= text_field_tag "filter_value", nil, :class => 'filter_value_input' %></td>
-        <td><%= link_to_function "Remove", "remove_filter(this)" %></td>
-      </tr>
+    <tbody id="filter_table" style="">
+      <tr id='counter'><td><%= hidden_field_tag 'filter_count', 0 %><td></tr>
+      <tr><td><%= submit_tag %></td></tr>
     </tbody>
   </table>
-  <%= hidden_field_tag 'filter_count', 0 %>
-  <div id='submit'><%= submit_tag %></div>
+
 <% end %>
 

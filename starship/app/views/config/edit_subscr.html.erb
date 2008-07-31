@@ -1,7 +1,7 @@
 <h1>Change Subscription for <%= MsgType.find(@subscr.msg_type_id).msgtype %></h1>
 
-<table class="defaultTable">
 <% form_for :subscr, :url => { :action => :edit_subscr } do |f| %>
+<table class="defaultTable">
   <tr>
     <td><strong>Delay: </strong></td>
     <td><%= collection_select('subscr', 'delay_id', @availDelay, 'id','name') %></td>
@@ -15,33 +15,39 @@
   <tr>
     <td valign=top><strong> <%= link_to_function "Comment", "$('comment_box').toggle()" %></strong></td>
 
-    <%# link_to_function "Comment", "$('comment_box').toggle()" %>
     <td> <div id="comment_box" style="display: none;"><%= text_area('subscr','comment', :size => "50x5") %></div></td>
   </tr>
 
 </table>
-
-
+<hr/>
 <table>
-    <tr><td><b>Filter: </b></td>
+  <tbody id="filter_table" style="">
+      <tr>
+      <td><b>Filter: </b></td>
       <td></td>
       <td></td>
       <td></td>
-    </tr>
+      <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
+                          page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } ) 
+                          page << "recalc_filter_ids();"
+                        end %></td>
 
-    <% @filters.each_with_index  { |filt,i| %>
-  <tr>
-    <td>Parameter</td>
-    <td><%= select_tag("param_id_#{i}",options_from_collection_for_select(@avail_params,'id','name',filt.parameter_id) ) %></td>
-    <td><%= select_tag("operator_id_#{i}",options_for_select($OPERATORS, filt.operator ) ) %></td>
-    <td><%= text_field_tag "filter_value_#{i}", filt.filterstring %></td>
-    <td><%= hidden_field_tag 'filter_count',@filters.size %></td>
-  </tr>
-    <% } %>
+      </tr>
+      <% @filters.each_with_index  { |filt,i| %>
+        <%= render :partial => 'filter', :locals => {:parameter_list => @avail_params, :selected_param => filt.parameter_id, :selected_oper => filt.operator, :value => filt.filterstring} %>
+      <% } %>
+
+    <tr id='counter'><td><%= hidden_field_tag 'filter_count',@filters.size %></td></tr>
+
+    <script type="text/javascript">
+      recalc_filter_ids();
+    </script>
+
+    <tr><td><%= submit_tag %></td></tr>
+  </tbody>
 </table>
-<tr><td><%= submit_tag %></td></tr>
+
+
 <% end %>
-
-
 
 

@@ -62,7 +62,7 @@ def edit_subscr
         filt.destroy
       }
       0.upto(params[:filter_count].to_i-1) { |counter|
-	    @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, :parameter_id => params["param_id_#{counter}"], :operator => params["operator_id_#{counter}"], :filterstring => params["filter_value_#{counter}"] )
+	    @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => params["filter_value_#{counter}"] )
 	  }
       redirect_to_index()
     else
@@ -80,7 +80,7 @@ end
 
 def get_type_params
   param_list = MsgType.find(params[:msg_type]).parameters
-  render :partial => 'filter', :locals => {:param_list => param_list}
+  render :partial => 'filter_param', :locals => {:param_list => param_list}
 end
 
 
