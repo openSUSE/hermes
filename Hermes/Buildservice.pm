@@ -40,7 +40,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( expandFromMsgType );
 
-our $hermesUserInfoRef;
+our($hermesUserInfoRef, $cachedProject, $cachedPackage);
 
 #
 # expand the message, that means
@@ -114,7 +114,8 @@ sub expandFromMsgType( $$ )
   $query->execute( $type );
   my $userListRef = undef;
 
-  #
+  invalidateCache();
+
   while( my ($subscriptId, $personId, $personString) = $query->fetchrow_array()) {
     # do that only if not private or if the project param is there 
     # and the personId is user in the project.
@@ -174,7 +175,7 @@ sub getFilters( $ )
   return @re;
 }
 
-sub applyFilter( $$) 
+sub applyFilter( $$ ) 
 {
   my( $paramHash, $filterRef ) = @_;
   my $res = 1;
@@ -215,7 +216,7 @@ sub applyFilter( $$)
       my $tPrj = $paramHash->{targetproject};
 
       if( $sPrj and $tPrj ) {
-        log( 'info', "Checking if <$user> is interested in request <$paramHash->{id}> " +
+        log( 'info', "Checking if <$user> is interested in request <$paramHash->{id}> ".
                      "with source project <$sPrj>, target project <$tPrj>");
         # check source project
         my $sPrjUsers = usersOfProject( $sPrj );
@@ -287,12 +288,17 @@ sub applyFilter( $$)
 sub usersOfProject( $ )
 {
   my ($project) = @_;
+  if( defined $cachedProject->{$project} ) {
+    log( 'info', "Using userdata for $project from cache" );
+    return $cachedProject->{$project}; 
+  }
 
   my $userHashRef;
 
   if( $project ) {
     my $meta = callOBSAPI( 'prjMetaRef', $project );
     $userHashRef = extractUserFromMeta( $meta );
+    $cachedProject->{$project} = $userHashRef;
     log( 'info', "These users are in project <$project>: " . join( ', ', keys %{$userHashRef} ) );
   } else {
     # unfortunately no project param, but privacy is requested.
@@ -306,17 +312,29 @@ sub usersOfProject( $ )
 sub usersOfPackage( $$ )
 {
   my ($project, $package) = @_;
+  if( defined $cachedPackage->{"$project/$package"} ) {
+    log( 'info', "Using userdata for package $project/$package from cache" );
+    return $cachedPackage->{"$project/$package"}; 
+  }
+
   my $userHashRef;
 
   if($project and $package) {
     my $meta = callOBSAPI( 'pkgMetaRef', $project, $package );
     $userHashRef = extractUserFromMeta( $meta );
+    $cachedPackage->{"$project/$package"} = $userHashRef;
     log( 'info', "These users are in package <$project/$package>: " . join( ', ', keys %{$userHashRef} ) );
   } else {
     log( 'warning', "Problem: usersOfPackage was called with project <$project>, package <$package>" );
   }
 
   return $userHashRef;
+}
+
+sub invalidateCache()
+{
+    $cachedPackage = {};
+    $cachedProject = {};
 }
 
 #
