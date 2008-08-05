@@ -1,6 +1,7 @@
 <tr>
   <td><%= render :partial => 'filter_param', :locals => {:param_list => parameter_list, :selected => selected_param } %></td>
   <td><%= select_tag 'filter_operator', options_for_select($OPERATORS,selected_oper), {:class => 'filter_select'} %></td>
+
   <td><b>Value: </b></td>
   <td><%= text_field_tag "filter_value", value, :class => 'filter_value_input' %></td>
   <td><%= link_to_function "Remove", "remove_filter(this)" %></td>
