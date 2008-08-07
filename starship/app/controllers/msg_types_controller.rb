@@ -27,10 +27,13 @@ class MsgTypesController < ApplicationController
   def show
 
     @message_view = true
-    @showtypes = MsgType.find :all #, { :include => :messages }
+    @showtypes = MsgType.find :all
 
-    @showtype = MsgType.find( :first, :include => :messages,
-      :conditions => ["msg_types.id = ?", params[:id]])
+#    @showtype = MsgType.find( :first, :include => :messages,
+#      :conditions => ["msg_types.id = ?", params[:id]])
+
+    @msgs_to_show = Message.paginate(:page => params[:page], :per_page => 10, :conditions => ["msg_type_id =?", params[:id]])
+    @msgtype = MsgType.find(params[:id])
 
     if params[:menu] == "expanded"
       @menu_expand = true

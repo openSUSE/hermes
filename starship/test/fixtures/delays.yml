@@ -1,7 +1,21 @@
 # Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
 
-# one:
-#   column: value
-#
-# two:
-#   column: value
+no_delay:
+        id: 1
+        name: 'NO_DELAY'
+per_minute:
+          id: 2
+          name: 'PER_MINUTE'
+per_hour:
+          id: 3
+          name: 'PER_HOUR'
+per_day:
+          id: 4
+          name: 'PER_DAY'
+per_week:
+          id: 5
+          name: 'PER_WEEK'
+per_month:
+          id: 6
+          name: 'PER_MONTH'
+
