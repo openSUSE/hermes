@@ -7,8 +7,10 @@ function get_valid_params() {
     parameters: forgery_string+'&msg_type='+msg_type,
     onSuccess: function(response) {
       update_filter_params(response.responseText);
-      recalc_filter_ids();
+
+//      recalc_filter_ids();
       set_special_operator_observer();
+
 
     }
   });

@@ -81,23 +81,28 @@ function special_operator_checks(element) {
 //  if( old_oper_value != 'special' &&  operator_elem.value == 'special') {
     if(param_elem.options[param_elem.selectedIndex].text == 'package') {
       if (old_oper_value != 'special')
-        old_value_hash.set(operator_element, $('filter_value_' + id).value);
+        old_value_hash.set(operator_elem.id, $('filter_value_' + id).value);
       filter_elem.value =  '_mypackages';
       filter_elem.readOnly = true;
     } else if(param_elem.options[param_elem.selectedIndex].text == 'project') {
       if (old_oper_value != 'special')
-        old_value_hash.set(operator_element, $('filter_value_' + id).value);
+        old_value_hash.set(operator_elem.id, $('filter_value_' + id).value);
       filter_elem.value =  '_myprojects';
       filter_elem.readOnly = true;
-    } 
+    } else {
+      filter_elem.value =  old_value_hash.get(operator_elem.id);
+      filter_elem.readOnly = false;
+    }
 
   } else if(old_oper_value == 'special' && operator_elem.value != 'special' ){ 
-      if (old_value_hash.get(operator_elem.id) != '')
+      if (old_value_hash.get(operator_elem.id) != '') {
         filter_elem.value =  old_value_hash.get(operator_elem.id);
-      else
+        filter_elem.readOnly = false;
+      } else {
         filter_elem.value = '';
-      filter_elem.readOnly = false;
-  }
+        filter_elem.readOnly = false;
+	  }
+  } 
   old_operator_hash.set(operator_elem.id,operator_elem.value);
 }
 
