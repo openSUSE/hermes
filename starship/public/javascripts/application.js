@@ -1,6 +1,7 @@
 // Place your application-specific JavaScript functions and classes here
 // This file is automatically included by javascript_include_tag :defaults
 
+//to save and restore filter values
 var old_operator_hash = new Hash();
 var old_value_hash = new Hash();
 
@@ -44,7 +45,6 @@ function set_special_operator_observer() {
 
   current_id = filter_count() - 1;
   operator_element = "filter_operator_" + current_id;
-  param_sel = "param_id_" + current_id;
 
   old_operator_hash.set(operator_element,$(operator_element).value);
   

@@ -1,4 +1,4 @@
-<h1>Change Subscription for <%= MsgType.find(@subscr.msg_type_id).msgtype %></h1>
+<h1>Change Subscription for: <%= MsgType.find(@subscr.msg_type_id).msgtype %></h1>
 
 <% form_for :subscr, :url => { :action => :edit_subscr } do |f| %>
 <table class="defaultTable">
@@ -30,6 +30,7 @@
       <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
                           page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } ) 
                           page << "recalc_filter_ids();"
+                          page << "set_special_operator_observer();"
                         end %></td>
 
       </tr>
@@ -41,6 +42,7 @@
 
     <script type="text/javascript">
       recalc_filter_ids();
+      set_special_operator_observer();
     </script>
 
     <tr><td><%= submit_tag %></td></tr>
