@@ -18,11 +18,11 @@
 
 <% @subscribedMsgs.each_with_index  { |subs,i| %>
   <tr id="filter_<%=i%>" >
-    <td id="edit_link_<%=i%>"><%= link_to subs.msg_type.msgtype, :action => 'edit_subscr', :id => subs %></td>
+    <td id="edit_link_<%=i%>"><%= link_to subs.msg_type.msgtype, edit_subscription_path(subs) %></td>
     <td><%= subs.delay.name %></td>
     <td><%= subs.delivery ? subs.delivery.name : '' %></td>
     <td><%= link_to_remote subs.enabled ? "Enabled" : "Disabled", { :url => { :action => 'disable', :id => i, :subs => subs }}, { :id => "disable_link_#{i}" }  %></td>
-    <td><%= link_to image_tag("delete.png"), :action => 'del_subscr', :id => subs %></td>
+    <td><%= link_to image_tag("delete.png"), subscription_path(subs), :method => :delete %></td>
   </tr>
   <% } %>
 </table>

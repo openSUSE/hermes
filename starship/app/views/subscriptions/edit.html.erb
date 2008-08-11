@@ -1,6 +1,6 @@
 <h1>Change Subscription for: <%= MsgType.find(@subscr.msg_type_id).msgtype %></h1>
 
-<% form_for :subscr, :url => { :action => :edit_subscr } do |f| %>
+<% form_for @subscr do |f| %>
 <table class="defaultTable">
   <tr>
     <td><strong>Delay: </strong></td>

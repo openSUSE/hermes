@@ -1,7 +1,7 @@
 ActionController::Routing::Routes.draw do |map|
  map.resources :messages
  map.resources :msg_types
-# map.resources :config
+ map.resources :subscriptions
 
   # The priority is based upon order of creation: first created -> highest priority.
 

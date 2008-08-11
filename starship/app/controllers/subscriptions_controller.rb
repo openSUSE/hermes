@@ -1,4 +1,4 @@
-class ConfigController < ApplicationController
+class SubscriptionsController < ApplicationController
 
 
 def index
@@ -13,7 +13,7 @@ def index
   @avail_delays = Delay.find(:all)
 end
 
-def add_subscr
+def create
   if request.post?
     sub_param = params[:subscr]
     sub_param[:person_id] = session[:user].id
@@ -41,7 +41,7 @@ def redirect_to_index(msg = nil)
   redirect_to :action => :index
 end
 
-def del_subscr
+def destroy
   curr_subscr = session[:user].subscriptions.find(:first, :conditions => {:id => params[:id]})
 
   if curr_subscr
@@ -52,11 +52,19 @@ def del_subscr
   end
 end
 
-def edit_subscr
+def edit
   @subscr = Subscription.find(params[:id])
   @filters = @subscr.filters
 
-  if request.post?
+  @msgs_for_type = @subscr.messages.find(:all, :include => :msg_type)
+  @availDelay = Delay.find(:all)
+  @availDeliveries = Delivery.find(:all)
+  @avail_params = @subscr.msg_type.parameters
+end
+
+def update
+  if request.put?
+    @subscr = Subscription.find(params[:id])
     if @subscr.update_attributes params[:subscr]
       @subscr.filters.each { |filt| 
         filt.destroy
@@ -69,12 +77,6 @@ def edit_subscr
       redirect_to_index(@subscr.errors.full_messages())
       @subscr.errors.clear()
     end
-
-  else
-    @msgs_for_type = @subscr.messages.find(:all, :include => :msg_type)
-    @availDelay = Delay.find(:all)
-    @availDeliveries = Delivery.find(:all)
-    @avail_params = @subscr.msg_type.parameters
   end
 end
 
