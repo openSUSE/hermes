@@ -56,7 +56,7 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_to_index
-    redirect_to :controller => :config, :action => :index
+    redirect_to :controller => :subscriptions
   end
 
   def current_user
