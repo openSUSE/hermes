@@ -42,13 +42,15 @@ def redirect_to_index(msg = nil)
 end
 
 def destroy
-  curr_subscr = session[:user].subscriptions.find(:first, :conditions => {:id => params[:id]})
+  if request.delete?
+    curr_subscr = session[:user].subscriptions.find(:first, :conditions => {:id => params[:id]})
 
-  if curr_subscr
-    curr_subscr.destroy
-    redirect_to_index "Subscription for #{curr_subscr.msg_type.msgtype} deleted"
-  else
-    redirect_to_index "Only your own subscriptions can be deleted."
+    if curr_subscr
+      curr_subscr.destroy
+      redirect_to_index "Subscription for #{curr_subscr.msg_type.msgtype} deleted"
+    else
+      redirect_to_index "Only your own subscriptions can be deleted."
+    end
   end
 end
 

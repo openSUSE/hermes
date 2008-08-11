@@ -3,7 +3,7 @@
 function get_valid_params() {
   msg_type = $('subscr_msg_type_id').value;
   forgery_string = '<%=request_forgery_protection_token%>=<%=form_authenticity_token%>';
-  new Ajax.Request('/config/get_type_params', {
+  new Ajax.Request('/subscriptions/get_type_params', {
     parameters: forgery_string+'&msg_type='+msg_type,
     onSuccess: function(response) {
       update_filter_params(response.responseText);
