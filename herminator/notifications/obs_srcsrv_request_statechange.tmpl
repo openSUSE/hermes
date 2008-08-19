@@ -1,6 +1,13 @@
-@subject: <TMPL_VAR NAME="type">-Request <TMPL_VAR NAME="id"> Changed
+@subject: <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> state changed: <TMPL_VAR NAME="oldstate"> -> <TMPL_VAR NAME="state">
 
-<TMPL_VAR NAME="type">-Request was changed, new state: <TMPL_VAR NAME="state">
+State of <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> was changed by <TMPL_VAR NAME="who">:
+
+  <TMPL_VAR NAME="oldstate"> -> <TMPL_VAR NAME="state">
+
+Comment:
+
+  <TMPL_VAR NAME="comment">
+
 
 <TMPL_IF NAME="sourceproject">
 The source project is <TMPL_VAR NAME="sourceproject">.
@@ -9,3 +16,4 @@ The source package is <TMPL_VAR NAME="sourcepackage"> in rev. <TMPL_VAR NAME="so
 The target project is <TMPL_VAR NAME="targetproject">.
 The target package is <TMPL_VAR NAME="targetpackage">.
 </TMPL_IF>
+

@@ -1,11 +1,14 @@
-@subject: <TMPL_VAR NAME="type">-Request <TMPL_VAR NAME="id"> Created
+@subject: <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created (target: <TMPL_VAR NAME="targetproject">)
 
-There was a <TMPL_VAR NAME="type">-Request created, state: <TMPL_VAR NAME="state">
+<TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created by <TMPL_VAR NAME="who">:
 
 <TMPL_IF NAME="sourceproject">
-The source project is <TMPL_VAR NAME="sourceproject">.
-The source package is <TMPL_VAR NAME="sourcepackage"> in rev. <TMPL_VAR NAME="sourcerevision">.
+Source 
+  project:  <TMPL_VAR NAME="sourceproject">
+  package:  <TMPL_VAR NAME="sourcepackage">
+<TMPL_IF NAME="sourcerevision">  revision: <TMPL_VAR NAME="sourcerevision"></TMPL_IF>
 
-The target project is <TMPL_VAR NAME="targetproject">.
-The target package is <TMPL_VAR NAME="targetpackage">.
+Target:
+  project: <TMPL_VAR NAME="targetproject">.
+  package: <TMPL_VAR NAME="targetpackage">.
 </TMPL_IF>
