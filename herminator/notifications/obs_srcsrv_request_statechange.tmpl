@@ -8,12 +8,13 @@ Comment:
 
   <TMPL_VAR NAME="comment">
 
-
 <TMPL_IF NAME="sourceproject">
-The source project is <TMPL_VAR NAME="sourceproject">.
-The source package is <TMPL_VAR NAME="sourcepackage"> in rev. <TMPL_VAR NAME="sourcerevision">.
+Source 
+  project:  <TMPL_VAR NAME="sourceproject">
+  package:  <TMPL_VAR NAME="sourcepackage">
+<TMPL_IF NAME="sourcerevision">  revision: <TMPL_VAR NAME="sourcerevision"></TMPL_IF>
 
-The target project is <TMPL_VAR NAME="targetproject">.
-The target package is <TMPL_VAR NAME="targetpackage">.
+Target:
+  project: <TMPL_VAR NAME="targetproject">
+  package: <TMPL_VAR NAME="targetpackage">
 </TMPL_IF>
-

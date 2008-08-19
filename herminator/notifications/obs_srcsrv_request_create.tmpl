@@ -1,7 +1,6 @@
 @subject: <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created (target: <TMPL_VAR NAME="targetproject">)
 
-<TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created by <TMPL_VAR NAME="who">:
-
+<TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created by <TMPL_VAR NAME="who">
 <TMPL_IF NAME="sourceproject">
 Source 
   project:  <TMPL_VAR NAME="sourceproject">
@@ -9,6 +8,6 @@ Source
 <TMPL_IF NAME="sourcerevision">  revision: <TMPL_VAR NAME="sourcerevision"></TMPL_IF>
 
 Target:
-  project: <TMPL_VAR NAME="targetproject">.
-  package: <TMPL_VAR NAME="targetpackage">.
+  project: <TMPL_VAR NAME="targetproject">
+  package: <TMPL_VAR NAME="targetpackage">
 </TMPL_IF>
