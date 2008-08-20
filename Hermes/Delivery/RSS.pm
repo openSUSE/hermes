@@ -51,6 +51,11 @@ sub sendRSS( $ )
   push @receiver, @{$msgRef->{cc}} if( $msgRef->{cc} );
   push @receiver, @{$msgRef->{bcc}} if( $msgRef->{bcc} );
 
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+  $mon = $mon+1;
+  $year = 1900+$year;
+  my $tString = sprintf( "%4d-%02d-%02dT%02d:%02d+02:00", $year, $mon, $mday, $hour, $min );
+  log('debug', "Time string for RSS channel and items: " . $tString );
 
   foreach my $p ( @receiver ) {
     log( 'info', "RSS-Feed for person $p" );
@@ -76,9 +81,19 @@ sub sendRSS( $ )
     my $desc = "Personal Hermes RSS Feed";
     $desc .= " for $personInfoRef->{name}" if( $personInfoRef && $personInfoRef->{name} );
 
+
     $rss->channel( title        => "openSUSE Hermes",
 		   link         => $Hermes::Config::StarshipBaseUrl . "/messages/",
-		   description  => "Personal Hermes RSS Feed" );
+		   description  => "Personal Hermes RSS Feed",
+		   dc => {
+			  date       => $tString,
+			  subject    => "openSUSE Buildservice",
+			  creator    => 'hermes@openSUSE.org',
+			  publisher  => 'hermes@openSUSE.org',
+			  rights     => 'Copyright 2008, openSUSE Project',
+			  language   => 'en-us',
+			 }
+		 );
 
 
     if( -e $rdfPath ) {
@@ -89,7 +104,16 @@ sub sendRSS( $ )
 
       $rss->add_item( title => $msgRef->{subject},
 		      link => $Hermes::Config::StarshipBaseUrl . "/messages/" . $msgRef->{msgid} ,
-		      description => ($msgRef->{body} || '') );
+		      description => ($msgRef->{body} || ''),
+		      dc => {
+			     date       => $tString,
+			     subject    => $msgRef->{subject},
+			     creator    => 'hermes@openSUSE.org',
+			     publisher  => 'hermes@openSUSE.org',
+			     rights     => 'Copyright 2008, openSUSE Project',
+			     language   => 'en-us',
+			    }
+		    );
 
       $rss->save( $rdfFile );
     }
