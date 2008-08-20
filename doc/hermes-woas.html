@@ -5,11 +5,11 @@
 <script type="text/javascript">
 /* <![CDATA[ */
 
-/* DFQRCTsKlU-0000452-START */
+/* DFQRCTsKlU-0000453-START */
 
 var woas = {"version": "0.9.6B"};
 
-var __marker = "DFQRCTsKlU-0000452";
+var __marker = "DFQRCTsKlU-0000453";
 
 woas["config"] = {
 "permit_edits":true,
@@ -21,18 +21,18 @@ woas["config"] = {
 "cumulative_save":false,
 "auto_save":0};
 
-var current = 'History';
+var current = 'Subsystems';
 
 var main_page = 'Hermes Main Page';
 
 var backstack = [
-'Dependencies',
-'Setup',
-'Hermes Main Page',
-'Configuration',
 'History',
 'Motivation',
-'Subsystems'
+'Subsystems',
+'clients',
+'Setup',
+'Configuration',
+'Dependencies'
 ];
 
 var page_titles = [
@@ -92,7 +92,7 @@ var page_titles = [
 'Configuration'
 ];
 
-/* DFQRCTsKlU-0000452-DATA */
+/* DFQRCTsKlU-0000453-DATA */
 var page_attrs = [0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,4,0,0,0,0,0,0,0,4,0,4,0,0,0,2,0,0,0,0,0,0,0,0,0,0,12,0];
 
 var pages = [
@@ -143,7 +143,7 @@ var pages = [
 '= Oddmuse integration\n\nYou can easily integrate WoaS with [[http://www.oddmuse.org/|Oddmuse]] using [[http://www.jquery.com/|jQuery]].\n\n== Posting\nThe URL to post is in the form:\n\n{{{http://example.com/cgi-bin/wiki?text=posted%20text;title=HomePage}}}\n\n== Reading\nThe URL to retrieve the wiki source is:\n\n{{{http://example.com/cgi-bin/wiki/raw/HomePage}}}\n\n== Overriding\n\nIt is theorically possible to use Javascript:: namespace pages to automatize pages retrieval/save.',
 '[[Special::TOC]]\n\n== Sandbox\nHey ya\n\n== test\nasdf\n\n== test\nasdf\n\n= Sandbox\n\n\n=== test, first\nasdf\n\n=== test, second\nasdf',
 '= Unusual lists\n\n# first level A\n# first level B\n## second level A\n## second level B\n## second level C\n# first level C\n## second level D\n### third level A\n### third level B\n',
-'= Subsystems=\n\nThere are different subsystems making up the Hermes system. They\'re described briefly\nin this chapter.\n\n==Hermes Baselibs==\n\nThe Hermes Baselibs are a set of perl modules. They are used both by Herminator, The Worker and\npossibly by clients that want to send messages or notifications directly and not over http.\n\n==Herminator==\n\nHerminator is the Hermes server offering a http interface to notify or send messages. Herminator\nwas written in perl and uses the CGI::Application framework to implement the http server.\nApache is recommended as http server to power Herminator.\n\nNote that at the current stage Herminator *must not* be opened to the internet because that\nwould be a perfect spamming platform, because posting messages and notifications is not\nrestricted at the moment. Of course it could be secured by basic auth via apache.\n\nHerminator comes with a rudimentary admin interface that can inform about the latest posted\nmessages and, more important atm, gives information about the http interfaces.\n\n==The Database==\n\nTo store messages, subscriptions to messages, notification types etc. Hermes uses a database.\nBy now, only mysql is supported. The database must be accessible to Herminator and The Worker.\n\n==The Worker==\n\nThe Worker is the script that actually sends out messages. Herminator only receives orders\nto send messages or notify people but does not send it instantly. That is the job of The Worker.\n\nThe Worker goes through the database and assembles messages that need to be sent. Worker runs\nin a loop in a console and does not end. Since Worker does the real job of sending mails, creating\nRSS etc. the worker needs access to the database and needs an environment where it is possible\nto mail etc.\n\n==Starship==\n\nStarship is a Ruby on Rails web application. It\'s main purpose is to enable people to maintain\ntheir subscriptions to certain notifications. Starship also acts as a Hermes message reading\napplication.\n\nStarship is based on Rails 2.0. It also needs access to the database.\n\n',
+'= Subsystems=\n\nThere are different subsystems making up the Hermes system. They\'re described briefly\nin this chapter.\n\n==Hermes Baselibs==\n\nThe Hermes Baselibs are a set of perl modules. They are used both by Herminator, The Worker and\npossibly by clients that want to send messages or notifications directly and not over http.\n\n==Herminator==\n\nHerminator is the Hermes server offering a http interface to notify or send messages. Herminator\nwas written in perl and uses the CGI::Application framework to implement the http server.\nApache is recommended as http server to power Herminator.\n\nNote that at the current stage Herminator *must not* be opened to the internet because that\nwould be a perfect spamming platform, because posting messages and notifications is not\nrestricted at the moment. Of course it could be secured by basic auth via apache.\n\nHerminator comes with a rudimentary admin interface that can inform about the latest posted\nmessages and, more important atm, gives information about the http interfaces.\n\n==The Database==\n\nTo store messages, subscriptions to messages, notification types etc. Hermes uses a database.\nBy now, only mysql is supported. The database must be accessible to Herminator, Generator and \nThe Worker. These processes communicate through the database.\n\n==The Generator==\n\nThe Generator makes real messages out of incoming notifications. Since this process can take\nsome time due to actions to create neccessary data for the notification it was decoupled from\nthe worker and from herminator. That leads to a setup where herminator only stores notifications\nin a raw format into the database. That is only writing the notification type and the according\nparameters and their values. And that is *fast* and does not add dependencies.\n\nGenerator than goes through the database and finds new raw notifications that were added through\nherminator. Generator needs to find out which users are interested in receiving this notification.\nThat depends on the parameter coming along with the notification and might require a time \nconsuming action to decide. In case of the Buildservice for example, it is needed to do a \nHTTP request to another web service. That can certainly some time. Finally if Generator \ndecides to have some receivers for the notification it creates a real message in the\ndatabase which is found by the worker.\n\n==The Worker==\n\nThe Worker is the script that actually sends out messages.\n\nThe Worker goes through the database and assembles messages that need to be sent. Worker runs\nin a loop in a console and does not end. Since Worker does the real job of sending mails, creating\nRSS etc. the worker needs access to the database and needs an environment where it is possible\nto mail etc.\n\n==Starship==\n\nStarship is a Ruby on Rails web application. It\'s main purpose is to enable people to maintain\ntheir subscriptions to certain notifications. Starship also acts as a Hermes message reading\napplication.\n\nStarship is based on Rails 2.0. It also needs access to the database.\n\n',
 '= Motivation\n\nThe idea of Hermes was born out of my personal inability to cope with huge amounts of mail.\nI know email is great, very fast and overall useful, but over the time the amount of mails\nthat I do not really want to receive grew. Especially automatically generated emails got\nmore and more. Even if they contain useful information I think that a human being is only\nable to consume a certain amount of mails per day.\n\nAt one point of time it started that these unwanted mail were much more than the mails I \nwanted to get and it became difficult to filter out the imported one. Most of business \nnowadays depends on emails and since I  like to do my job well I need to take care that \nthe right messages come through.\n\nAs a result I wished for years that I could decide myself which messages I get at all.\nBut that is not all. I also thought it might be cool to decide myself on which way \nmessages of a certain type approaches me. Especially automatically generated messages\nwith the same base type and only a small amount of differing information should not \nblow up my mailbox saying 50 times a day the same thing with only slightly different\ncontents. For example I am not interested to receive 50 emails a day saying that one\nof my fife packages which are maintained by me are currently not building in one of\nthe ten different build environments. Instead I would really prefer to receive one digest email \nin the morning saying that 50 package build attempts failed.\n\nAnother aspect is that email is a communication way. It is to useful to be misused to \nonly send information which is not expected to be answered. For these kind of things,\nfor example RSS feeds are good. So not only the digesting of messages is neccessary \nbut also I like to decide myself on which medium a messages finds me. \n\nThese thinkings made me starting to implement Hermes.\n',
 '= Client Business =\nThis chapter describes how a client interacts with Hermes. The client is software that wants to send \nmessages and notifications through Hermes.\n\nBasically there are two possibilities to hand over information to Hermes: Either via a HTTP interface\naccessing Herminator or through the perl client lib.\n\nThere are two different kind of interaction with Hermes from the clients point of view: Sending\nmessages or sending notifications.\n\n== Messages ==\n\nOne of the possibility work with Hermes is sending classical messages.\nBeside subject and body a message has  to, cc and bcc lists just as email. Hermes does not influence\nthe receiver list for messages as it does for notifications. Sending messages should always \nbe appropiate where emails were sent before.\n\n== Notifications ==\n\nThe other kind of working with Hermes is to route notifications to Hermes. The client only sends\na string that identifies the kind of notification along with a variable list of parameters.\nHermes generates the text and the list of receivers according to the message type. User can\nsubscribe to a certain notification type to get on the receiver list using Starship.\n\nTo generate messages for the notifications Hermes supports [[http://html-template.sourceforge.net/|HTML::Template]] \nto generate the message. All parameters that come along with the notifications are available in the\ntemplate.\n\nInformation about the http interface can be found in the Admin interface of Herminator.',
 '= Setup\n\nHermes is hosted in a subversion available under \n{{{https://forgesvn1.novell.com/svn/opensuse/trunk/infrastructure/hermes}}}\nAll directory names refer to directories in the svn. \n\nSetup Hermes in the following steps:\n\n== Hermes Baselibs ==\n\nThe Baselibs from the svn directory Hermes need to be installed as a perl module. Configure\nthe database access and logging in the file Hermes/Config.pm\n\n== The Database ==\n\nA mysql database must be set up. To initialise the schema, rake and the migration of Rails is used. \nGo to directory starship and call \n  {{{rake db:migrate}}}\nto intialise the database.\n\n== Herminator ==\n\nSet up Herminator, the server which serves the clients. For that, point your apache to make\nhim process perl cgi in the herminator directory.\n\n== The Worker ==\n\nThe worker only depends on the Baselibs but needs access to the database using the config data\nfrom the baselibs.\n\n',
@@ -152,7 +152,7 @@ var pages = [
 '= Configuration\n\nHere are some important hints about neccessary configurations of Hermes.\n\n==Database==\n\nThe database is configured at two places which needs to reflect identical settings:\n\n# Starship: Configure the correct db in the starship rails environment.\n# Hermes Baselibs: See file {{{Hermes/Config.pm}} for the database settings for the baselibs.\n\n==Config Files==\n\nHermes reads config from the following places\n\n* Hermes/Config.pm contains database settings\n* /etc/hermes.conf \n* ./hermes.conf\n* conf/hermes.conf\n\nThese are read in this sequence. Values can be overwritten by successors. See the file contents\nespecially in {{{conf/hermes.conf}}} for configuration parameters.\n\n==Templates for Notifications==\n\nIf Hermes receives a notification, it seeks in a special directory to find template files for the [[http://html-template.sourceforge.net|HTML::Template]] system as widely used in the perl world. All parameters which come along with the notification (remember that the notification can come with a arbitrary list of parameters into Herminator) are passed to the template system to act as replacement variables.\n\nThe directory where Hermes looks for templates is configured in one of the config files using the config variable {{{$HerminatorDir}}} which is appended automatically with {{{notifications}}}. The notifications are located in the Herminator space to make them editable through Herminators admin interface later on.\n'
 ];
 
-/* DFQRCTsKlU-0000452-END */
+/* DFQRCTsKlU-0000453-END */
 
 /* ]]> */ </script>
 <style type="text/css">/* existent link */
@@ -4285,11 +4285,11 @@ woas["export_one_page"] = function (
 			data = '<div class="menu_area" id="sw_menu_area" style="position: fixed;"><div class="wiki" id="menu_area">'+_exp_menu+'</div></div><div class="text_area" id="wiki_text">'+data+'</div>';
 		}
 		data = "<ht"+"ml><he"+"ad><title>"+this.xhtml_encode(title)+"</title>"+exp.css+
-		'<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" / / / / / / / / / />'+"\n"+
-		'<meta name="generator" content="Wiki on a Stick v'+this.version+'" / / / / / / / / / />'+"\n"+
-		'<meta name="keywords" content="'+this.utf8_encode(this._attrib_escape(_auto_keywords(raw_text)))+'" / / / / / / / / / />'+"\n"+
+		'<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" / / / / / / / / / / />'+"\n"+
+		'<meta name="generator" content="Wiki on a Stick v'+this.version+'" / / / / / / / / / / />'+"\n"+
+		'<meta name="keywords" content="'+this.utf8_encode(this._attrib_escape(_auto_keywords(raw_text)))+'" / / / / / / / / / / />'+"\n"+
 		'<meta name="description" content="'+
-		this.utf8_encode(this._attrib_escape(raw_text.replace(/\s+/g, " ").substr(0,max_description_length)))+'" / / / / / / / / / />'+"\n"+
+		this.utf8_encode(this._attrib_escape(raw_text.replace(/\s+/g, " ").substr(0,max_description_length)))+'" / / / / / / / / / / />'+"\n"+
 		exp.meta_author+
 		exp.custom_bs+
 		"</h"+"ead><"+"body>"+data+"</bod"+"y></h"+"tml>\n"; raw_text = null;
@@ -4313,7 +4313,7 @@ woas["export_wiki"] = function () {
 		_export_default_ext = $("woas_ep_ext").value;
 		exp["meta_author"] = this.trim($("woas_ep_author").value);
 		if (exp.meta_author.length)
-			exp.meta_author = '<meta name="author" content="'+this._attrib_escape(this.xhtml_encode(exp.meta_author))+'" / / / / / / / / / />'+"\n";
+			exp.meta_author = '<meta name="author" content="'+this._attrib_escape(this.xhtml_encode(exp.meta_author))+'" / / / / / / / / / / />'+"\n";
 		_export_unix_norm = $("woas_cb_unix_norm").checked;
 	} catch (e) { alert(e); return false; }
 	
@@ -4504,7 +4504,7 @@ function setWikiImage() {
 }
 
 function setHTMLImage() {
-	setImage('<img src=\'','\' / / / / / / / / / />');
+	setImage('<img src=\'','\' / / / / / / / / / / />');
 }
 
 function setWikiUrl() {
@@ -4703,14 +4703,14 @@ function ro_woas() {
 function open_table_help() {
 	var w = woas.popup("help", 350, 200, ",menubar=no,toolbar=no,location=no,status=no,dialog=yes");
 	w.document.writeln("<html><head><title>Building tables<\/title><\/head><body>");
-	w.document.writeln("<u>Building tables:<\/u><br / / / / / / / / / /><br / / / / / / / / / />");
-	w.document.writeln("<tt>{|   <\/tt><br / / / / / / / / / />");
-	w.document.writeln("<tt>|+ Table Caption<\/tt><br / / / / / / / / / />");
-	w.document.writeln("<tt>| *colum 1* || *column 2* || *column 3*<\/tt><br / / / / / / / / / />");
-	w.document.writeln("<tt>|-<\/tt><br / / / / / / / / / />");
-	w.document.writeln("<tt>| line 2 || [[a link]] || something<\/tt><br / / / / / / / / / />");
-	w.document.writeln("<tt>|-<\/tt><br / / / / / / / / / />");
-	w.document.writeln("<tt>| line 3 || || more stuff<\/tt><br / / / / / / / / / />");
+	w.document.writeln("<u>Building tables:<\/u><br / / / / / / / / / / /><br / / / / / / / / / / />");
+	w.document.writeln("<tt>{|   <\/tt><br / / / / / / / / / / />");
+	w.document.writeln("<tt>|+ Table Caption<\/tt><br / / / / / / / / / / />");
+	w.document.writeln("<tt>| *colum 1* || *column 2* || *column 3*<\/tt><br / / / / / / / / / / />");
+	w.document.writeln("<tt>|-<\/tt><br / / / / / / / / / / />");
+	w.document.writeln("<tt>| line 2 || [[a link]] || something<\/tt><br / / / / / / / / / / />");
+	w.document.writeln("<tt>|-<\/tt><br / / / / / / / / / / />");
+	w.document.writeln("<tt>| line 3 || || more stuff<\/tt><br / / / / / / / / / / />");
 	w.document.writeln("<tt>|}   <\/tt>");
 	w.document.writeln("<\/body><\/html>");
 	w.document.close();
@@ -4751,7 +4751,7 @@ function import_wiki() {
 <div class="wiki_header bg" id="sw_wiki_header" style="position: absolute;">
 <table cellspacing="0" width="100%">
 <tbody><tr>
-<td><span class="title" id="wiki_title">History</span></td>
+<td><span class="title" id="wiki_title">Subsystems</span></td>
 <td align="right">
 <div id="menu_back" style="display: inline; cursor: pointer; visibility: visible;"><a title="Back" onclick="go_back()"><img id="img_back" style="display: inline; visibility: visible;" alt="Back" src="data:image/png;base64,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" /><span id="alt_back" style="display: none; visibility: hidden;">&nbsp;<strong>[Back]</strong>&nbsp;</span></a></div>
 <div id="menu_forward" style="display: none; cursor: pointer; visibility: hidden;"><a title="Forward" onclick="go_forward()"><img id="img_forward" style="display: inline; visibility: visible;" alt="Forward" src="data:image/png;base64,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" /><span id="alt_forward" style="display: none; visibility: hidden;">&nbsp;<strong>[Forward]</strong>&nbsp;</span></a></div>
@@ -4814,7 +4814,7 @@ Wiki Code:
   <input class="wiki_button" name="img" id="img" value="Image" onclick="setHTMLImage()" type="submit" />
   <input class="wiki_button" name="url" id="url" value="Link" onclick="setHTMLUrl()" type="submit" />
 </div>
-<textarea id="wiki_editor" style="width: 1069px; height: 641px;" rows="0" cols="0"></textarea> 
+<textarea id="wiki_editor" style="width: 1075px; height: 641px;" rows="0" cols="0"></textarea> 
 </div>
 <div id="debug_info" style="display: none; visibility: hidden; z-index: 101; text-align: right; width: 300px;">
 <h2>Debug console</h2>
