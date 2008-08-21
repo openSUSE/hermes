@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+require File.dirname(__FILE__) + '/../config/boot'
+
+days = 7
+delete_time = Time.now-days*60*60*24
+
+Notifications.destroy :conditions => ["generated < ?", delete_time]
+MessagesPeople.destroy :conditions => ["sent < ?", delete_time]
+msgs_to_delete = Message.find_by_sql <<-END_SQL
+  SELECT m.id from messages m 
+  LEFT OUTER JOIN messages_people mp 
+    ON m.id = mp.message_id
+  WHERE ISNULL(mp.message_id)
+END_SQL
+
+Message.delete msgs_to_delete
