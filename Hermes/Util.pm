@@ -33,7 +33,7 @@ use Data::Dumper;
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( notificationTemplateDetails notificationDetails);
+@EXPORT	    = qw( notificationTemplateDetails notificationDetails templateFileName );
 
 
 =head1 NAME
@@ -121,6 +121,15 @@ sub notificationDetails($;$)
   return $infoRef;
 }
 
+sub templateFileName( $ )
+{
+  my ($tmpl) = @_;
+  if( $tmpl ) {
+    return $Hermes::Config::HerminatorDir . "/notifications/" . lc $tmpl . ".tmpl";
+  } else {
+    return undef;
+  }
+}
 
 #
 # some initialisations

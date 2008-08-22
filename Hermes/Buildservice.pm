@@ -18,6 +18,7 @@
 ################################################################
 # Contributors:
 #  Klaas Freitag <freitag@suse.de>
+#  Andreas Bauer <abauer@suse.de>
 #
 package Hermes::Buildservice;
 
@@ -32,6 +33,7 @@ use Hermes::Config;
 use Hermes::DBI;
 use Hermes::Log;
 use Hermes::Person;
+use Hermes::Util;
 
 use Data::Dumper;
 
@@ -74,7 +76,7 @@ sub expandFromMsgType( $$ )
   $re->{from} = $paramHash->{from} || "hermes\@opensuse.org";
 
   my $text;
-  my $filename = $Hermes::Config::HerminatorDir . "/notifications/" . lc $type . ".tmpl";
+  my $filename = templateFileName( $type );
   log( 'info', "template filename: <$filename>" );
 
   if( -r "$filename" ) {
