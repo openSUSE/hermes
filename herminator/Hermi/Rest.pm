@@ -27,7 +27,7 @@ use base 'CGI::Application';
 use Hermes::Log;
 use Hermes::Message;
 use Hermes::Statistics;
-
+use Hermes::Util;
 
 
 # sub do_stuff : Path('do/stuff') { ... }
@@ -42,7 +42,8 @@ sub setup {
 		   'post'   => 'postMessage',
 		   'notify' => 'postNotification',
 		   'hello'  => 'sayHello',
-		   'doc'    => 'showDoc'
+		   'doc'    => 'showDoc',
+		   'type'   => 'editType'
 		  );
   $self->mode_param( 'rm' );
 
@@ -75,7 +76,7 @@ sub cgiapp_postrun
 
   $self->header_type( 'header' );
   # $self->header_props( -expires => 'now' );
-  $self->header_props( -Cache-Control => 'no-cache' );
+  $self->header_props( '-Cache-Control' => 'no-cache' );
 }
 
 sub sayHello
@@ -184,6 +185,42 @@ sub postMessage {
   my $id = newMessage( $subject, $body, $type, $delay, @to, @cc, @bcc, $from );
 
   return "$id";
+}
+
+sub editType()
+{
+  my $self = shift;
+
+  # Get CGI query object
+  my $q = $self->query();
+  my $tmpl = $self->load_tmpl( 'edittype.tmpl',
+				  die_on_bad_params => 0,
+				  cache => 1 );
+
+  my $type = $q->param( 'type' );
+
+  if( $type ) {
+    my $detailsRef = notificationDetails( $type );
+
+    $tmpl->param( type  => $detailsRef->{_type} );
+    $tmpl->param( added => $detailsRef->{_added} );
+    $tmpl->param( delay => $detailsRef->{_defaultdelay} );
+
+    my @names;
+
+    foreach( @{$detailsRef->{_parameterList}} ) {
+      log( 'debug', "Parameter : $_" );
+      push @names, { 'name' => $_, 
+		     'value' => $detailsRef->{$_} };
+    }
+    $tmpl->param( parameters => \@names );
+  }
+
+  $htmlTmpl->param( Header => "Hermes Notification Type Details" );
+  $htmlTmpl->param( Content => $tmpl->output );
+
+  return $htmlTmpl->output;
+
 }
 
 1;

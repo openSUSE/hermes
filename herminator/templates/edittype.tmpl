@@ -1,0 +1,14 @@
+<h2>Template <TMPL_VAR NAME="type"></h2>
+<div id="box">
+<p>added on: <TMPL_VAR NAME="added"></p>
+<p>Default delay: <TMPL_VAR NAME="delay"></p>
+<table>
+<TMPL_LOOP NAME="parameters">
+<tr>
+<td>Parameter:</td><td><TMPL_VAR NAME="name"><td><TMPL_VAR NAME="value"></td>
+</tr>
+</TMPL_LOOP>
+</table>
+</div>
+
+

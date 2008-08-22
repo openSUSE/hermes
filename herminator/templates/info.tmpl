@@ -25,7 +25,7 @@ none.
 <TMPL_LOOP NAME="LatestMessages">
   <tr><td><TMPL_VAR NAME=id></td>
       <td><TMPL_VAR NAME=subject></td>
-      <td><TMPL_VAR NAME=msgtype></td>
+      <td><a href="index.cgi?rm=type&type=<TMPL_VAR NAME=msgtype>"><TMPL_VAR NAME=msgtype></a></td>
       <td><TMPL_VAR NAME=created></td>
 </tr>
 </TMPL_LOOP>
