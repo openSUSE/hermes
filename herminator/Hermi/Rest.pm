@@ -24,6 +24,7 @@ package Hermi::Rest;
 use strict;
 use base 'CGI::Application';
 # use CGI::Application::Plugin::ActionDispatch;
+use Hermes::Config;
 use Hermes::Log;
 use Hermes::Message;
 use Hermes::Statistics;
@@ -214,6 +215,10 @@ sub editType()
 		     'value' => $detailsRef->{$_} };
     }
     $tmpl->param( parameters => \@names );
+
+    my $tmplFile = templateFileName( $detailsRef->{_type} );
+    $tmpl->param( testrender => testRender( $detailsRef, $tmplFile ) );
+    $tmpl->param( templateFile => $tmplFile );
   }
 
   $htmlTmpl->param( Header => "Hermes Notification Type Details" );
@@ -222,5 +227,33 @@ sub editType()
   return $htmlTmpl->output;
 
 }
+
+sub testRender( $$ )
+{
+  my ($noti, $tmplFile) = @_;
+
+  return unless $noti;
+
+
+  log('debug', "The template file: <$tmplFile>" );
+  if( -r "$tmplFile" ) {
+    my $tmpl = HTML::Template->new(filename => "$tmplFile",
+				   die_on_bad_params => 0,
+				   cache => 1 );
+
+    my @params = @{$noti->{_parameterList}};
+
+    my %paramHash;
+    foreach my $param ( @params ) {
+      log('debug', "Adding parameter: <$param> = <" . $noti->{param} . ">" );
+      $paramHash{$param} = $noti->{$param};
+    }
+    $tmpl->param( \%paramHash );
+
+    return $tmpl->output;
+  }
+  return "no template file found!";
+}
+
 
 1;

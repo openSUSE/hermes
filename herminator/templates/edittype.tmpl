@@ -2,13 +2,19 @@
 <div id="box">
 <p>added on: <TMPL_VAR NAME="added"></p>
 <p>Default delay: <TMPL_VAR NAME="delay"></p>
+
+<h3>Parameters with example data:</h3>
 <table>
 <TMPL_LOOP NAME="parameters">
 <tr>
-<td>Parameter:</td><td><TMPL_VAR NAME="name"><td><TMPL_VAR NAME="value"></td>
+<td><TMPL_VAR NAME="name"><td><TMPL_VAR NAME="value"></td>
 </tr>
 </TMPL_LOOP>
 </table>
 </div>
-
+<h3>Test rendering with current template:</h3>
+<div id="box">
+<pre><TMPL_VAR NAME="testrender"></pre>
+</div>
+<p>Rendered from file <tt><TMPL_VAR NAME="templateFile"></tt></p>
 
