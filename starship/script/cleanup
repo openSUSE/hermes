@@ -1,12 +1,37 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
+require 'ostruct'
+
+options = OpenStruct.new
+options.days = 7
+options.env = "development"
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: script/cleanup [options]"
+
+  opts.on("-d", "--days N", "number of days to keep") do |days|
+    options.days = days
+  end
+
+  opts.on("-e", "--env ENV", "rails environment to use") do |env|
+    options.env = env
+  end
+
+  opts.on_tail("-h", "--help", "show this message") do
+    puts opts
+    exit
+  end
+end.parse!
+
+RAILS_ENV = options.env
 require File.dirname(__FILE__) + '/../config/boot'
+require RAILS_ROOT+"/config/environment"
 
-days = 7
-delete_time = Time.now-days*60*60*24
+delete_time = Time.now - options.days.to_i*60*60*24
 
-Notifications.destroy :conditions => ["generated < ?", delete_time]
-MessagesPeople.destroy :conditions => ["sent < ?", delete_time]
+Notification.destroy_all ["generated < ?", delete_time]
+MessagesPeople.delete_all ["sent < ?", delete_time]
 msgs_to_delete = Message.find_by_sql <<-END_SQL
   SELECT m.id from messages m 
   LEFT OUTER JOIN messages_people mp 
