@@ -16,5 +16,19 @@
 <div id="box">
 <pre><TMPL_VAR NAME="testrender"></pre>
 </div>
+
+<TMPL_IF status>
+<p id="status">Status: <TMPL_VAR NAME="status"></p>
+</TMPL_IF>
+
 <p>Rendered from file <tt><TMPL_VAR NAME="templateFile"></tt></p>
 
+<form action="index.cgi?rm=type&type=<TMPL_VAR NAME="type">" method="get">
+  <input type="hidden" name="rm" value="type">
+  <input type="hidden" name="type" value="<TMPL_VAR NAME="type">">
+  <p>Edit the template:<br>
+    <textarea name="tmplEdit" cols="75" rows="10"><TMPL_VAR NAME="template"></textarea><br/>
+  <input type="submit" name="dopreview" value=" Preview ">
+  <input type="submit" name="dosave" value=" Save ">
+  </p>
+</form>

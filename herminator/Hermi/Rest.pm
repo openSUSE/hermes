@@ -194,32 +194,74 @@ sub editType()
 
   # Get CGI query object
   my $q = $self->query();
-  my $tmpl = $self->load_tmpl( 'edittype.tmpl',
-				  die_on_bad_params => 0,
-				  cache => 1 );
-
   my $type = $q->param( 'type' );
+  return "" unless( $type );
 
-  if( $type ) {
-    my $detailsRef = notificationDetails( $type );
+  my $tmpl = $self->load_tmpl( 'edittype.tmpl',
+			       die_on_bad_params => 0,
+			       cache => 1 );
 
-    $tmpl->param( type  => $detailsRef->{_type} );
-    $tmpl->param( added => $detailsRef->{_added} );
-    $tmpl->param( delay => $detailsRef->{_defaultdelay} );
+  my $status;
+  my $previewTmpl;
+  my $detailsRef = notificationDetails( $type );
+  my $tmplFile = templateFileName( $detailsRef->{_type} );
 
-    my @names;
+  if ( $q->param( 'tmplEdit' ) ) {
+    log( 'debug', "template was edited!" );
+    $previewTmpl = $q->param('tmplEdit');
 
-    foreach( @{$detailsRef->{_parameterList}} ) {
-      log( 'debug', "Parameter : $_" );
-      push @names, { 'name' => $_, 
-		     'value' => $detailsRef->{$_} };
+    log( 'debug', "Dosave: " . $q->param('dosave' ));
+
+    if ( $q->param( 'dosave' ) && $q->param('dosave') eq ' Save ' ) {
+      log('debug', "SAVING the template" );
+      # save the template
+      if ( -w $tmplFile ) {
+	if ( open F, ">$tmplFile" ) {
+	  print F $previewTmpl;
+	  close F;
+	  $previewTmpl = undef;
+	  $status = "Template saved!";
+	} else {
+	  $status = "ERROR: open failed for file $tmplFile!";
+	}
+      } else {
+	$status = "ERROR: No write access on $tmplFile";
+      }
+    } else {
+      $status = "Preview Rendering";
     }
-    $tmpl->param( parameters => \@names );
-
-    my $tmplFile = templateFileName( $detailsRef->{_type} );
-    $tmpl->param( testrender => testRender( $detailsRef, $tmplFile ) );
-    $tmpl->param( templateFile => $tmplFile );
   }
+
+  $tmpl->param( type  => $detailsRef->{_type} );
+  $tmpl->param( added => $detailsRef->{_added} );
+  $tmpl->param( delay => $detailsRef->{_defaultdelay} );
+
+  my @names;
+
+  foreach ( @{$detailsRef->{_parameterList}} ) {
+    log( 'debug', "Parameter : $_" );
+    push @names, { 'name' => $_, 
+		   'value' => $detailsRef->{$_} };
+  }
+  $tmpl->param( parameters => \@names );
+
+  $tmpl->param( testrender => testRender( $detailsRef, $tmplFile, $previewTmpl ) );
+
+  if ( $previewTmpl ) {
+    $tmpl->param( templateFile => "from editfield, not yet SAVED!" );
+    $tmpl->param( template => $previewTmpl );
+  } else {
+    $tmpl->param( templateFile => $tmplFile );
+
+    if ( -r $tmplFile ) {
+      if ( open F, "$tmplFile" ) {
+	my @t = <F>;
+	$tmpl->param( template => join("", @t ) );
+	close F;
+      }
+    }
+  }
+  $tmpl->param( status => $status );
 
   $htmlTmpl->param( Header => "Hermes Notification Type Details" );
   $htmlTmpl->param( Content => $tmpl->output );
@@ -228,31 +270,37 @@ sub editType()
 
 }
 
-sub testRender( $$ )
+sub testRender( $$;$ )
 {
-  my ($noti, $tmplFile) = @_;
+  my ($noti, $tmplFile, $previewTmpl ) = @_;
 
   return unless $noti;
 
-
   log('debug', "The template file: <$tmplFile>" );
-  if( -r "$tmplFile" ) {
-    my $tmpl = HTML::Template->new(filename => "$tmplFile",
-				   die_on_bad_params => 0,
-				   cache => 1 );
+  my $tmpl;
 
+  if( $previewTmpl ) {
+    $tmpl = HTML::Template->new( scalarref => \$previewTmpl,
+				 die_on_bad_params => 0 );
+  } elsif( -r "$tmplFile" ) {
+    $tmpl = HTML::Template->new(filename => "$tmplFile",
+				die_on_bad_params => 0,
+				cache => 1 );
+  }
+
+  if( $tmpl ) {
     my @params = @{$noti->{_parameterList}};
 
     my %paramHash;
     foreach my $param ( @params ) {
-      log('debug', "Adding parameter: <$param> = <" . $noti->{param} . ">" );
+      log('debug', "Adding parameter: <$param> = <" . $noti->{$param} . ">" );
       $paramHash{$param} = $noti->{$param};
     }
     $tmpl->param( \%paramHash );
 
     return $tmpl->output;
   }
-  return "no template file found!";
+  return "no template available!";
 }
 
 
