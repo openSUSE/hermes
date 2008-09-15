@@ -201,10 +201,11 @@ sub applyFilter( $$ )
       # user must be involved in the package.
       my $user = $paramHash->{_userId};
       my $pkg = $paramHash->{package};
+      my $prj = $paramHash->{project};
       my $pkgStr = $pkg || 'unknown';
 
       log( 'info', "Checking for user <$user> involved in pkg <$pkgStr>" );
-      my $userHashRef = usersOfPackage( $pkg );
+      my $userHashRef = usersOfPackage( $prj, $pkg );
       if( ! $userHashRef->{$user} ) {
 	log( 'info', "User <$user> is NOT in the maintainer group for <$pkgStr>" );
 	$res = 0;
