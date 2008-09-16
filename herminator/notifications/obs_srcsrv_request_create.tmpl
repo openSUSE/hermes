@@ -1,13 +1,23 @@
-@subject: <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created (target: <TMPL_VAR NAME="targetproject">)
+@subject: New <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> for <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
 
-<TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created by <TMPL_VAR NAME="who">
+<TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created by <TMPL_VAR NAME="who">:
 <TMPL_IF NAME="sourceproject">
-Source 
-  project:  <TMPL_VAR NAME="sourceproject">
-  package:  <TMPL_VAR NAME="sourcepackage">
-<TMPL_IF NAME="sourcerevision">  revision: <TMPL_VAR NAME="sourcerevision"></TMPL_IF>
-
-Target:
-  project: <TMPL_VAR NAME="targetproject">
-  package: <TMPL_VAR NAME="targetpackage">
+   <TMPL_VAR NAME="sourceproject">/<TMPL_VAR NAME="sourcepackage"> -> <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
+<TMPL_IF NAME="sourcerevision">
+   Source revision md5: <TMPL_VAR NAME="sourcerevision">
 </TMPL_IF>
+To REVIEW against the previous version:
+   osc submitreq show --diff <TMPL_VAR NAME="id">
+
+To ACCEPT the request:
+   osc submitreq accept <TMPL_VAR NAME="id"> --message="reviewed ok."
+   
+To DECLINE the request:
+   osc submitreq decline <TMPL_VAR NAME="id"> --message="declined for reason xyz (see ... for background / policy / ...)."
+
+To RETRACT the request:
+   osc submitreq delete <TMPL_VAR NAME="id"> --message="retracted because ..., sorry / thx / see better version ..."
+
+</TMPL_IF>Confused?  Contact the community:
+   https://build.opensuse.org/
+   http://en.opensuse.org/Build_Service/Collaboration
