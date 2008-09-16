@@ -4,6 +4,7 @@
 //to save and restore filter values
 var old_operator_hash = new Hash();
 var old_value_hash = new Hash();
+var special_operator_values = new Array('_mypackages','_myprojects');
 
 // removes filter and updates filter ids
 // last filter gets hidden to ensure there's always a filter to
@@ -26,10 +27,14 @@ function recalc_filter_ids() {
     filter.adjacent('input.filter_value_input')[i].id = 'filter_value_'+i;
 
     param_select = filter.adjacent('select.param_select')[i];
+    operator_select = filter.adjacent('select.filter_select')[i];
     
     //delete the old Observer and create a new one
     stop_observer(param_select);
+    stop_observer(operator_select);
+
     add_observer(param_select);
+    add_observer(operator_select);
 
     special_operator_checks(param_select);
   }
@@ -54,20 +59,19 @@ function set_special_operator_observer() {
 
 function stop_observer(element) {
   Event.stopObserving(element,'change',function(event) {
-    pecial_operator_checks(Event.element(event))
+    special_operator_checks(Event.element(event))
   });
 }
 
 function add_observer(element) {
   Event.observe(element,'change',function(event) {
-      special_operator_checks(Event.element(event)) 
+    special_operator_checks(Event.element(event)) 
   });
 }
 
 //check if the parameter is package or project to fix the filter value input
 function special_operator_checks(element) {
 
-//  alert(element.id);
   id = $(element).name.match(/.$/);
 
   param_elem = $('param_id_' + id);
@@ -75,34 +79,53 @@ function special_operator_checks(element) {
   filter_elem = $("filter_value_" + id);
 
   old_oper_value = old_operator_hash.get(operator_elem.id);
-
+  selected_param_value = param_elem.options[param_elem.selectedIndex].text
+  current_filter_value = $('filter_value_' + id).value
   
-  if( (old_oper_value != 'special' || old_oper_value == 'special'  ) &&  operator_elem.value == 'special') {
-//  if( old_oper_value != 'special' &&  operator_elem.value == 'special') {
-    if(param_elem.options[param_elem.selectedIndex].text == 'package') {
-      if (old_oper_value != 'special')
+  if(operator_elem.value == 'special') {
+    if(selected_param_value == 'package') {
+      if(in_array(special_operator_values,current_filter_value) == false)
         old_value_hash.set(operator_elem.id, $('filter_value_' + id).value);
       filter_elem.value =  '_mypackages';
       filter_elem.readOnly = true;
-    } else if(param_elem.options[param_elem.selectedIndex].text == 'project') {
-      if (old_oper_value != 'special')
+    } else if(selected_param_value == 'project') {
+      if(in_array(special_operator_values,current_filter_value) == false)
         old_value_hash.set(operator_elem.id, $('filter_value_' + id).value);
       filter_elem.value =  '_myprojects';
       filter_elem.readOnly = true;
     } else {
-      filter_elem.value =  old_value_hash.get(operator_elem.id);
+      if (old_value_hash.get(operator_elem.id)) {
+        filter_elem.value =  old_value_hash.get(operator_elem.id);
+      }
       filter_elem.readOnly = false;
     }
 
-  } else if(old_oper_value == 'special' && operator_elem.value != 'special' ){ 
-      if (old_value_hash.get(operator_elem.id) != '') {
+  } else if(old_oper_value == 'special' && operator_elem.value != 'special' &&
+            (selected_param_value == 'project' || selected_param_value == 'package')){
+
+      if (old_value_hash.get(operator_elem.id))
         filter_elem.value =  old_value_hash.get(operator_elem.id);
-        filter_elem.readOnly = false;
-      } else {
+      else 
         filter_elem.value = '';
-        filter_elem.readOnly = false;
-	  }
-  } 
-  old_operator_hash.set(operator_elem.id,operator_elem.value);
+      
+      filter_elem.readOnly = false;
+  }
+ old_operator_hash.set(operator_elem.id,operator_elem.value);
+
+}
+
+function in_array(a,p){
+ for (i=0;i<a.length;i++)
+  if (a[i] == p) return true
+ return false
+}
+
+function parameter_has_package_or_project(param_element) {
+  parameters = param_elem.collectTextNodes().split("\n");
+
+  if (in_array(parameters,'package') || in_array(parameters,'project')) {
+    return true;
+  }
+  return false
 }
 

@@ -8,10 +8,6 @@ function get_valid_params() {
     onSuccess: function(response) {
       update_filter_params(response.responseText);
 
-//      recalc_filter_ids();
-      set_special_operator_observer();
-
-
     }
   });
 
@@ -26,7 +22,6 @@ function update_filter_params(html) {
   });
   recalc_filter_ids();
 }
-
 
 </script>
 
