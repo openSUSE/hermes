@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 15) do
+ActiveRecord::Schema.define(:version => 16) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -89,6 +89,8 @@ ActiveRecord::Schema.define(:version => 15) do
     t.string   "sender",      :limit => 64
     t.datetime "generated"
   end
+
+  add_index "notifications", ["generated"], :name => "index_notifications_on_generated"
 
   create_table "parameters", :force => true do |t|
     t.string "name", :limit => 64

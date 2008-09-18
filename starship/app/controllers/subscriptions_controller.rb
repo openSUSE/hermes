@@ -23,6 +23,7 @@ def create
     else
       sub = Subscription.new(sub_param)
       0.upto(params[:filter_count].to_i-1) { |counter|
+        params["param_id_#{counter}"] ||= 'default'
         sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],:filterstring => params["filter_value_#{counter}"] )
       }
       if sub.save
