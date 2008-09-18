@@ -4,7 +4,7 @@
 //to save and restore filter values
 var old_operator_hash = new Hash();
 var old_value_hash = new Hash();
-  var special_operator_values = new Array('_mypackages','_myprojects');
+var special_operator_values = new Array('_mypackages','_myprojects','_myrequests');
 
   // removes filter and updates filter ids
   // last filter gets hidden to ensure there's always a filter to
@@ -23,8 +23,9 @@ var old_value_hash = new Hash();
       filter.adjacent('select.param_select')[i].id = 'param_id_'+i;
       filter.adjacent('select.filter_select')[i].name = 'filter_operator_'+i;
       filter.adjacent('select.filter_select')[i].id = 'filter_operator_'+i;
-      filter.adjacent('input.filter_value_input')[i].name = 'filter_value_'+i;
-      filter.adjacent('input.filter_value_input')[i].id = 'filter_value_'+i;
+
+      filter.adjacent('.filter_value_input')[i].name = 'filter_value_'+i;
+      filter.adjacent('.filter_value_input')[i].id = 'filter_value_'+i;
 
       param_select = filter.adjacent('select.param_select')[i];
       operator_select = filter.adjacent('select.filter_select')[i];
@@ -39,7 +40,7 @@ var old_value_hash = new Hash();
   }
 
   function filter_count() {
-    return $('filter_table').childElements()[0].adjacent('select.param_select').length;
+    return $('filter_table').childElements()[0].adjacent('select.filter_select').length;
     
   }
 
@@ -66,7 +67,11 @@ var old_value_hash = new Hash();
 
     old_oper_value = old_operator_hash.get(operator_elem.id);
     selected_param_value = param_elem.options[param_elem.selectedIndex].text
-    current_filter_value = $('filter_value_' + id).value
+    
+    if ($('filter_value_' + id))
+      current_filter_value = $('filter_value_' + id).value;
+    else
+      current_filter_value = '';
 
     if(operator_elem.value == 'special') {
       param_elem.disabled = true;
@@ -74,7 +79,7 @@ var old_value_hash = new Hash();
       if (old_oper_value != 'special' && old_oper_value != '' && old_oper_value != undefined)
         old_value_hash.set(operator_elem.id, $('filter_value_' + id).value);
 
-      filter_elem.replace(select_tag(id));
+      filter_elem.replace(select_tag(id,current_filter_value));
 
     } else if(old_oper_value == 'special' && operator_elem.value != 'special'){
 
@@ -97,11 +102,14 @@ var old_value_hash = new Hash();
    return false
   }
 
-  function select_tag(id){
+  function select_tag(id,selected){
     sel_string = '<select id=filter_value_' + id + ' name=filter_value_' + id +' class=filter_value_input';
-    sel_string += " <option>_myprojects</option>";
-    sel_string += " <option>_mypackages</option>";
-    sel_string += " <option>_myrequests</option>";
+    special_operator_values.each(function(s){
+      if (selected == s)
+        sel_string += ' <option selected=selected>' + s + '</option>';
+      else
+        sel_string += ' <option>' + s + '</option>';
+    })
     sel_string += "</select>";
     return sel_string;
   }

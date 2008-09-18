@@ -15,6 +15,7 @@ end
 
 def create
   if request.post?
+
     sub_param = params[:subscr]
     sub_param[:person_id] = session[:user].id
 
@@ -23,7 +24,8 @@ def create
     else
       sub = Subscription.new(sub_param)
       0.upto(params[:filter_count].to_i-1) { |counter|
-        params["param_id_#{counter}"] ||= 'default'
+        params["param_id_#{counter}"] ||= 0
+        logger.debug("[Create Subscription] #{params["filter_value_#{counter}"]}")
         sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],:filterstring => params["filter_value_#{counter}"] )
       }
       if sub.save
@@ -73,6 +75,7 @@ def update
         filt.destroy
       }
       0.upto(params[:filter_count].to_i-1) { |counter|
+            params["param_id_#{counter}"] ||= 0
 	    @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => params["filter_value_#{counter}"] )
 	  }
       redirect_to_index()
