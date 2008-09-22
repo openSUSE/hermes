@@ -56,6 +56,12 @@ div#Inhalt p {
   margin: 1em 0;
 }
 
+p#top {
+  border-bottom: 1px dashed #8c0000;
+  text-align: right;
+  font-size: small;
+}
+
 div#box {
   border: 1px dashed silver;
 }

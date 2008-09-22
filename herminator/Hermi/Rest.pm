@@ -29,12 +29,12 @@ use Hermes::Log;
 use Hermes::Message;
 use Hermes::Statistics;
 use Hermes::Util;
-
+use Hermes::DBI;
 
 # sub do_stuff : Path('do/stuff') { ... }
 # sub do_more_stuff : Regex('^/do/more/stuff\/?$') { ... }
 # sub do_something_else : Regex('do/something/else/(\w+)/(\d+)$') { ... }
-use vars qw( $htmlTmpl );
+use vars qw( $dbh $htmlTmpl %isAdmin $user );
 
 sub setup {
   my $self = shift;
@@ -67,6 +67,30 @@ sub cgiapp_prerun
     $self->prerun_mode( 'post' );
   }
 
+  # Check for the users admin flag
+  $user = "anonymous";
+  if( lc $Hermes::Config::authentication eq "ichain" ) {
+    # with iChain authentification, the HTTP request contains trustable header
+    # values like the username. Since iChain works like a proxy these can be
+    # taken for real and no further dealing with passwords etc. is needed.
+
+    my @httpHeader = $q->http();
+    # log('info', "HTTP-Header: " . join(", ", @httpHeader ) );
+    log('info', "User Name: " . $q->http('HTTP_USER_NAME'));
+
+    my $loggedInUser = $q->http('HTTP_X_USERNAME');
+    # $loggedInUser = 'termite'; # DEBUG !! REMOVE ME !!
+    if( $loggedInUser ) {
+      my $sql = "SELECT admin FROM persons WHERE stringid=?";
+      my $sth = $dbh->prepare( $sql );
+      $sth->execute( $loggedInUser );
+      my ($admin) = $sth->fetchrow_array();
+      log( 'info', "Admin flag for user <$loggedInUser>: $admin" );
+      $isAdmin{ $loggedInUser } = $admin > 0;
+      $user = $loggedInUser;
+    }
+  }
+
   my $post = $q->param( 'POSTDATA' );
   log( 'info', "POST data in prerun: <$post>" ) if( $post );
 }
@@ -80,13 +104,25 @@ sub cgiapp_postrun
   $self->header_props( '-Cache-Control' => 'no-cache' );
 }
 
+#
+# initialise the frame html template that is around all detail pages.
+#
+sub initFrame( $ )
+{
+  my ($header) = @_;
+
+  $htmlTmpl->param( Header => $header );
+  $htmlTmpl->param( isAdmin => $isAdmin{ $user } || 0 );
+  $htmlTmpl->param( User => $user );
+}
+
 sub sayHello
 {
   my $self = shift;
 
   # Get CGI query object
   my $q = $self->query();
-  $htmlTmpl->param( Header => "Welcome to Hermes" );
+  initFrame( "Welcome to Hermes" );
 
   my $detailTmpl = $self->load_tmpl( 'info.tmpl', die_on_bad_params => 1, cache => 0 );
 
@@ -113,7 +149,7 @@ sub showDoc
 				  die_on_bad_params => 0,
 				  cache => 1 );
   $docTmpl->param( urlbase => "subbotin.suse.de/hermes" );
-  $htmlTmpl->param( Header => "Hermes Documentation" );
+  initFrame( "Hermes Documentation" );
   $htmlTmpl->param( Content => $docTmpl->output );
 
   return $htmlTmpl->output;
@@ -206,7 +242,7 @@ sub editType()
   my $detailsRef = notificationDetails( $type );
   my $tmplFile = templateFileName( $detailsRef->{_type} );
 
-  if ( $q->param( 'tmplEdit' ) ) {
+  if ( $q->param( 'tmplEdit' ) && $isAdmin{$user} ) {
     log( 'debug', "template was edited!" );
     $previewTmpl = $q->param('tmplEdit');
 
@@ -262,8 +298,9 @@ sub editType()
     }
   }
   $tmpl->param( status => $status );
-
-  $htmlTmpl->param( Header => "Hermes Notification Type Details" );
+  $tmpl->param( admin => $isAdmin{$user} || 0 );
+  $tmpl->param( user  => $user || "unknown" );
+  initFrame( "Hermes Notification Type Details" );
   $htmlTmpl->param( Content => $tmpl->output );
 
   return $htmlTmpl->output;
@@ -303,5 +340,6 @@ sub testRender( $$;$ )
   return "no template available!";
 }
 
+$dbh = Hermes::DBI->connect();
 
 1;

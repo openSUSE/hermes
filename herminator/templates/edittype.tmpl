@@ -23,6 +23,7 @@
 
 <p>Rendered from file <tt><TMPL_VAR NAME="templateFile"></tt></p>
 
+<TMPL_IF NAME="admin">
 <form action="index.cgi?rm=type&type=<TMPL_VAR NAME="type">" method="post">
   <input type="hidden" name="rm" value="type">
   <input type="hidden" name="type" value="<TMPL_VAR NAME="type">">
@@ -32,3 +33,5 @@
   <input type="submit" name="dosave" value=" Save ">
   </p>
 </form>
+</TMPL_IF>
+

@@ -14,6 +14,9 @@
 </ul>
 
 <div id="Inhalt">
+  <p id="top">Hello <TMPL_VAR NAME="user">
+  <TMPL_IF NAME="isAdmin"> (Administrator)</TMPL_IF>
+  </p>
   <h1><TMPL_VAR NAME=Header></h1>
   <TMPL_VAR NAME=Content>
 </div>
