@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 16) do
+ActiveRecord::Schema.define(:version => 17) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -97,10 +97,11 @@ ActiveRecord::Schema.define(:version => 16) do
   end
 
   create_table "persons", :force => true do |t|
-    t.string "email"
-    t.string "name"
-    t.string "jid"
-    t.string "stringid"
+    t.string  "email"
+    t.string  "name"
+    t.string  "jid"
+    t.string  "stringid"
+    t.boolean "admin",    :default => false
   end
 
   create_table "subscription_filters", :force => true do |t|
