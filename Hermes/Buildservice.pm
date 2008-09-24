@@ -353,7 +353,7 @@ sub callOBSAPI( $$;$ )
 
   return {} unless( $project );
   $project = uri_escape( $project );
-  $package = url_escape( $package ) if( $package );
+  $package = uri_escape( $package ) if( $package );
 
   my %results;
   my $OBSAPIUrl = $Hermes::Config::OBSAPIBase ||  "http://api.opensuse.org/";
