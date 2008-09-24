@@ -118,6 +118,7 @@ while( 1 ) {
 	    $updateSth->execute( $id );
 	    $dbh->do( 'UNLOCK TABLES' );
 	}
+        $cnt++;
     }
 
     my $elapsed = tv_interval ($t0);
