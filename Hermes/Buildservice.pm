@@ -92,7 +92,7 @@ sub expandFromMsgType( $$ )
       log( 'info', "Extracted subject <$re->{subject}> from template!" );
       $text =~ s/^\s*\@subject:.*$//im;
     }
-    log('info', "Template body: <$text>" );
+    # log('info', "Template body: <$text>" );
 
   } else {
     log( 'warning', "Can not find <$filename>, using default" );
@@ -128,12 +128,12 @@ sub expandFromMsgType( $$ )
     # filters have to apply.
     my $filterOk = 1;
     foreach my $filterRef ( @filters ) {
-      log( 'info', "Filtering type <$type> on param. " . $filterRef->{param} );
       $filterOk = applyFilter( $paramHash, $filterRef );
       if( ! $filterOk ) {
-	log( 'info', "Filter failed!" );
+	log( 'info', "Filter $filterRef->{filterlog} failed!" );
 	last;
       }
+      log( 'info', $filterRef->{filterlog} . " adds user to to-line: " . $personId );
     }
     if( $filterOk ) {
       push @{$re->{to}}, $personId;
@@ -171,8 +171,8 @@ sub getFilters( $ )
 
   my @re;
   while( my ($param, $operator, $string) = $query->fetchrow_array()) {
-    push @re, { param => $param, operator => $operator, string => $string };
-    log('info', "Filter added: param <$param>, operator <$operator>, value <$string>" );
+    push @re, { param => $param, operator => $operator, string => $string,
+	        filterlog => "Filter: param <$param>, operator <$operator>, value <$string>" };
   }
   return @re;
 }
@@ -250,10 +250,12 @@ sub applyFilter( $$ )
       $searchStr = quotemeta( $searchStr );
 
       my $str = $filterRef->{string};
-      log( 'info', "Filtering oneof <$searchStr> in <$str>?" );
 
       my @possibleValues = split( /\s*,\s*/, $str );
-      if( grep /$searchStr/, @possibleValues ) {
+      my $success = grep( /$searchStr/, @possibleValues );
+      log( 'info', "Filtering oneof <$searchStr> in [" . join( "|", @possibleValues ) . "]: " . $success );
+      
+      if( $success ) {
 	$res = 1;
       } else {
 	$res = 0;
