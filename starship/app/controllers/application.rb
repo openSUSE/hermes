@@ -5,7 +5,7 @@ class ApplicationController < ActionController::Base
   helper :all # include all helpers, all the time
   before_filter :login_via_ichain, :require_auth
 
-  $OPERATORS = %w{ oneof regex special }
+  $OPERATORS = %w{ oneof regexp special }
   
   def login_via_ichain
     logger.debug('login_via_ichain called!')
