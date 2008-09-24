@@ -24,7 +24,10 @@ def create
     else
       sub = Subscription.new(sub_param)
       0.upto(params[:filter_count].to_i-1) { |counter|
-        params["param_id_#{counter}"] ||= 0
+        # with the special operator no parameter_id is set
+        # needs to be a valid parameter_id, otherwise the filters wont evaluated by hermes
+        # same in update function
+        params["param_id_#{counter}"] ||= 7
         logger.debug("[Create Subscription] #{params["filter_value_#{counter}"]}")
         sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],:filterstring => params["filter_value_#{counter}"] )
       }
@@ -75,7 +78,7 @@ def update
         filt.destroy
       }
       0.upto(params[:filter_count].to_i-1) { |counter|
-            params["param_id_#{counter}"] ||= 0
+            params["param_id_#{counter}"] ||= 7
 	    @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => params["filter_value_#{counter}"] )
 	  }
       redirect_to_index()
