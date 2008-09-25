@@ -5,11 +5,11 @@
 <script type="text/javascript">
 /* <![CDATA[ */
 
-/* DFQRCTsKlU-0000454-START */
+/* DFQRCTsKlU-0000455-START */
 
 var woas = {"version": "0.9.6B"};
 
-var __marker = "DFQRCTsKlU-0000454";
+var __marker = "DFQRCTsKlU-0000455";
 
 woas["config"] = {
 "permit_edits":true,
@@ -21,18 +21,18 @@ woas["config"] = {
 "cumulative_save":false,
 "auto_save":0};
 
-var current = 'Subsystems';
+var current = 'Configuration';
 
 var main_page = 'Hermes Main Page';
 
 var backstack = [
+'Configuration',
 'Subsystems',
 'clients',
-'Setup',
-'Configuration',
-'Dependencies',
 '::Menu',
-'Hermes Main Page'
+'Configuration',
+'Setup',
+'Dependencies'
 ];
 
 var page_titles = [
@@ -92,7 +92,7 @@ var page_titles = [
 'Configuration'
 ];
 
-/* DFQRCTsKlU-0000454-DATA */
+/* DFQRCTsKlU-0000455-DATA */
 var page_attrs = [0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,4,0,0,0,0,0,0,0,4,0,4,0,0,0,2,0,0,0,0,0,0,0,0,0,0,12,0];
 
 var pages = [
@@ -149,10 +149,10 @@ var pages = [
 '= Setup\n\nHermes is hosted in a subversion available under \n{{{https://forgesvn1.novell.com/svn/opensuse/trunk/infrastructure/hermes}}}\nAll directory names refer to directories in the svn. \n\nSetup Hermes in the following steps:\n\n== Hermes Baselibs ==\n\nThe Baselibs from the svn directory Hermes need to be installed as a perl module. Configure\nthe database access and logging in the file Hermes/Config.pm\n\n== The Database ==\n\nA mysql database must be set up. To initialise the schema, rake and the migration of Rails is used. \nGo to directory starship and call \n  {{{rake db:migrate}}}\nto intialise the database.\n\n== Herminator ==\n\nSet up Herminator, the server which serves the clients. For that, point your apache to make\nhim process perl cgi in the herminator directory.\n\n== The Worker ==\n\nThe worker only depends on the Baselibs but needs access to the database using the config data\nfrom the baselibs.\n\n',
 '= Dependencies\n\nAs usual Hermes has software dependencies. And as usual, these kind of dependencies are *hell*. Some perl modules are required and these again require others etc. etc.\n\nWe\'re trying to keep the dependencies as little as possible but on the other hand it makes no sense to reinvent the wheel. \n\nHave fun with the deps. Seek out in the [[http://build.opensuse.org|openSUSE Buildservice]] for solutions, for example in the [[http://http://download.opensuse.org/repositories/devel:/languages:/perl/|perl language repository]] or in the [[http://http://download.opensuse.org/repositories/openSUSE:infrastructure|openSUSE infrastructure]] repository which helps you out if you\'re on SLE 10.\n\n\n{{{\nThe Hermes Baselibs:\n===================\n\nThe Hermes baselibs are perl modules used by the hermes server and\nthe hermes command line tools. They also can be used by clients to\npost messages not over http but directly into the hermes database.\nDirect access to the database and database credentials must be \navailable for that.\n\nDependencies:\n- perl\n  perl Modules:\n    Name                    SUSE Package Name\n +------------------------+----------------------------------------\n   Html-Template            perl-HTML-Template\n   Data::Dumper             perl-base\n   DBI                      perl-DBI\n   Net::Jabber              perl-Net-Jabber\n   MIME::Lite               perl-MIME-Lite\n   XML::RSS                 -no openSUSE package yet-\n\nRemoved the Log::Dispatch dependencies and replaced them by own implemented log file.\n\nThe Hermes Server:\n=================\n\nThe Hermes server is a server which takes notifications and messages\nover HTTP and stores it to a database. Clients that want to post \nmessages to Hermes use the Hermes server.\n\nDependencies:\n\n- mysql\n- Hermes Baselibs\n- perl\n  perl Modules:\n  * CGI::Application        perl-CGI-Application\n\nHermes Starship\n===============\n\nHermes Starship is a Ruby on Rails application that enables peole to\nmanage their subscriptions to notifications in the hermes system.\n\nDependencies:\n\n- mysql\n- Ruby\n- Ruby on Rails version \x3E2\n\n}}}',
 'data:image/png;base64,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',
-'= Configuration\n\nHere are some important hints about neccessary configurations of Hermes.\n\n==Database==\n\nThe database is configured at two places which needs to reflect identical settings:\n\n# Starship: Configure the correct db in the starship rails environment.\n# Hermes Baselibs: See file {{{Hermes/Config.pm}} for the database settings for the baselibs.\n\n==Config Files==\n\nHermes reads config from the following places\n\n* Hermes/Config.pm contains database settings\n* /etc/hermes.conf \n* ./hermes.conf\n* conf/hermes.conf\n\nThese are read in this sequence. Values can be overwritten by successors. See the file contents\nespecially in {{{conf/hermes.conf}}} for configuration parameters.\n\n==Templates for Notifications==\n\nIf Hermes receives a notification, it seeks in a special directory to find template files for the [[http://html-template.sourceforge.net|HTML::Template]] system as widely used in the perl world. All parameters which come along with the notification (remember that the notification can come with a arbitrary list of parameters into Herminator) are passed to the template system to act as replacement variables.\n\nThe directory where Hermes looks for templates is configured in one of the config files using the config variable {{{$HerminatorDir}}} which is appended automatically with {{{notifications}}}. The notifications are located in the Herminator space to make them editable through Herminators admin interface later on.\n'
+'= Configuration\n\nHere are some important hints about neccessary configurations of Hermes.\n\n==Database==\n\nThe database is configured at two places which needs to reflect identical settings:\n\n# Starship: Configure the correct db in the starship rails environment (config/database.yml).\n# Hermes Baselibs: See file {{{Hermes/Config.pm}} for the database settings for the baselibs.\n\n==Config Files==\n\nHermes reads config from the following places\n\n* Hermes/Config.pm contains database settings\n* /etc/hermes.conf \n* ./hermes.conf\n* conf/hermes.conf\n\nThese are read in this sequence. Values can be overwritten by successors. See the file contents\nespecially in {{{conf/hermes.conf}}} for configuration parameters.\n\n==Templates for Notifications==\n\nIf Hermes receives a notification, it seeks in a special directory to find template files for the [[http://html-template.sourceforge.net|HTML::Template]] system as widely used in the perl world. All parameters which come along with the notification (remember that the notification can come with a arbitrary list of parameters into Herminator) are passed to the template system to act as replacement variables.\n\nThe directory where Hermes looks for templates is configured in one of the config files using the config variable {{{$HerminatorDir}}} which is appended automatically with {{{notifications}}}. The notifications are located in the Herminator space to make them editable through Herminators admin interface later on.\n'
 ];
 
-/* DFQRCTsKlU-0000454-END */
+/* DFQRCTsKlU-0000455-END */
 
 /* ]]> */ </script>
 <style type="text/css">/* existent link */
@@ -4285,11 +4285,11 @@ woas["export_one_page"] = function (
 			data = '<div class="menu_area" id="sw_menu_area" style="position: fixed;"><div class="wiki" id="menu_area">'+_exp_menu+'</div></div><div class="text_area" id="wiki_text">'+data+'</div>';
 		}
 		data = "<ht"+"ml><he"+"ad><title>"+this.xhtml_encode(title)+"</title>"+exp.css+
-		'<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" / / / / / / / / / / / />'+"\n"+
-		'<meta name="generator" content="Wiki on a Stick v'+this.version+'" / / / / / / / / / / / />'+"\n"+
-		'<meta name="keywords" content="'+this.utf8_encode(this._attrib_escape(_auto_keywords(raw_text)))+'" / / / / / / / / / / / />'+"\n"+
+		'<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" / / / / / / / / / / / / />'+"\n"+
+		'<meta name="generator" content="Wiki on a Stick v'+this.version+'" / / / / / / / / / / / / />'+"\n"+
+		'<meta name="keywords" content="'+this.utf8_encode(this._attrib_escape(_auto_keywords(raw_text)))+'" / / / / / / / / / / / / />'+"\n"+
 		'<meta name="description" content="'+
-		this.utf8_encode(this._attrib_escape(raw_text.replace(/\s+/g, " ").substr(0,max_description_length)))+'" / / / / / / / / / / / />'+"\n"+
+		this.utf8_encode(this._attrib_escape(raw_text.replace(/\s+/g, " ").substr(0,max_description_length)))+'" / / / / / / / / / / / / />'+"\n"+
 		exp.meta_author+
 		exp.custom_bs+
 		"</h"+"ead><"+"body>"+data+"</bod"+"y></h"+"tml>\n"; raw_text = null;
@@ -4313,7 +4313,7 @@ woas["export_wiki"] = function () {
 		_export_default_ext = $("woas_ep_ext").value;
 		exp["meta_author"] = this.trim($("woas_ep_author").value);
 		if (exp.meta_author.length)
-			exp.meta_author = '<meta name="author" content="'+this._attrib_escape(this.xhtml_encode(exp.meta_author))+'" / / / / / / / / / / / />'+"\n";
+			exp.meta_author = '<meta name="author" content="'+this._attrib_escape(this.xhtml_encode(exp.meta_author))+'" / / / / / / / / / / / / />'+"\n";
 		_export_unix_norm = $("woas_cb_unix_norm").checked;
 	} catch (e) { alert(e); return false; }
 	
@@ -4504,7 +4504,7 @@ function setWikiImage() {
 }
 
 function setHTMLImage() {
-	setImage('<img src=\'','\' / / / / / / / / / / / />');
+	setImage('<img src=\'','\' / / / / / / / / / / / / />');
 }
 
 function setWikiUrl() {
@@ -4703,14 +4703,14 @@ function ro_woas() {
 function open_table_help() {
 	var w = woas.popup("help", 350, 200, ",menubar=no,toolbar=no,location=no,status=no,dialog=yes");
 	w.document.writeln("<html><head><title>Building tables<\/title><\/head><body>");
-	w.document.writeln("<u>Building tables:<\/u><br / / / / / / / / / / / /><br / / / / / / / / / / / />");
-	w.document.writeln("<tt>{|   <\/tt><br / / / / / / / / / / / />");
-	w.document.writeln("<tt>|+ Table Caption<\/tt><br / / / / / / / / / / / />");
-	w.document.writeln("<tt>| *colum 1* || *column 2* || *column 3*<\/tt><br / / / / / / / / / / / />");
-	w.document.writeln("<tt>|-<\/tt><br / / / / / / / / / / / />");
-	w.document.writeln("<tt>| line 2 || [[a link]] || something<\/tt><br / / / / / / / / / / / />");
-	w.document.writeln("<tt>|-<\/tt><br / / / / / / / / / / / />");
-	w.document.writeln("<tt>| line 3 || || more stuff<\/tt><br / / / / / / / / / / / />");
+	w.document.writeln("<u>Building tables:<\/u><br / / / / / / / / / / / / /><br / / / / / / / / / / / / />");
+	w.document.writeln("<tt>{|   <\/tt><br / / / / / / / / / / / / />");
+	w.document.writeln("<tt>|+ Table Caption<\/tt><br / / / / / / / / / / / / />");
+	w.document.writeln("<tt>| *colum 1* || *column 2* || *column 3*<\/tt><br / / / / / / / / / / / / />");
+	w.document.writeln("<tt>|-<\/tt><br / / / / / / / / / / / / />");
+	w.document.writeln("<tt>| line 2 || [[a link]] || something<\/tt><br / / / / / / / / / / / / />");
+	w.document.writeln("<tt>|-<\/tt><br / / / / / / / / / / / / />");
+	w.document.writeln("<tt>| line 3 || || more stuff<\/tt><br / / / / / / / / / / / / />");
 	w.document.writeln("<tt>|}   <\/tt>");
 	w.document.writeln("<\/body><\/html>");
 	w.document.close();
@@ -4751,7 +4751,7 @@ function import_wiki() {
 <div class="wiki_header bg" id="sw_wiki_header" style="position: absolute;">
 <table cellspacing="0" width="100%">
 <tbody><tr>
-<td><span class="title" id="wiki_title">Subsystems</span></td>
+<td><span class="title" id="wiki_title">Configuration</span></td>
 <td align="right">
 <div id="menu_back" style="display: inline; cursor: pointer; visibility: visible;"><a title="Back" onclick="go_back()"><img id="img_back" style="display: inline; visibility: visible;" alt="Back" src="data:image/png;base64,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" /><span id="alt_back" style="display: none; visibility: hidden;">&nbsp;<strong>[Back]</strong>&nbsp;</span></a></div>
 <div id="menu_forward" style="display: none; cursor: pointer; visibility: hidden;"><a title="Forward" onclick="go_forward()"><img id="img_forward" style="display: inline; visibility: visible;" alt="Forward" src="data:image/png;base64,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" /><span id="alt_forward" style="display: none; visibility: hidden;">&nbsp;<strong>[Forward]</strong>&nbsp;</span></a></div>
@@ -4814,7 +4814,7 @@ Wiki Code:
   <input class="wiki_button" name="img" id="img" value="Image" onclick="setHTMLImage()" type="submit" />
   <input class="wiki_button" name="url" id="url" value="Link" onclick="setHTMLUrl()" type="submit" />
 </div>
-<textarea id="wiki_editor" style="width: 1132px; height: 599px;" rows="0" cols="0"></textarea> 
+<textarea id="wiki_editor" style="width: 1131px; height: 378px;" rows="0" cols="0"></textarea> 
 </div>
 <div id="debug_info" style="display: none; visibility: hidden; z-index: 101; text-align: right; width: 300px;">
 <h2>Debug console</h2>
