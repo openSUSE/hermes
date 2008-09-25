@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 17) do
+ActiveRecord::Schema.define(:version => 21) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -51,13 +51,15 @@ ActiveRecord::Schema.define(:version => 17) do
     t.string   "msgtype",      :limit => 64
     t.datetime "added",                      :null => false
     t.integer  "defaultdelay"
+    t.text     "description"
   end
 
   add_index "msg_types", ["msgtype"], :name => "msgtype"
 
-  create_table "msg_types_parameters", :id => false, :force => true do |t|
+  create_table "msg_types_parameters", :force => true do |t|
     t.integer "msg_type_id",  :null => false
     t.integer "parameter_id", :null => false
+    t.text    "description"
   end
 
   add_index "msg_types_parameters", ["msg_type_id", "parameter_id"], :name => "msg_type_parameter_id", :unique => true
@@ -72,6 +74,7 @@ ActiveRecord::Schema.define(:version => 17) do
     t.boolean "enabled",     :default => true
   end
 
+  add_index "msg_types_people", ["person_id", "msg_type_id", "delivery_id"], :name => "person_msg_type_delivery_idx", :unique => true
   add_index "msg_types_people", ["person_id", "msg_type_id"], :name => "person_id"
 
   create_table "notification_parameters", :force => true do |t|
@@ -93,7 +96,8 @@ ActiveRecord::Schema.define(:version => 17) do
   add_index "notifications", ["generated"], :name => "index_notifications_on_generated"
 
   create_table "parameters", :force => true do |t|
-    t.string "name", :limit => 64
+    t.string "name",    :limit => 64
+    t.string "hr_name"
   end
 
   create_table "persons", :force => true do |t|
