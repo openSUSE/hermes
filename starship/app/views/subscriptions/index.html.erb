@@ -1,9 +1,8 @@
 <% javascript_include_tag :defaults %>
 
-<h1>Message Type Handling for <%= @person.stringid %></h1>
 <table>
 <tr>
-<td><h3>Subscribed Messagtypes</h3></td>
+<td><h3>You are subscribed to the following message types: </h3></td>
 <!-- <td><h3>Latest subscribed Messages</h3></td> -->
 </tr>
 <tr><td valign=top>
@@ -18,7 +17,8 @@
 
 <% @subscribedMsgs.each_with_index  { |subs,i| %>
   <tr id="filter_<%=i%>" >
-    <td id="edit_link_<%=i%>"><%= link_to subs.msg_type.msgtype, edit_subscription_path(subs) %></td>
+    <td id="edit_link_<%=i%>">
+		<%= link_to subs.msg_type.type_desc, edit_subscription_path(subs) %></td>
     <td><%= subs.delay.name %></td>
     <td><%= subs.delivery ? subs.delivery.name : '' %></td>
     <td><%= link_to_remote subs.enabled ? "Enabled" : "Disabled", { :url => { :action => 'disable', :id => i, :subs => subs }}, { :id => "disable_link_#{i}" }  %></td>
@@ -26,6 +26,7 @@
   </tr>
   <% } %>
 </table>
+(click on the message type to change your settings for it.)
 
 
 <!--
@@ -60,10 +61,3 @@
 <div id='new_subscr' style="display: none;">
   <%= render(:partial => 'new_subscription', :locals => { :delays => @avail_delays, :deliveries => @avail_deliveries, :types => @avail_types } ) %>
 </div>
-
-
-
-
-
-
-

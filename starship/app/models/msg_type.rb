@@ -16,4 +16,8 @@ class MsgType < ActiveRecord::Base
                :conditions => ['msgtype = ?', "%#{type}%"]
   end
   
+  def type_desc
+    return description.nil? ? msgtype : description
+  end
+
 end

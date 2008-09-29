@@ -1,4 +1,4 @@
-<h1>Change Subscription for: <%= MsgType.find(@subscr.msg_type_id).msgtype %></h1>
+<h3>Changing settings for your subscription to message type: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
 
 <% form_for @subscr do |f| %>
 <table class="defaultTable">
@@ -20,10 +20,17 @@
 
 </table>
 <hr/>
+<h3>Filter configuration for your subscription to message type: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
 <table>
   <tbody id="filter_table" style="">
       <tr>
-      <td><b>Filter: </b></td>
+      <td>
+      	<% if (@filters.length == 0) %>
+		  <b>No filters set</b>
+		<% else %>
+		  <b>Filter: </b>
+		<% end -%>
+	  </td>
       <td></td>
       <td></td>
       <td></td>

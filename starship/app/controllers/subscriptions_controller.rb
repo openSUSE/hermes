@@ -13,6 +13,7 @@ def index
   @avail_delays = Delay.find(:all)
 end
 
+
 def create
   if request.post?
 
