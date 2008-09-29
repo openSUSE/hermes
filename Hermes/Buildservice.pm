@@ -42,7 +42,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( expandFromMsgType );
 
-our($hermesUserInfoRef, $cachedProject, $cachedPackage);
+our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedWatchlist);
 
 #
 # expand the message, that means
@@ -183,6 +183,7 @@ sub applyFilter( $$ )
   my $res = 1;
 
   if( $filterRef->{operator} eq "special" ) {
+
     if( $filterRef->{string} eq "_myprojects" ) {
       # user must be involved in the project.
       my $user = $paramHash->{_userId};
@@ -197,6 +198,7 @@ sub applyFilter( $$ )
       } else {
 	log( 'info', "User <$user> is in the maintainer group for <$prjStr>" );
       }
+
     } elsif( $filterRef->{string} eq "_mypackages" ) {
       # user must be involved in the package.
       my $user = $paramHash->{_userId};
@@ -212,6 +214,22 @@ sub applyFilter( $$ )
       } else {
 	log( 'info', "User <$user> is in the maintainer group for <$pkgStr>" );
       }
+
+    } elsif( $filterRef->{string} eq "_mywatchlist" ) {
+      #user mast have $project in his watchlist
+      my $user = $paramHash->{_userId};
+      my $prj = $paramHash->{project};
+      
+      log( 'info', "Checking for project <$prj> in watchlist of user <$user>" );
+      my $watchlistHash = userWatchList( $user );
+
+      if ( ! $watchlistHash->{$prj} ) {
+        log( 'info', "User <$user> has project <$prj> NOT in his watchlist" );
+        $res = 0;
+      } else {
+        log( 'info', "User <$user> has project <$prj> in his watchlist" );
+      }
+
     } elsif( $filterRef->{string} eq "_myrequests" ) {
       # user is maintainer of source or target project
       my $user = $paramHash->{_userId};
@@ -237,9 +255,11 @@ sub applyFilter( $$ )
 	  log( 'info', "User <$user> is in the maintainer group for <$sPrj>" );
         }
       }
+
     } else {
       log( 'error', "Unknown special filter type " . $filterRef->{string} );
     }
+
   } elsif( $filterRef->{operator} eq "oneof" ) {
     # the parameter value must be contained in the filter string
     if( $paramHash->{ $filterRef->{param} } ) {
@@ -301,7 +321,7 @@ sub usersOfProject( $ )
   my $userHashRef;
 
   if( $project ) {
-    my $meta = callOBSAPI( 'prjMetaRef', $project );
+    my $meta = callOBSAPI( 'prjMetaRef', ($project) );
     $userHashRef = extractUserFromMeta( $meta );
     $cachedProject->{$project} = $userHashRef;
     log( 'info', "These users are in project <$project>: " . join( ', ', keys %{$userHashRef} ) );
@@ -325,7 +345,7 @@ sub usersOfPackage( $$ )
   my $userHashRef;
 
   if($project and $package) {
-    my $meta = callOBSAPI( 'pkgMetaRef', $project, $package );
+    my $meta = callOBSAPI( 'pkgMetaRef', ( $project,$package ) );
     $userHashRef = extractUserFromMeta( $meta );
     $cachedPackage->{"$project/$package"} = $userHashRef;
     log( 'info', "These users are in package <$project/$package>: " . join( ', ', keys %{$userHashRef} ) );
@@ -336,10 +356,34 @@ sub usersOfPackage( $$ )
   return $userHashRef;
 }
 
+sub userWatchList( $$ )
+{
+  my ($user) = @_;
+  if( defined $cachedWatchlist->{$user} ) {
+    log( 'info', "Using userdata for $user from cache" );
+    return $cachedWatchlist->{$user};
+  }
+  my $watchlistHashRef;
+
+  if( $user ) {
+    my $meta = callOBSAPI( 'personMetaRef', ($user) );
+    $watchlistHashRef = extractProjectsFromPersonMeta( $meta );
+    $cachedWatchlist->{$user} = $watchlistHashRef;
+    log( 'info', "These Projects are watched by <$user>: " . join( ', ', keys %{$watchlistHashRef} ) );
+  } else {
+    # unfortunately no user param, but privacy is requested.
+    # -> problem
+    log( 'warning', "Problem: Privacy is requested, but no param user" );
+  }
+
+  return $watchlistHashRef;
+}
+
 sub invalidateCache()
 {
     $cachedPackage = {};
     $cachedProject = {};
+    $cachedWatchlist = {};
 }
 
 #
@@ -349,11 +393,16 @@ sub invalidateCache()
 #
 sub callOBSAPI( $$;$ )
 {
-  my ( $function, $project, $package ) = @_;
-
-  return {} unless( $project );
-  $project = uri_escape( $project );
-  $package = uri_escape( $package ) if( $package );
+  my ( $function, @urlparams ) = @_;
+  my $urlstr = "";
+# my $auth = 0;
+  foreach (@urlparams){
+    if ( $urlstr != "" ){
+      $urlstr .= '/';
+    }
+    $urlstr .= uri_escape( $_ );
+  }
+# return {} unless( $project );
 
   my %results;
   my $OBSAPIUrl = $Hermes::Config::OBSAPIBase ||  "http://api.opensuse.org/";
@@ -362,19 +411,21 @@ sub callOBSAPI( $$;$ )
 
   my $ua = LWP::UserAgent->new;
   $ua->agent( "Hermes Buildservice Processor" );
-  my $uri;
+  my $uri = $OBSAPIUrl . "public/";
 
-  if( $function eq 'prjMetaRef' ) {
-    $uri = $OBSAPIUrl . "public/source/$project/_meta";
-  } elsif( $function eq 'pkgMetaRef' ) {
-    $uri = $OBSAPIUrl . "public/source/$project/$package/_meta";
+  if( $function eq 'prjMetaRef' || $function eq 'pkgMetaRef') {
+    $uri .= "source/$urlstr/_meta";
+  } elsif($function eq 'personMetaRef') {
+    $uri .= "person/$urlstr/_watchlist";
+#   $auth = 1;
   }
 
   log( 'info', "Asking $uri with GET" );
+
   my $req = HTTP::Request->new( GET => $uri );
   $req->header( 'Accept' => 'text/xml' );
-  #$req->authorization_basic( $Hermes::Config::OBSAPIUser,
-  #			      $Hermes::Config::OBSAPIPasswd );
+# $req->authorization_basic( $Hermes::Config::OBSAPIUser,
+#     			      $Hermes::Config::OBSAPIPasswd ) if($auth);
 
   my $res = $ua->request( $req );
 
@@ -404,6 +455,25 @@ sub extractUserFromMeta( $ )
     }
   }
   return \%retuser;
+}
+
+#
+# returns a list of watched projects of a user
+#
+sub extractProjectsFromPersonMeta( $ )
+{
+  my ($meta) = @_;
+  my %retwatchlist;
+
+  if ( $meta ) {
+    $meta =~ s/.*?<watchlist>\s*(.*?)\s*<\/watchlist>.*/$1/gs;
+
+    foreach ( split(/\n/,$meta) ) {
+      $_ =~ s/.*?<project\sname\=\"(.+?)\"\/>.*?/$1/;
+      $retwatchlist{$_} = 1 if( $1 );
+    }
+  }
+  return \%retwatchlist;
 }
 
 $dbh = Hermes::DBI->connect();
