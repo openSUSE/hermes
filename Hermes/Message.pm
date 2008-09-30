@@ -393,7 +393,7 @@ sub storeNotificationParameters($$$ )
   return unless( $typeId =~ /^\d+$/ );
 
   my $paramSth = $dbh->prepare( "SELECT id FROM parameters WHERE name=?" );
-  my $inssth = $dbh->prepare( "INSERT INTO msg_types_parameters VALUES ($typeId, ?)" );
+  my $inssth = $dbh->prepare( "INSERT INTO msg_types_parameters (msg_type_id, parameter_id) VALUES ($typeId, ?)" );
   my $insparamSth = $dbh->prepare( 'INSERT INTO notification_parameters(notification_id, parameter_id, value ) VALUES (?,?,?)' );
 
   my $msgTypeSql = "SELECT parameter_id FROM msg_types_parameters WHERE msg_type_id=$typeId";

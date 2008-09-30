@@ -76,9 +76,10 @@ sub cgiapp_prerun
 
     my @httpHeader = $q->http();
     # log('info', "HTTP-Header: " . join(", ", @httpHeader ) );
-    log('info', "User Name: " . $q->http('HTTP_USER_NAME'));
+
 
     my $loggedInUser = $q->http('HTTP_X_USERNAME');
+    log('info', "User Name: " . $loggedInUser ? $loggedInUser : "anonymous" );
     # $loggedInUser = 'termite'; # DEBUG !! REMOVE ME !!
     if( $loggedInUser ) {
       my $sql = "SELECT admin FROM persons WHERE stringid=?";
@@ -102,6 +103,22 @@ sub cgiapp_postrun
   $self->header_type( 'header' );
   # $self->header_props( -expires => 'now' );
   $self->header_props( '-Cache-Control' => 'no-cache' );
+}
+
+#
+# This sub creates a CGI query object for the CGI::Application framework. It needs to
+# be overwritten because we need the pragma -oldstyle_urls which is not default for CGI.
+# Not setting oldstyle-uri makes the CGI parser to split up parameters at semicolons.
+# That's wrong because for us and creates strange additional parameters in the DB
+# because for example comments with semicolons are split up.
+#
+sub cgiapp_get_query
+{
+  my $self = shift();
+
+  use CGI qw/-oldstyle_urls/;
+
+  return CGI->new();
 }
 
 #
