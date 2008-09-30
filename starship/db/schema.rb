@@ -74,7 +74,6 @@ ActiveRecord::Schema.define(:version => 21) do
     t.boolean "enabled",     :default => true
   end
 
-  add_index "msg_types_people", ["person_id", "msg_type_id", "delivery_id"], :name => "person_msg_type_delivery_idx", :unique => true
   add_index "msg_types_people", ["person_id", "msg_type_id"], :name => "person_id"
 
   create_table "notification_parameters", :force => true do |t|
@@ -109,10 +108,10 @@ ActiveRecord::Schema.define(:version => 21) do
   end
 
   create_table "subscription_filters", :force => true do |t|
-    t.integer "subscription_id", :null => false
-    t.integer "parameter_id",    :null => false
-    t.string  "operator",        :null => false
-    t.string  "filterstring",    :null => false
+    t.integer "subscription_id",                 :null => false
+    t.integer "parameter_id",                    :null => false
+    t.string  "operator",        :default => "", :null => false
+    t.string  "filterstring",    :default => "", :null => false
   end
 
   add_index "subscription_filters", ["subscription_id"], :name => "subscription_id"
