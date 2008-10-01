@@ -1,8 +1,11 @@
 @subject: New <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> for <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
 
-<TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> created by <TMPL_VAR NAME="who">:
+<TMPL_VAR NAME="type">-request from: <TMPL_VAR NAME="who">
 <TMPL_IF NAME="sourceproject">
    <TMPL_VAR NAME="sourceproject">/<TMPL_VAR NAME="sourcepackage"> -> <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
+
+   https://build.opensuse.org/package/show?package=<TMPL_VAR NAME="sourcepackage">&project=<TMPL_VAR NAME="sourceproject">
+   https://build.opensuse.org/package/show?package=<TMPL_VAR NAME="targetpackage">&project=<TMPL_VAR NAME="targetproject">
 <TMPL_IF NAME="sourcerevision">
    Source revision md5: <TMPL_VAR NAME="sourcerevision">
 </TMPL_IF>
