@@ -396,12 +396,17 @@ sub callOBSAPI( $$;$ )
   my ( $function, @urlparams ) = @_;
   my $urlstr = "";
 # my $auth = 0;
+
+
+# new perl way: join( '/', map{ uri_escape($_)} (@urlparams) );
   foreach (@urlparams){
-    if ( $urlstr != "" ){
+    if ( $urlstr ne "" ){
       $urlstr .= '/';
     }
     $urlstr .= uri_escape( $_ );
   }
+
+
 # return {} unless( $project );
 
   my %results;
