@@ -1,0 +1,74 @@
+#!/usr/bin/env ruby
+
+@global_count = 0
+
+def create_notifications(count,msgtype)
+  return unless count > 0
+  Notification.transaction do
+    notification_ids = Array.new
+    puts "Creating notifications..."
+    1.upto count do |i|
+      n = Notification.create :msg_type => msgtype, :generated => (Time.now + @options.offset), :sender => "test"
+      notification_ids << n.id
+      @global_count += 1
+      puts "#{@global_count}/#{@options.count}"
+    end
+    param_sql_list = notification_ids.map do |n_id| 
+      msgtype.parameter_ids.map {|p_id| "(#{n_id},#{p_id},'test')"}.join(",")
+    end
+
+    puts "Creating notification parameters..."
+    param_sql = "insert into notification_parameters (notification_id,parameter_id,value) values " + param_sql_list.join(",")
+    ActiveRecord::Base.connection.execute param_sql
+  end
+end
+
+require 'optparse'
+require 'ostruct'
+
+@options = OpenStruct.new
+@options.count = 200000
+@options.env = "development"
+@options.offset = 0
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: script/fill_db [options]"
+
+  opts.on("-c", "--count N", "number of entries to generate") do |count|
+    puts "count:" +count
+    @options.count = count.to_i
+  end
+
+  opts.on("-e", "--env ENV", "rails environment to use") do |env|
+    @options.env = env
+  end
+
+  opts.on( "--offset OFF", "generated offset in days") do |offset|
+    puts "offset: "+offset
+    @options.offset = offset.to_i*60*60*24
+  end
+
+  opts.on_tail("-h", "--help", "show this message") do
+    puts opts
+    exit
+  end
+end.parse!
+
+puts "Initializing #{@options.env} environment..."
+RAILS_ENV = @options.env
+require File.dirname(__FILE__) + '/../config/boot'
+require RAILS_ROOT+"/config/environment"
+
+
+mt = MsgType.find_by_msgtype "OBS_SRCSRV_REQUEST_CREATE"
+
+# create notifications in blocks of 1000
+# active record chokes if the notification parameter insert gets too long
+
+block_length = 1000
+1.upto(@options.count / block_length) do
+  create_notifications(block_length,mt)
+end
+create_notifications(@options.count % block_length, mt)
+
+puts "Finished."

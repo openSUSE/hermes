@@ -24,6 +24,7 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+puts "Initializing #{options.env} environment..."
 RAILS_ENV = options.env
 require File.dirname(__FILE__) + '/../config/boot'
 require RAILS_ROOT+"/config/environment"
@@ -31,23 +32,38 @@ require RAILS_ROOT+"/config/environment"
 delete_time = Time.now - options.days.to_i*60*60*24
 
 Notification.transaction do 
-  Notification.delete_all ["generated < ?", delete_time]
-  nparms_to_delete = NotificationParameter.find_by_sql <<-END_SQL
-    SELECT np.id from notification_parameters np
+  puts "Deleting notifications..."
+  @ncount = Notification.delete_all ["generated < ?", delete_time]
+  puts "Deleting notification parameters..."
+  @npcount = ActiveRecord::Base.connection.delete <<-END_SQL
+    DELETE QUICK FROM np
+    USING notification_parameters np
     LEFT OUTER JOIN notifications n
       ON n.id = np.notification_id
     WHERE ISNULL(n.id)
   END_SQL
-  NotificationParameter.delete nparms_to_delete
 end
 
+puts "#@ncount notifications with #@npcount parameters deleted."
+
+puts "Deleting messages..."
 Message.transaction do
-  MessagesPeople.delete_all ["sent < ?", delete_time]
-  msgs_to_delete = Message.find_by_sql <<-END_SQL
-    SELECT m.id from messages m 
+  @mpcount = MessagesPeople.delete_all ["sent < ?", delete_time]
+  @mcount = ActiveRecord::Base.connection.delete <<-END_SQL
+    DELETE QUICK FROM m
+    USING messages m 
     LEFT OUTER JOIN messages_people mp 
       ON m.id = mp.message_id
     WHERE ISNULL(mp.message_id)
   END_SQL
-  Message.delete msgs_to_delete
 end
+
+puts "#@mcount messages deleted."
+puts "#@mpcount entries in messages_people deleted."
+
+puts "Optimizing tables... "
+ActiveRecord::Base.connection.execute "optimize table notifications"
+ActiveRecord::Base.connection.execute "optimize table notification_parameters"
+ActiveRecord::Base.connection.execute "optimize table messages"
+ActiveRecord::Base.connection.execute "optimize table messages_people"
+puts "done."
