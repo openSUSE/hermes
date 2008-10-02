@@ -24,6 +24,7 @@ package Hermi::Rest;
 use strict;
 use base 'CGI::Application';
 # use CGI::Application::Plugin::ActionDispatch;
+
 use Hermes::Config;
 use Hermes::Log;
 use Hermes::Message;
@@ -40,6 +41,7 @@ sub setup {
   my $self = shift;
   $self->start_mode('hello');
   $self->run_modes(
+		   'ajaxupdate' => 'ajaxUpdate',
 		   'post'   => 'postMessage',
 		   'notify' => 'postNotification',
 		   'hello'  => 'sayHello',
@@ -51,7 +53,6 @@ sub setup {
   $htmlTmpl = $self->load_tmpl( 'hermes.tmpl',
 				die_on_bad_params => 1,
 				cache => 1 );
-
 }
 
 # prerun is needed to handle POST calls that have some of the
@@ -63,33 +64,41 @@ sub cgiapp_prerun
 
   # Get CGI query object
   my $q = $self->query();
-  if( lc $q->url_param( 'rm' ) eq 'post' ) {
+  my $mode = lc $q->url_param('rm');
+  if( $mode eq 'post' ) {
     $self->prerun_mode( 'post' );
+  } elsif( $mode eq "ajaxupdate" ) {
+    $self->prerun_mode( 'ajaxupdate' );
   }
+  log('debug', "Current Runmode: " . $self->get_current_runmode() );
 
   # Check for the users admin flag
   $user = "anonymous";
+  my $loggedInUser;
   if( lc $Hermes::Config::authentication eq "ichain" ) {
     # with iChain authentification, the HTTP request contains trustable header
     # values like the username. Since iChain works like a proxy these can be
     # taken for real and no further dealing with passwords etc. is needed.
 
-    my @httpHeader = $q->http();
+    # my @httpHeader = $q->http();
     # log('info', "HTTP-Header: " . join(", ", @httpHeader ) );
 
 
-    my $loggedInUser = $q->http('HTTP_X_USERNAME');
-    log('info', "User Name: " . $loggedInUser ? $loggedInUser : "anonymous" );
-    # $loggedInUser = 'termite'; # DEBUG !! REMOVE ME !!
-    if( $loggedInUser ) {
-      my $sql = "SELECT admin FROM persons WHERE stringid=?";
-      my $sth = $dbh->prepare( $sql );
-      $sth->execute( $loggedInUser );
-      my ($admin) = $sth->fetchrow_array();
-      log( 'info', "Admin flag for user <$loggedInUser>: $admin" );
-      $isAdmin{ $loggedInUser } = $admin > 0;
-      $user = $loggedInUser;
-    }
+    $loggedInUser = $q->http('HTTP_X_USERNAME');
+  }elsif( $Hermes::Config::authentication =~ /^ichaintest-(.+)$/) {
+    $loggedInUser = $1;
+  }
+
+  log('info', "User Name: " . $loggedInUser ? $loggedInUser : "anonymous" );
+
+  if( $loggedInUser ) {
+    my $sql = "SELECT admin FROM persons WHERE stringid=?";
+    my $sth = $dbh->prepare( $sql );
+    $sth->execute( $loggedInUser );
+    my ($admin) = $sth->fetchrow_array();
+    log( 'info', "Admin flag for user <$loggedInUser>: $admin" );
+    $isAdmin{ $loggedInUser } = $admin > 0;
+    $user = $loggedInUser;
   }
 
   my $post = $q->param( 'POSTDATA' );
@@ -286,6 +295,8 @@ sub editType()
   }
 
   $tmpl->param( type  => $detailsRef->{_type} );
+  $tmpl->param( NotiTypeDesc => $detailsRef->{_description} || "not yet defined" );
+  $tmpl->param( NotiTypeId => $detailsRef->{_id} );
   $tmpl->param( added => $detailsRef->{_added} );
   $tmpl->param( delay => $detailsRef->{_defaultdelay} );
 
@@ -355,6 +366,26 @@ sub testRender( $$;$ )
     return $tmpl->output;
   }
   return "no template available!";
+}
+
+sub ajaxUpdate
+{
+  my $self = shift;
+
+  # Get CGI query object
+  my $q = $self->query();
+  my $value = $q->param( 'value' );
+  my $editId  = $q->param( 'editorId' );
+  my $id = $q->param( 'id' ) || "go away";
+
+  log('debug', "Ajax-Update: $editId = $id" );
+  if( $editId eq "noti_type_desc" && $id =~ /^\d+$/ ) {
+    my $sql = "UPDATE msg_types SET description=? WHERE id=?";
+
+    my $sth = $dbh->prepare( $sql );
+    $sth->execute( $value, $id );
+  }
+  return "$value";
 }
 
 $dbh = Hermes::DBI->connect();

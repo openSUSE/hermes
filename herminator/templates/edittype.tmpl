@@ -1,4 +1,15 @@
 <h2>Template <TMPL_VAR NAME="type"></h2>
+
+<span id="noti_type_desc" class="infotext"><TMPL_VAR NAME="NotiTypeDesc"></span>
+
+<script type="text/javascript">
+    new Ajax.InPlaceEditor( 'noti_type_desc', 'index.cgi', 
+             { callback: function(form, value) { 
+	         return 'rm=ajaxupdate&id=<TMPL_VAR NAME="NotiTypeId">&value='+escape(value) } 
+             } )
+</script>
+
+
 <div id="box">
 <p>added on: <TMPL_VAR NAME="added"></p>
 <p>Default delay: <TMPL_VAR NAME="delay"></p>
