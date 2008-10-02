@@ -58,7 +58,7 @@ puts "Initializing #{@options.env} environment..."
 RAILS_ENV = @options.env
 require File.dirname(__FILE__) + '/../config/boot'
 require RAILS_ROOT+"/config/environment"
-
+RAILS_DEFAULT_LOGGER.silence do
 
 mt = MsgType.find_by_msgtype "OBS_SRCSRV_REQUEST_CREATE"
 
@@ -72,3 +72,4 @@ end
 create_notifications(@options.count % block_length, mt)
 
 puts "Finished."
+end

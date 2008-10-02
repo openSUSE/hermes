@@ -29,41 +29,56 @@ RAILS_ENV = options.env
 require File.dirname(__FILE__) + '/../config/boot'
 require RAILS_ROOT+"/config/environment"
 
+RAILS_DEFAULT_LOGGER.silence do
 delete_time = Time.now - options.days.to_i*60*60*24
+slice_length = 10000
 
-Notification.transaction do 
-  puts "Deleting notifications..."
-  @ncount = Notification.delete_all ["generated < ?", delete_time]
-  puts "Deleting notification parameters..."
-  @npcount = ActiveRecord::Base.connection.delete <<-END_SQL
-    DELETE QUICK FROM np
-    USING notification_parameters np
-    LEFT OUTER JOIN notifications n
-      ON n.id = np.notification_id
-    WHERE ISNULL(n.id)
-  END_SQL
+notifications = Notification.find :all, :select => :id, :conditions => ["generated < ?", delete_time]
+notifications.map! {|n| n.id}
+@ncount = @npcount = 0
+
+puts "Deleting #{notifications.length} notifications in blocks of #{slice_length}..."
+while( not (slice = notifications.slice!(0,slice_length)).empty? )
+  Notification.delete slice
+  @ncount += slice.length
+  print "  #@ncount notifications deleted, #{notifications.length} remaining. Deleting parameters... "
+  STDOUT.flush
+  nc = NotificationParameter.delete_all :notification_id => slice
+  @npcount += nc
+  puts "#{nc} deleted."
 end
 
-puts "#@ncount notifications with #@npcount parameters deleted."
+puts "#@ncount notifications with #@npcount parameters deleted.\n\n"
 
-puts "Deleting messages..."
-Message.transaction do
-  @mpcount = MessagesPeople.delete_all ["sent < ?", delete_time]
-  @mcount = ActiveRecord::Base.connection.delete <<-END_SQL
-    DELETE QUICK FROM m
-    USING messages m 
-    LEFT OUTER JOIN messages_people mp 
-      ON m.id = mp.message_id
-    WHERE ISNULL(mp.message_id)
-  END_SQL
+print "Deleting sent entries in messages_people... "
+STDOUT.flush
+@mpcount = MessagesPeople.delete_all ["sent < ?", delete_time]
+puts "#@mpcount deleted."
+
+messages = Message.find_by_sql <<-END_SQL
+  SELECT m.id
+  FROM messages m
+  LEFT OUTER JOIN messages_people mp
+    ON m.id = mp.message_id
+  WHERE ISNULL(mp.message_id)
+END_SQL
+messages.map {|m| m.id}
+@mcount = 0
+puts "Deleting #{messages.length} unused messages in blocks of #{slice_length}..."
+while( not (slice = messages.slice!(0,slice_length)).empty? )
+  Message.delete slice
+  @mcount += slice.length
+  puts "  #@mcount deleted, #{messages.length} remaining."
 end
 
-puts "#@mcount messages deleted."
-puts "#@mpcount entries in messages_people deleted."
-
-puts "Optimizing tables... "
-ActiveRecord::Base.connection.execute "optimize table notifications"
-ActiveRecord::Base.connection.execute "optimize table notification_parameters"
-ActiveRecord::Base.connection.execute "optimize table messages"
-ActiveRecord::Base.connection.execute "optimize table messages_people"
+puts "\nOptimizing tables..."
+ActiveRecord::Base.connection.execute "OPTIMIZE TABLE notifications"
+puts "  notifications optimized."
+ActiveRecord::Base.connection.execute "OPTIMIZE TABLE notification_parameters"
+puts "  notification_parameters optimized."
+ActiveRecord::Base.connection.execute "OPTIMIZE TABLE messages"
+puts "  messages optimized."
+ActiveRecord::Base.connection.execute "OPTIMIZE TABLE messages_people"
+puts "  messages_people optimized."
 puts "done."
+end
