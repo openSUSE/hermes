@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<guiabstractions>
+
+  <filterabstractions>
+      <filterabstract id="my_packs">
+         <summary>My Packages</summary>
+         <description>All my packages</description>
+         <filter parameter="project" operator="special" value="_mypackages"/>
+      </filterabstract>
+
+      <filterabstract id="my_watches">
+         <summary>My Watchlist</summary>
+         <description>My Watchlist</description>
+         <filter parameter="project" operator="special" value="_mywatchlist"/>
+      </filterabstract>
+  </filterabstractions>
+
+  <subscriptionabstracts>
+    <group id="build_results">
+      <name>Paketbau-Resultate</name>
+      
+      <subscription id="build_fail">
+        <summary>Build Failure</summary>
+        <description>Fehlgeschlagen long</description>
+        <msg_type name="obs_build_fail"/>
+        <checkable filterabstract="my_packs"/>
+        <checkable filterabstract="my_watches"/>
+      </subscription>
+
+      <subscription id="build_ok">
+        <summary>Build Success</summary>
+        <description>Der Bau war erfolgreich</description>
+        <msg_type name="obs_build_ok"/>
+        <checkable filterabstract="my_packs"/>
+        <checkable filterabstract="my_watches"/>
+      </subscription>
+    </group>
+
+  </subscriptionabstracts>
+  
+</guiabstractions>
