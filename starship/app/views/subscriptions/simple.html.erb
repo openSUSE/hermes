@@ -1,0 +1,34 @@
+<% javascript_include_tag :defaults %>
+
+<% for group_id in @abstraction_groups.keys %>
+
+  <h3><%= @abstraction_groups[group_id] %> </h3>
+
+  <% for abstraction in @abstractions[group_id] %>
+  
+  <table class="defaultTable">
+  <tr><td>
+  - <%= abstraction.summary %> 
+  (<%= abstraction.description %>) 
+  </td>
+  <td>
+  
+  <table class="defaultTable">
+  <% for filter_abstract in abstraction.filterabstracts %>
+    <tr><td>
+    <%= filter_abstract.summary %> (<%= filter_abstract.description %>)
+    </td><td>
+    Delivery
+    </td><td>
+    Digest
+    </td></tr>
+  <% end %>
+  </table>
+  
+  </td></tr>
+  </table>
+  
+  <% end %>
+
+<% end %>
+

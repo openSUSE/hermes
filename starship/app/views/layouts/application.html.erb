@@ -126,7 +126,8 @@
          <ul class="navlist">
           <li><a href="/msg_types">Hermes</a></li>
 		  <li><a href="index.cgi?rm=doc">Documentation</a></li>
-		  <li><a href="/subscriptions">My Hermes</a></li>
+		  <li><a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">My Hermes</a></li>
+      <li><a href="<%= url_for(:controller => "subscriptions" , :action => "simple", :id => "simple") %>">My Hermes (simple)</a></li>
 
 
          </ul>
@@ -261,9 +262,7 @@
          </div>
 
          <div class="box_content" id="bodyContent">
-          <a name="top" id="top"></a>
-<!--          <h1>openSUSE.org Theme</h1>
-	  <h3 id="siteSub">From openSUSE</h3> -->
+
 	  <div id="contentSub"></div>
 
 			<% if flash[:notice] -%>

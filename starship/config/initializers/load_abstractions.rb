@@ -2,9 +2,9 @@
 require 'xml/smart'
 
 # hashes with key: element-id, value object
-abstractions = {}
-filterabstractions = {}
-abstractiongroups = {}
+abstractions = Hash.new
+filterabstractions = Hash.new
+abstractiongroups = Hash.new
 
 Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
   begin 
@@ -54,7 +54,6 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
   end
 }
 
-debugger
 
 SUBSCRIPTIONABSTRACTIONS = abstractions
 ABSTRACTIONGROUPS = abstractiongroups

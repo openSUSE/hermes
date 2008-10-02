@@ -17,7 +17,7 @@
 
   <subscriptionabstracts>
     <group id="build_results">
-      <name>Paketbau-Resultate</name>
+      <name>Package building results</name>
       
       <subscription id="build_fail">
         <summary>Build Failure</summary>

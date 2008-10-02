@@ -1,6 +1,21 @@
 class SubscriptionsController < ApplicationController
 
 
+def simple
+  
+  @person = session[:user]
+  @person.name ||= "unknown"
+  @hermestitle = "Subscriptions for #{@person.name}"
+
+  @abstraction_groups = ABSTRACTIONGROUPS
+  @abstractions = SUBSCRIPTIONABSTRACTIONS
+
+  @avail_types = MsgType.find(:all)
+  @avail_deliveries = Delivery.find(:all)
+  @avail_delays = Delay.find(:all)
+end
+
+
 def index
   @person = session[:user]
   @person.name ||= "unknown"
