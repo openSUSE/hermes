@@ -4,9 +4,10 @@ class SubscriptionsController < ApplicationController
 def index
   @person = session[:user]
   @person.name ||= "unknown"
+  @hermestitle = "Subscriptions for #{@person.name}"
 
   @subscribedMsgs = @person.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
-  @latestMsgs = @person.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
+  #@latestMsgs = @person.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
 
   @avail_types = MsgType.find(:all)
   @avail_deliveries = Delivery.find(:all)
