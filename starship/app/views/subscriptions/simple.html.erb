@@ -4,31 +4,52 @@
 
   <h3><%= @abstraction_groups[group_id] %> </h3>
 
+
+  <% form_for :subscription do |form| %>
+  <table class="defaultTable">
   <% for abstraction in @abstractions[group_id] %>
   
-  <table class="defaultTable">
-  <tr><td>
-  - <%= abstraction.summary %> 
-  (<%= abstraction.description %>) 
+  <tr><td valign='top'>
+  <%= abstraction.summary %> <br/>
+  <i><%= abstraction.description %></i> 
   </td>
   <td>
   
   <table class="defaultTable">
   <% for filter_abstract in abstraction.filterabstracts %>
-    <tr><td>
-    <%= filter_abstract.summary %> (<%= filter_abstract.description %>)
-    </td><td>
-    Delivery
-    </td><td>
-    Digest
-    </td></tr>
+  
+    <!-- form part for abstract id: <%= abstraction.id %> -->
+  
+    <tr><td valign='top'>
+    <%= form.check_box 'test' %>
+    </td>
+    <td valign='top'>
+    <%= filter_abstract.summary %> <br/>
+    <i><%= filter_abstract.description %></i>
+    </td><td valign='top'>
+    <%= form.select :delivery, @avail_deliveries %>
+    </td><td valign='top'>
+    <%= form.select :delay, @avail_delays %>
+    </td>
+    </tr>
   <% end %>
   </table>
   
+  <% end %>
+  
+  </td></tr>
+  <tr><td colspan='2' valign='top' align='right'>
+  <%= submit_tag %>
   </td></tr>
   </table>
-  
   <% end %>
 
 <% end %>
+
+<br/>
+
+You can choose from a list of default notifications here. 
+To configure more complex notifications, please use the expert interface. 
+
+
 

@@ -2,7 +2,6 @@ class SubscriptionsController < ApplicationController
 
 
 def simple
-  
   @person = session[:user]
   @person.name ||= "unknown"
   @hermestitle = "Subscriptions for #{@person.name}"
@@ -11,8 +10,8 @@ def simple
   @abstractions = SUBSCRIPTIONABSTRACTIONS
 
   @avail_types = MsgType.find(:all)
-  @avail_deliveries = Delivery.find(:all)
-  @avail_delays = Delay.find(:all)
+  @avail_deliveries = Delivery.find(:all, :order => 'id').map {|d| [d.name, d.id]}
+  @avail_delays = Delay.find(:all, :order => 'id').map {|d| [d.name, d.id]}
 end
 
 

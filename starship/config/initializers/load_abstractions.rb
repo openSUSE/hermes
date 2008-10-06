@@ -37,6 +37,7 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
         abstraction.summary = subscription_node.find("summary").first.text
         abstraction.description = subscription_node.find("description").first.text
         abstraction.msg_type = subscription_node.find("msg_type/@name").first.value
+        abstraction.id = subscription_node.find("@id").first.value
         abstraction.filterabstracts = Array.new
         
         #add filter abstractions
