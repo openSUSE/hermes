@@ -12,6 +12,7 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
     
     xml.root.find("//filterabstract").each do | node | 
       filter_abstraction = FilterAbstract.new()
+      filter_abstraction.id = node.find("@id").first.value
       filter_abstraction.summary = node.find("summary").first.text
       filter_abstraction.description = node.find("description").first.text
       filter_abstraction.filters = Array.new
@@ -30,7 +31,7 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
     xml.find("//group").each do | node | 
       group_id = node.find("@id").first.value
       abstractiongroups[group_id] = node.find("name").first.text
-      abstractions[group_id] = Array.new
+      abstractions[group_id] = Hash.new
 
       node.find("subscription").each do | subscription_node | 
         abstraction = SubscriptionAbstract.new()
@@ -38,13 +39,14 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
         abstraction.description = subscription_node.find("description").first.text
         abstraction.msg_type = subscription_node.find("msg_type/@name").first.value
         abstraction.id = subscription_node.find("@id").first.value
-        abstraction.filterabstracts = Array.new
+        abstraction.filterabstracts = Hash.new
         
         #add filter abstractions
         subscription_node.find("checkable").each do | checkable_node |
-          abstraction.filterabstracts << filterabstractions[checkable_node.find("@filterabstract").first.value]
+          filterabstract_name = checkable_node.find("@filterabstract").first.value
+          abstraction.filterabstracts[filterabstract_name] = filterabstractions[filterabstract_name]
         end
-        abstractions[group_id] << abstraction
+        abstractions[group_id][abstraction.id] = abstraction
       end
       
     end

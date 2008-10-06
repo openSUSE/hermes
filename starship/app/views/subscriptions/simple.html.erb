@@ -1,13 +1,12 @@
 <% javascript_include_tag :defaults %>
 
+<% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
 <% for group_id in @abstraction_groups.keys %>
 
   <h3><%= @abstraction_groups[group_id] %> </h3>
-
-
-  <% form_for :subscription do |form| %>
+  
   <table class="defaultTable">
-  <% for abstraction in @abstractions[group_id] %>
+  <% for abstraction in @abstractions[group_id].values %>
   
   <tr><td valign='top'>
   <%= abstraction.summary %> <br/>
@@ -16,12 +15,13 @@
   <td>
   
   <table class="defaultTable">
-  <% for filter_abstract in abstraction.filterabstracts %>
+  <% for filter_abstract in abstraction.filterabstracts.values %>
   
-    <!-- form part for abstract id: <%= abstraction.id %> -->
+    <!-- form part for abstract id: <%= abstraction.id %> filter_abstract id: <%= filter_abstract.id %> -->
   
     <tr><td valign='top'>
-    <%= form.check_box 'test' %>
+    <%= check_box_tag "#{abstraction.id}||#{filter_abstract.id}", "1", 
+      @person.subscribed_to_abstraction( group_id, abstraction.id, filter_abstract.id ) %>
     </td>
     <td valign='top'>
     <%= filter_abstract.summary %> <br/>
@@ -38,18 +38,15 @@
   <% end %>
   
   </td></tr>
-  <tr><td colspan='2' valign='top' align='right'>
-  <%= submit_tag %>
-  </td></tr>
   </table>
-  <% end %>
-
+ 
+<% end %>
+<%= submit_tag %>
 <% end %>
 
 <br/>
 
 You can choose from a list of default notifications here. 
-To configure more complex notifications, please use the expert interface. 
-
-
+To configure more complex notifications, please use the 
+<a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. 
 
