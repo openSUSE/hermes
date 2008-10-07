@@ -58,6 +58,15 @@ def create
 end
 
 
+def modify_simple_subscriptions
+  if request.post?
+
+  redirect_to :action => :simple
+  end
+end
+
+
+
 def redirect_to_index(msg = nil)
   flash[:notice] = msg
   redirect_to :action => :index

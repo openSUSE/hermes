@@ -20,16 +20,20 @@
     <!-- form part for abstract id: <%= abstraction.id %> filter_abstract id: <%= filter_abstract.id %> -->
   
     <tr><td valign='top'>
-    <%= check_box_tag "#{abstraction.id}||#{filter_abstract.id}", "1", 
-      @person.subscribed_to_abstraction( group_id, abstraction.id, filter_abstract.id ) %>
+    <% subscription = @person.subscribed_to_abstraction( group_id, abstraction.id, filter_abstract.id ) %>
+    <%= check_box_tag "#{abstraction.id}||#{filter_abstract.id}", "1", subscription %>
     </td>
     <td valign='top'>
     <%= filter_abstract.summary %> <br/>
     <i><%= filter_abstract.description %></i>
     </td><td valign='top'>
-    <%= form.select :delivery, @avail_deliveries %>
+    <% if ( subscription ) 
+      deliveryid = subscription.delivery.id
+      delayid = subscription.delay.id
+    end %>
+    <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delivery", options_for_select(@avail_deliveries, deliveryid) %>
     </td><td valign='top'>
-    <%= form.select :delay, @avail_delays %>
+    <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delay", options_for_select(@avail_delays, delayid) %>
     </td>
     </tr>
   <% end %>
