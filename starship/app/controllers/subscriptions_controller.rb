@@ -57,7 +57,7 @@ end
 
 def modify_simple_subscriptions
   if request.post?
-    flash[:notice] = ""
+    flash[:success] = ""
     
     SUBSCRIPTIONABSTRACTIONS.keys.each do | group_id | 
       SUBSCRIPTIONABSTRACTIONS[group_id].values.each do | abstraction |
@@ -77,9 +77,9 @@ def modify_simple_subscriptions
                   :operator => filter.operator, :filterstring => filter.filterstring )
               end
               if subscription.save
-                flash[:notice] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been added.\n"
+                flash[:success] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been added.\n"
               else 
-                flash[:error] = "Adding new subscription for #{abstraction.id} - #{filterabstract.id} failed."
+                flash[:error] = "Adding new subscription for #{abstraction.id} - #{filterabstract.id} failed.\n"
               end
             elsif (params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i != subscription.delay_id ||
                 params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i != subscription.delivery_id)
@@ -87,7 +87,7 @@ def modify_simple_subscriptions
               subscription.delay_id = params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i
               subscription.delivery_id = params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i
               if subscription.save
-                flash[:notice] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been updated.\n"
+                flash[:success] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been updated.\n"
               else
                 flash[:error] += "Subscription for #{abstraction.id} - #{filterabstract.id} update failed.\n"
               end
@@ -95,7 +95,7 @@ def modify_simple_subscriptions
           elsif ( !params["#{abstraction.id}||#{filterabstract.id}"] && subscription)
             logger.debug "Removing Filterabstract #{abstraction.id}||#{filterabstract.id}"
             if subscription.destroy
-              flash[:notice] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been removed.\n"
+              flash[:success] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been removed.\n"
             else
               flash[:error] += "Removing subscription for #{abstraction.id} - #{filterabstract.id} failed.\n"
             end

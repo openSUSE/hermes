@@ -265,13 +265,30 @@
 
 	    <div id="contentSub"></div>
 
-			<% if flash[:notice] -%>
-				 <div id="notice"><%= flash[:notice] %></div>
-			<% end %>
-      
-      <% if flash[:error] -%>
-         <div id="error"><%= flash[:error] %></div>
-      <% end %>
+              <% unless flash.values.empty? 
+                 [:success, :error, :notice].each do |flash_type| 
+                 if (flash[flash_type] && !flash[flash_type].empty?)
+                 case flash_type
+                   when :error 
+                     flash_header = 'Error'  
+                   when :notice
+                     flash_header = 'Notice'  
+                   when :success
+                     flash_header = 'Success'  
+                 end %>  
+              <div id="notification_box" class="<%= flash_type %>">
+                <div id="left_col">
+                  <div id="notification_icon">
+                    <span><%= flash_header %></span>
+                  </div>
+                </div>
+                <div id="right_col">
+                  <p><%= flash[flash_type].gsub(/\n/, '<br/>')  -%></p>
+                </div>
+              </div>
+              <% end
+                 end
+                 end -%>
       
 		   <%= yield %>
 

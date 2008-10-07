@@ -4,24 +4,42 @@
   <filterabstractions>
       <filterabstract id="my_packs">
          <summary>My Packages</summary>
-         <description>All my packages</description>
+         <description>All packages where you are listed as maintainer</description>
          <filter parameter="_special" operator="special" value="_mypackages"/>
       </filterabstract>
 
       <filterabstract id="my_projects">
          <summary>My Projects</summary>
-         <description>My Projects</description>
+         <description>All projects where you are listed as maintainer</description>
          <filter parameter="_special" operator="special" value="_myprojects"/>
       </filterabstract>
+
+      <filterabstract id="my_features">
+         <summary>My Features</summary>
+         <description>All features you are listed in a role</description>
+         <filter parameter="_special" operator="oneof" value="123"/>
+      </filterabstract>
+
   </filterabstractions>
 
   <subscriptionabstracts>
+  
+    <group id="fate">
+      <name>Features</name>
+      <subscription id="feature_changed">
+        <summary>Feature changed</summary>
+        <description>Receive a notification every time a feature is changed.</description>
+        <msg_type name="obs_build_success"/>
+        <checkable filterabstract="my_features"/>
+      </subscription>
+    </group>
+  
     <group id="build_results">
       <name>Package building results</name>
       
       <subscription id="build_fail">
         <summary>Build Failure</summary>
-        <description>Fehlgeschlagen long</description>
+        <description>Receive a notification every time a package fails to build.</description>
         <msg_type name="obs_build_fail"/>
         <checkable filterabstract="my_packs"/>
         <checkable filterabstract="my_projects"/>
@@ -29,7 +47,7 @@
 
       <subscription id="build_ok">
         <summary>Build Success</summary>
-        <description>Der Bau war erfolgreich</description>
+        <description>Receive a notification every time a package was build successfully.</description>
         <msg_type name="obs_build_success"/>
         <checkable filterabstract="my_packs"/>
         <checkable filterabstract="my_projects"/>

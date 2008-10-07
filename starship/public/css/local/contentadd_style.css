@@ -107,3 +107,94 @@ textarea {
 	
 }
 
+/*****************
+* Notifications *
+*****************/
+
+#notification_box {
+  display: table;
+  position: relative;
+  margin: 1em 0;
+  font-size: 110%;
+  width: 100%;
+}
+
+#notification_box * {
+}
+
+#notification_box #left_col, #notification_box #right_col {
+  margin: 0.3em;
+}
+
+#notification_box #left_col {
+  width: 6.7em;
+  max-width: 100px;
+  position: absolute;
+  text-align: center;
+}
+
+#notification_box #left_col #notification_icon {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto;
+}
+
+#notification_box #left_col #notification_icon span {
+  display: none;
+}
+
+#notification_box #right_col {
+  margin-left: 9em; 
+}
+
+#notification_box #right_col p {
+  margin-top: 0.7em;
+  margin-bottom: 0.7em;
+}
+
+#notification_box #right_col h1 {
+  font-size: 1.5em;
+}
+
+#notification_box #right_col #notification_h1 {
+}
+
+#notification_box.error {
+  border: 1px solid #8C0000;
+  background-color: #FF4D4D;
+}
+
+#notification_box.error * {
+  color: #f9f9f9;
+}
+
+#notification_box.error #notification_icon {
+  background: transparent url('/css/local/images/flash_error_34.png') no-repeat scroll top left;
+}
+
+#notification_box.notice {
+  border: 1px solid #FCB21C;
+  background-color: #FFFFBD;
+}
+
+#notification_box.notice * {
+  color: black;
+}
+
+#notification_box.notice #notification_icon {
+  background: transparent url('/css/local/images/flash_notice_34.png') no-repeat scroll top left;
+}
+
+#notification_box.success {
+  border: 1px solid #217808;
+  background-color: #8FCF06;
+}
+
+#notification_box.success * {
+  color: #f9f9f9;
+}
+
+#notification_box.success #notification_icon {
+  background: transparent url('/css/local/images/flash_success_34.png') no-repeat scroll top left;
+}
+

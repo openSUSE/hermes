@@ -1,5 +1,7 @@
 <% javascript_include_tag :defaults %>
 
+<p>Please select below for which events you want to receive notifications.</p>
+
 <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
 <% for group_id in @abstraction_groups.keys %>
 
@@ -8,8 +10,8 @@
   <table class="defaultTable">
   <% for abstraction in @abstractions[group_id].values %>
   
-  <tr><td valign='top'>
-  <%= abstraction.summary %> <br/>
+  <tr><td valign='top' width="30%">
+  <b><%= abstraction.summary %></b> <br/>
   <i><%= abstraction.description %></i> 
   </td>
   <td>
@@ -19,11 +21,11 @@
   
     <!-- form part for abstract id: <%= abstraction.id %> filter_abstract id: <%= filter_abstract.id %> -->
   
-    <tr><td valign='top'>
+    <tr><td valign='top' width="20">
     <% subscription = @person.subscribed_to_abstraction( group_id, abstraction.id, filter_abstract.id ) %>
     <%= check_box_tag "#{abstraction.id}||#{filter_abstract.id}", "1", subscription %>
     </td>
-    <td valign='top'>
+    <td valign='top' width="60%">
     <%= filter_abstract.summary %> <br/>
     <i><%= filter_abstract.description %></i>
     </td><td valign='top'>
@@ -48,7 +50,7 @@
   </table>
  
 <% end %>
-<%= submit_tag %>
+<%= submit_tag "Save settings" %>
 <% end %>
 
 <br/>

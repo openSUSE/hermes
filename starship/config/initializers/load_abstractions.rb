@@ -57,6 +57,5 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
   end
 }
 
-
 SUBSCRIPTIONABSTRACTIONS = abstractions
 ABSTRACTIONGROUPS = abstractiongroups
