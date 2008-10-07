@@ -294,6 +294,7 @@ sub editType()
     }
   }
 
+  $tmpl->param( isAdmin => $isAdmin{$user} || 0 );
   $tmpl->param( type  => $detailsRef->{_type} );
   $tmpl->param( NotiTypeDesc => $detailsRef->{_description} || "not yet defined" );
   $tmpl->param( NotiTypeId => $detailsRef->{_id} );
