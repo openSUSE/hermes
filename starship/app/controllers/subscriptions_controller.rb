@@ -5,11 +5,8 @@ def simple
   @person = session[:user]
   @person.name ||= "unknown"
   @hermestitle = "Subscriptions for #{@person.name}"
-
   @abstraction_groups = ABSTRACTIONGROUPS
   @abstractions = SUBSCRIPTIONABSTRACTIONS
-
-  @avail_types = MsgType.find(:all)
   @avail_deliveries = Delivery.find(:all, :order => 'id').map {|d| [d.name, d.id]}
   @avail_delays = Delay.find(:all, :order => 'id').map {|d| [d.name, d.id]}
 end
@@ -60,8 +57,36 @@ end
 
 def modify_simple_subscriptions
   if request.post?
-
-  redirect_to :action => :simple
+    
+    SUBSCRIPTIONABSTRACTIONS.keys.each do | group_id | 
+      SUBSCRIPTIONABSTRACTIONS[group_id].values.each do | abstraction |
+        abstraction.filterabstracts.values.each do | filterabstract | 
+          # load matching user subscription
+          subscription = session[:user].subscribed_to_abstraction(group_id, abstraction.id, filterabstract.id)   
+          if ( params["#{abstraction.id}||#{filterabstract.id}"])
+            if (!subscription)
+              logger.debug "Adding Filterabstract #{abstraction.id}||#{filterabstract.id}"
+              
+              
+              flash[:notice] = "Subscription for #{abstraction.id} - #{filterabstract.id} has been added"
+            else
+              logger.debug "Updating Filterabstract #{abstraction.id}||#{filterabstract.id}"
+              
+              
+              flash[:notice] = "Subscription for #{abstraction.id} - #{filterabstract.id} has been updated"
+            end
+                        
+          elsif ( !params["#{abstraction.id}||#{filterabstract.id}"] && subscription)
+            logger.debug "Removing Filterabstract #{abstraction.id}||#{filterabstract.id}"
+            subscription.destroy
+            flash[:notice] = "Subscription for #{abstraction.id} - #{filterabstract.id} has been removed"
+          end
+        end
+        
+        
+      end
+    end    
+    redirect_to :action => :simple
   end
 end
 
@@ -71,6 +96,7 @@ def redirect_to_index(msg = nil)
   flash[:notice] = msg
   redirect_to :action => :index
 end
+
 
 def destroy
   if request.delete?
@@ -85,15 +111,16 @@ def destroy
   end
 end
 
+
 def edit
   @subscr = Subscription.find(params[:id])
   @filters = @subscr.filters
-
   @msgs_for_type = @subscr.messages.find(:all, :include => :msg_type)
   @availDelay = Delay.find(:all)
   @availDeliveries = Delivery.find(:all)
   @avail_params = @subscr.msg_type.parameters
 end
+
 
 def update
   if request.put?
@@ -113,6 +140,7 @@ def update
     end
   end
 end
+
 
 def get_type_params
   param_list = MsgType.find(params[:msg_type]).parameters

@@ -15,7 +15,7 @@ class Person < ActiveRecord::Base
     abstraction = SUBSCRIPTIONABSTRACTIONS[group_id][abstraction_id]
     
     # use the first subscription of the user that matches all criteria from the abstraction (msgtype, filters)
-    subscriptions.find(:all, :conditions => [ "msg_types.msgtype = ?", abstraction.msg_type],
+    subscriptions.find(:all, :conditions => [ "msg_types_people.enabled = 1 and msg_types.msgtype = ?", abstraction.msg_type],
       :include => [:msg_type] ).each do | subscription | 
         hits = 0
         abstraction.filterabstracts[filter_abstraction_id].filters.each do | filter |
