@@ -5,13 +5,13 @@
       <filterabstract id="my_packs">
          <summary>My Packages</summary>
          <description>All my packages</description>
-         <filter parameter="package" operator="special" value="_mypackages"/>
+         <filter parameter="_special" operator="special" value="_mypackages"/>
       </filterabstract>
 
       <filterabstract id="my_projects">
          <summary>My Projects</summary>
          <description>My Projects</description>
-         <filter parameter="project" operator="special" value="_myprojects"/>
+         <filter parameter="_special" operator="special" value="_myprojects"/>
       </filterabstract>
   </filterabstractions>
 
