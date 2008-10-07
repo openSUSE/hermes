@@ -57,6 +57,7 @@ end
 
 def modify_simple_subscriptions
   if request.post?
+    flash[:notice] = ""
     
     SUBSCRIPTIONABSTRACTIONS.keys.each do | group_id | 
       SUBSCRIPTIONABSTRACTIONS[group_id].values.each do | abstraction |
@@ -67,23 +68,39 @@ def modify_simple_subscriptions
             if (!subscription)
               logger.debug "Adding Filterabstract #{abstraction.id}||#{filterabstract.id}"
               
+              subscription = Subscription.new(:msg_type_id => MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'").id, 
+                :person_id => session[:user].id, :delay_id => params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i, 
+                :delivery_id => params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i)
               
-              flash[:notice] = "Subscription for #{abstraction.id} - #{filterabstract.id} has been added"
-            else
+              filterabstract.filters.each do | filter |
+                subscription.filters <<  SubscriptionFilter.new( :parameter_id => filter.parameter_id, 
+                  :operator => filter.operator, :filterstring => filter.filterstring )
+              end
+              if subscription.save
+                flash[:notice] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been added.\n"
+              else 
+                flash[:error] = "Adding new subscription for #{abstraction.id} - #{filterabstract.id} failed."
+              end
+            elsif (params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i != subscription.delay_id ||
+                params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i != subscription.delivery_id)
               logger.debug "Updating Filterabstract #{abstraction.id}||#{filterabstract.id}"
-              
-              
-              flash[:notice] = "Subscription for #{abstraction.id} - #{filterabstract.id} has been updated"
+              subscription.delay_id = params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i
+              subscription.delivery_id = params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i
+              if subscription.save
+                flash[:notice] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been updated.\n"
+              else
+                flash[:error] += "Subscription for #{abstraction.id} - #{filterabstract.id} update failed.\n"
+              end
             end
-                        
           elsif ( !params["#{abstraction.id}||#{filterabstract.id}"] && subscription)
             logger.debug "Removing Filterabstract #{abstraction.id}||#{filterabstract.id}"
-            subscription.destroy
-            flash[:notice] = "Subscription for #{abstraction.id} - #{filterabstract.id} has been removed"
+            if subscription.destroy
+              flash[:notice] += "Subscription for #{abstraction.id} - #{filterabstract.id} has been removed.\n"
+            else
+              flash[:error] += "Removing subscription for #{abstraction.id} - #{filterabstract.id} failed.\n"
+            end
           end
         end
-        
-        
       end
     end    
     redirect_to :action => :simple

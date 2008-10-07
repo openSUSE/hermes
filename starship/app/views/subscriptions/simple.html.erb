@@ -28,8 +28,11 @@
     <i><%= filter_abstract.description %></i>
     </td><td valign='top'>
     <% if ( subscription ) 
-      deliveryid = subscription.delivery.id
-      delayid = subscription.delay.id
+         deliveryid = subscription.delivery.id
+         delayid = subscription.delay.id
+       else
+         deliveryid = nil
+         delayid = nil
     end %>
     <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delivery", options_for_select(@avail_deliveries, deliveryid) %>
     </td><td valign='top'>
