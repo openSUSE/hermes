@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 21) do
+ActiveRecord::Schema.define(:version => 22) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -108,10 +108,10 @@ ActiveRecord::Schema.define(:version => 21) do
   end
 
   create_table "subscription_filters", :force => true do |t|
-    t.integer "subscription_id",                 :null => false
-    t.integer "parameter_id",                    :null => false
-    t.string  "operator",        :default => "", :null => false
-    t.string  "filterstring",    :default => "", :null => false
+    t.integer "subscription_id", :null => false
+    t.integer "parameter_id",    :null => false
+    t.string  "operator",        :null => false
+    t.string  "filterstring",    :null => false
   end
 
   add_index "subscription_filters", ["subscription_id"], :name => "subscription_id"
