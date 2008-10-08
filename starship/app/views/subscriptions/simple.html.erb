@@ -2,12 +2,14 @@
 
 <p>Please select below for which events you want to receive notifications.</p>
 
+<% simple_subscriptions = 0 %>
+<table class="defaultTable">
+
 <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
 <% for group_id in @abstraction_groups.keys %>
 
-  <h3><%= @abstraction_groups[group_id] %> </h3>
+  <tr><td colspan="5"><h3><%= @abstraction_groups[group_id] %> </h3></td></tr>
   
-  <table class="defaultTable">
   <% for abstraction in @abstractions[group_id].values %>
   
   <tr><td valign='top' width="30%">
@@ -32,6 +34,7 @@
     <% if ( subscription ) 
          deliveryid = subscription.delivery.id
          delayid = subscription.delay.id
+         simple_subscriptions += 1
        else
          deliveryid = nil
          delayid = nil
@@ -47,15 +50,23 @@
   <% end %>
   
   </td></tr>
-  </table>
  
-<% end %>
-<%= submit_tag "Save settings" %>
-<% end %>
+  <% end %>
+  <tr><td colspan="5"><%= submit_tag "Save settings" %></td></tr>
+  <% end %>
 
+  </table>
 <br/>
+
+<% if ( @subscribedMsgs.size > simple_subscriptions ) %>  
+
+You have <%= pluralize((@subscribedMsgs.size - simple_subscriptions), "additional subscription") %> that can only be changed in the 
+<a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. 
+
+<% else %>
 
 You can choose from a list of default notifications here. 
 To configure more complex notifications, please use the 
 <a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. 
 
+<% end %>

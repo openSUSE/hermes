@@ -7,6 +7,7 @@ def simple
   @hermestitle = "Subscriptions for #{@person.name}"
   @abstraction_groups = ABSTRACTIONGROUPS
   @abstractions = SUBSCRIPTIONABSTRACTIONS
+  @subscribedMsgs = @person.subscriptions.find( :all)
   @avail_deliveries = Delivery.find(:all, :order => 'id').map {|d| [d.name, d.id]}
   @avail_delays = Delay.find(:all, :order => 'id').map {|d| [d.name, d.id]}
 end
