@@ -24,16 +24,9 @@
 <table>
   <tbody id="filter_table" style="">
       <tr>
-      <td>
-      	<% if (@filters.length == 0) %>
-		  <b>No filters set</b>
-		<% else %>
-		  <b>Filter: </b>
-		<% end -%>
-	  </td>
-      <td></td>
-      <td></td>
-      <td></td>
+      <td colspan="4">
+      No filter means, you will get all notifications for the chosen message type. Multiple filters mean &lt;filter1&gt; AND &lt;filter2&gt;... 
+	    </td>
       <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
                           page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } ) 
                           page << "recalc_filter_ids();"

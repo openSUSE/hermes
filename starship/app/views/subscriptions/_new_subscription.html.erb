@@ -28,9 +28,9 @@ function update_filter_params(html) {
 <% form_for :subscr do |f| %>
   <table class="defaultTable">
     <tr>
-    <td><b>Msgtype: </b></td>
-    <td><b>Delay: </b></td>
-    <td><b>Delivery: </b></td>
+    <td><b>Message Type: </b></td>
+    <td><b>Digest mode: </b></td>
+    <td><b>Delivery mode: </b></td>
     </tr>
     <tr>
     <td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id', 'type_desc') %></td>
@@ -45,12 +45,20 @@ function update_filter_params(html) {
     </tr>
   </table>
   <hr/>
+  
+  <table class="defaultTable">
+    <tr>
+    <td>No filter means, you will get all notifications for the chosen message type. Multiple filters mean &lt;filter1&gt; AND &lt;filter2&gt;... </td>
+    </tr>
+  </table>
+  
   <table class="defaultTable">
     <tbody id="filter_table" style="">
       <tr id='counter'><td><%= hidden_field_tag 'filter_count', 0 %><td></tr>
       <tr><td><%= submit_tag %></td></tr>
     </tbody>
   </table>
+  
 
 <% end %>
 

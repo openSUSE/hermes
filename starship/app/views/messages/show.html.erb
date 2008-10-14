@@ -20,7 +20,7 @@
 
 <p>
   <b>Body:</b>
-  <%= @message.body %>
+  <%=h @message.body.gsub(/\n/, '<br/>') %>
 </p>
 
 <% if @to_save_comment %>

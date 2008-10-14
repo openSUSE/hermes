@@ -3,6 +3,6 @@
   <td><%= select_tag 'filter_operator', options_for_select($OPERATORS,selected_oper), {:class => 'filter_select'} %></td>
 
   <td><b>Value: </b></td>
-  <td><%= text_field_tag "filter_value", value, :class => 'filter_value_input' %></td>
+  <td><%= text_field_tag "filter_value", value, :class => 'filter_value_input', :size => '40' %></td>
   <td><%= link_to_function "Remove", "remove_filter(this)" %></td>
 </tr>

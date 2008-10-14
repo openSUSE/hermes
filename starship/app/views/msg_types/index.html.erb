@@ -14,7 +14,7 @@
 	
 <% for type in @msg_types %>
 <tr>
-  <td><%= link_to type[0].msgtype, {:action => "show", :controller => "msg_types", :id => type[0].id} %></td>
+  <td><%= link_to type[0].type_desc, {:action => "show", :controller => "msg_types", :id => type[0].id} %></td>
   <td><%= type[1] %></td>
 </tr>
 <% end %>

@@ -20,7 +20,7 @@
 	
 	<% for showtype in @showtypes %>
 		<tr>
-		<td><%=h showtype.msgtype %></td>
+		<td><%=h showtype.type_desc %></td>
 		<td><%= showtype.messages.count %></td>
 		</tr>
 	<% end %>
