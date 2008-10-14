@@ -127,6 +127,11 @@
           <li><a href="<%= url_for(:controller => "subscriptions" , :action => "simple") %>">My Subscriptions</a></li>
           <li><a href="<%= url_for(:controller => "messages") %>">Hermes Messages</a></li>
 		      <!-- <li><a href="index.cgi?rm=doc">Documentation</a></li> -->
+          
+          <% if session[:user].admin %>
+          <li><a href="https://notify.opensuse.org/">Hermes admin</a></li>
+          <% end %>
+          
          </ul>
         </div>
         <div class="box_bottom_row">
