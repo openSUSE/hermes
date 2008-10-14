@@ -21,7 +21,10 @@
 #
 package Hermi::Rest;
 
+use Data::Dumper;
+
 use strict;
+
 use base 'CGI::Application';
 # use CGI::Application::Plugin::ActionDispatch;
 
@@ -125,7 +128,7 @@ sub cgiapp_get_query
 {
   my $self = shift();
 
-  use CGI qw/-oldstyle_urls/;
+  use CGI qw /-oldstyle_urls/;
 
   return CGI->new();
 }
@@ -272,7 +275,7 @@ sub editType()
     log( 'debug', "template was edited!" );
     $previewTmpl = $q->param('tmplEdit');
 
-    log( 'debug', "Dosave: " . $q->param('dosave' ));
+    log( 'debug', "Dosave: " . ($q->param('dosave' ) || "false") );
 
     if ( $q->param( 'dosave' ) && $q->param('dosave') eq ' Save ' ) {
       log('debug', "SAVING the template" );
@@ -303,10 +306,18 @@ sub editType()
 
   my @names;
 
-  foreach ( @{$detailsRef->{_parameterList}} ) {
-    log( 'debug', "Parameter : $_" );
-    push @names, { 'name' => $_, 
-		   'value' => $detailsRef->{$_} };
+  foreach my $paraRef( @{$detailsRef->{_parameterList}} ) {
+    log( 'debug', "Parameter : $paraRef->{name}" );
+    my $name = $paraRef->{name};
+
+    push @names, { 'name'   => $name,
+		   'hrName' => $paraRef->{_hrName} || "undefined",
+		   'value'  => $paraRef->{$name},
+		   'desc'   => $paraRef->{_desc} || "still empty",
+		   'nameSpanId' => "pd_name_$name",
+		   'descSpanId' => "pd_desc_$name",
+		   'descEditJs' => parameterInplaceEdit( $name, 'desc', $detailsRef->{_id} ),
+		   'nameEditJs' => parameterInplaceEdit( $name, 'name', $detailsRef->{_id}, 15 ) };
   }
   $tmpl->param( parameters => \@names );
 
@@ -329,11 +340,34 @@ sub editType()
   $tmpl->param( status => $status );
   $tmpl->param( admin => $isAdmin{$user} || 0 );
   $tmpl->param( user  => $user || "unknown" );
-  initFrame( "Hermes Notification Type Details" );
+  initFrame( "Hermes Notification Type <i>$type</i>" );
   $htmlTmpl->param( Content => $tmpl->output );
 
   return $htmlTmpl->output;
 
+}
+
+#
+# Create a in place editor for both the human readable name and the description
+# of notification parameters
+# Paramter:
+# 1. The name of the parameter
+# 2. The destinquischer between name and desc, string 
+# 3. The notification type id
+# 4. The length of the edit line (optional)
+#
+sub parameterInplaceEdit( $$$;$ ) 
+{
+  my ($name, $var, $id, $cols) = @_;
+  my $columns = $cols || 40;
+
+  my $domId = "pd_" . $var . "_" . $name;
+
+  my $re = "new Ajax.InPlaceEditor( \'$domId\', \'index.cgi\', \{ cols: $columns, rows: 1,";
+  $re .= " callback: function(form, value) { ";
+  $re .= "return 'rm=ajaxupdate&paraname=$name&id=$id&value='+escape(value) } } ) ";
+
+  return $re;
 }
 
 sub testRender( $$;$ )
@@ -359,8 +393,11 @@ sub testRender( $$;$ )
 
     my %paramHash;
     foreach my $param ( @params ) {
-      log('debug', "Adding parameter: <$param> = <" . $noti->{$param} . ">" );
-      $paramHash{$param} = $noti->{$param};
+      my $paraName = $param->{name};
+      if( $paraName ) {
+	log('debug', "Adding parameter: <$paraName> = <" . $noti->{$paraName} . ">" );
+	$paramHash{ $paraName } = $noti->{$paraName};
+      }
     }
     $tmpl->param( \%paramHash );
 
@@ -385,7 +422,24 @@ sub ajaxUpdate
 
     my $sth = $dbh->prepare( $sql );
     $sth->execute( $value, $id );
+  } elsif( $editId =~ /pd_desc_(.+)$/ ) {
+    # editing parameter description
+    my $paraId = parameterId( $1 );
+    if( $paraId && $id ) {
+      my $sql = "UPDATE msg_types_parameters SET description=? WHERE msg_type_id=? AND parameter_id=?";
+      my $sth = $dbh->prepare( $sql );
+      $sth->execute( $value, $id, $paraId );
+    }
+  } elsif( $editId =~ /pd_name_(.+)$/ ) {
+    # editing parameter human readable name
+    my $paraId = parameterId( $1 );
+    if( $paraId && $id ) {
+      my $sql = "UPDATE parameters SET hr_name=? WHERE id=?";
+      my $sth = $dbh->prepare( $sql );
+      $sth->execute( $value, $paraId );
+    }
   }
+
   return "$value";
 }
 

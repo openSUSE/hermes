@@ -43,17 +43,32 @@ div#Inhalt {
   /* border: 1px dashed silver; */
   min-width: 16em; /* Mindestbreite (der Ueberschrift) verhindert Anzeigefehler in modernen Browsern */
 }
+
 div#Inhalt h1 {
   font-size: 1.5em;
-  margin: 0 0 1em;
+  margin: 0 0 5px;
 }
+
+div#Inhalt h3 {
+  font-size: 1.2em;
+  margin: 5pt 0pt 0pt;
+}
+
 div#Inhalt h2 {
   font-size: 1.2em;
   margin: 10pt 0pt 0pt;
 }
+
 div#Inhalt p {
   font-size:1em;
-  margin: 1em 0;
+  margin: 4px 0;
+}
+
+div#Inhalt p.infotext {
+  margin-top: 1px;
+  padding-left: 12px;
+  font-size: small;
+  color: #6c6981;
 }
 
 p#top {
@@ -64,6 +79,7 @@ p#top {
 
 div#box {
   border: 1px dashed silver;
+  padding: 3px;
 }
 
 table {

@@ -1,5 +1,6 @@
-<h2>Template <TMPL_VAR NAME="type"></h2>
+<p class="infotext">added on: <TMPL_VAR NAME="added"></p>
 
+<div id="box">
 <p id="noti_type_desc" class="infotext"><TMPL_VAR NAME="NotiTypeDesc"></p>
 
 <TMPL_IF NAME="isAdmin">
@@ -10,21 +11,40 @@
              } )
 </script>
 </TMPL_IF>
-
-<div id="box">
-<p>added on: <TMPL_VAR NAME="added"></p>
-<p>Default delay: <TMPL_VAR NAME="delay"></p>
+</div>
 
 <h3>Parameters with example data:</h3>
+<p class="infotext">Human readable name and description of each parameter is
+  editable. Make sure to edit if there is information missing. Just click on
+the text to edit.</p>
+<div id="box">
 <table>
+<tr><td><b>Name</b></td><td><b>Human Name</b></td><td><b>Value</b></td>
+<td><b>Description</b></td></tr>
 <TMPL_LOOP NAME="parameters">
 <tr>
-<td><TMPL_VAR NAME="name"><td><TMPL_VAR NAME="value"></td>
+<td><TMPL_VAR NAME="name"></td>
+<td><span id="<TMPL_VAR NAME="nameSpanId">"><TMPL_VAR NAME="hrName"></span>
+  <script type="text/javascript">
+    <TMPL_VAR NAME="nameEditJs">
+  </script>
+</td>
+<td><TMPL_VAR NAME="value"></td>
+
+<td><span id="<TMPL_VAR NAME="descSpanId">"><TMPL_VAR NAME="desc"></span>
+  <script type="text/javascript">
+    <TMPL_VAR NAME="descEditJs">
+  </script>
+</td>
 </tr>
 </TMPL_LOOP>
 </table>
 </div>
 <h3>Test rendering with current template:</h3>
+<p class="infotext">The following box shows an example of how a rendered
+  message looks like with example data. If you have administration rights,
+you can edit the template in the editbox below.</p>
+
 <div id="box">
 <pre><TMPL_VAR NAME="testrender"></pre>
 </div>
