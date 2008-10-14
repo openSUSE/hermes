@@ -176,7 +176,7 @@
          <div class="box_content" id="banner_content">
           <div id="pt-personal">
           <% if session[:user] %>
-            Logged in as <a href="https://users.opensuse.org"><%= session[:user].stringid %></a>
+            Logged in as <a href="https://users.opensuse.org/my/profile"><%= session[:user].stringid %></a>
             <br/>
             <%= link_to 'Logout', :controller => 'account', :action => 'logout' -%>
           <% else %>
