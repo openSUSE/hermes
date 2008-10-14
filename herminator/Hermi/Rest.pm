@@ -308,6 +308,7 @@ sub editType()
   foreach my $paraRef( @{$detailsRef->{_parameterList}} ) {
     log( 'debug', "Parameter : $paraRef->{name}" );
     my $name = $paraRef->{name};
+    next if( $name eq "rm" || $name eq "_type" );
 
     push @names, { 'name'   => $name,
 		   'hrName' => $paraRef->{_hrName} || "undefined",
