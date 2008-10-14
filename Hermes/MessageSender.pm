@@ -285,7 +285,6 @@ sub digestList( @ )
       $body .= $bodyCont . "\n==>\n";
     }
 
-    push @{$receipientsRef->{ $msgRef->{'Header'} } }, $msgRef->{Person};
     $oldMsgId = $msgRef->{MsgId};
   }
 
@@ -380,7 +379,7 @@ sub sendImmediateMessages(;$)
 
   while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
 	       $header, $deliveryId ) = $query->fetchrow_array()) {
-    # The query returns a message id multiple times, depending on the amount of 
+    # The query returns a message id multiple times, depending on the amount of
     # receipients.
     # push @markSentIds, $markSentId; # if of the record in messages_people
 
@@ -401,7 +400,7 @@ sub sendImmediateMessages(;$)
     my $receipientsRef;
     log( 'info', "Storing MsgID <$msgid> with <$personId> as <$header> in DeliveryID <$deliveryId>" );
 
-    # if we do not yet have a hash for this delivery method, create one. 
+    # if we do not yet have a hash for this delivery method, create one.
     unless( $deliveryMatrix{$deliveryId} ) {
       $deliveryMatrix{$deliveryId} = {};
       $receipientsRef = $deliveryMatrix{$deliveryId};

@@ -33,8 +33,41 @@ use Data::Dumper;
 use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( notificationTemplateDetails notificationDetails templateFileName );
+@EXPORT	    = qw( notificationTemplateDetails notificationDetails templateFileName 
+	       parameterId );
 
+
+
+
+=head1 NAME
+
+parameterId() - get the id of a parameter
+
+=head1 SYNOPSIS
+
+    use Hermes::Util;
+
+    my $id = paramterId( "checkhermes" );
+
+=head1 DESCRIPTION
+
+returns the database id for a given parameter name.
+
+=cut
+
+sub parameterId( $ )
+{
+  my ($name) = @_;
+  my $id;
+
+  my $sql = "SELECT * FROM parameters WHERE name=?";
+  my $sth = $dbh->prepare( $sql );
+  $sth->execute( $name );
+
+  ($id) = $sth->fetchrow_array();
+
+  return $id;
+}
 
 =head1 NAME
 
@@ -62,18 +95,26 @@ sub notificationTemplateDetails($)
   my $sth = $dbh->prepare( $sql );
 
   $sth->execute( $type );
-  my ($id, $msgtype, $added, $defaultdelay) = $sth->fetchrow_array();
+  my ($id, $msgtype, $added, $defaultdelay, $desc) = $sth->fetchrow_array();
 
-  $sql = "SELECT p.id, p.name FROM msg_types_parameters mtp, parameters p WHERE mtp.parameter_id = p.id ";
+  $sql = "SELECT p.id, p.name, p.hr_name, mtp.description, mtp.id ";
+  $sql .= "FROM msg_types_parameters mtp, parameters p WHERE mtp.parameter_id = p.id ";
   $sql .= "AND mtp.msg_type_id=?";
 
   my $paramSth = $dbh->prepare( $sql );
   $paramSth->execute( $id );
   my @paramList;
-  while( my( $id, $name) = $paramSth->fetchrow_array() ) {
-     $re{$name} = $id;
-     $re{$id} = $name;
-     push @paramList, $name;
+  while( my( $id, $name, $hr_name, $desc, $mtpId ) = $paramSth->fetchrow_array() ) {
+    $re{$id} = $name;
+    $re{$name} = $id;
+    my %para;
+    $para{$name}  = $id;
+    $para{$id}    = $name;
+    $para{name}    = $name;
+    $para{_hrName} = $hr_name;
+    $para{_desc}   = $desc;
+    $para{_mtpId}  = $mtpId;
+    push @paramList, \%para;
   }
 
   $re{_parameterList} = \@paramList;
@@ -81,6 +122,7 @@ sub notificationTemplateDetails($)
   $re{_type} = $msgtype;
   $re{_added} = $added;
   $re{_defaultdelay} = $defaultdelay;
+  $re{_description} = $desc;
 
   return \%re;
 }
