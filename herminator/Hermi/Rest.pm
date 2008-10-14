@@ -86,8 +86,7 @@ sub cgiapp_prerun
     # my @httpHeader = $q->http();
     # log('info', "HTTP-Header: " . join(", ", @httpHeader ) );
 
-
-    $loggedInUser = $q->http('HTTP_X_USERNAME');
+    $loggedInUser = $q->http('X_USERNAME');
   }elsif( $Hermes::Config::authentication =~ /^ichaintest-(.+)$/) {
     $loggedInUser = $1;
   }
