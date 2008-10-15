@@ -460,8 +460,13 @@ sub templateTypeList()
 
   my $firstType = @$typesRef[0];
   foreach my $t ( @$typesRef ) {
+    my $dipType = $t;
+
+    if( length( $dipType ) > 25 ) {
+      $dipType = "..." . substr( $dipType, -25 );
+    }
     my $oneEntry;
-    $oneEntry = "<li><a href=\"index.cgi?rm=type&type=$t\">$t</a></li>";
+    $oneEntry = "<li title=\"$t\"><a href=\"index.cgi?rm=type&type=$t\">$dipType</a></li>";
     $res .= $oneEntry;
   }
   $res .= "</ul>\n";
