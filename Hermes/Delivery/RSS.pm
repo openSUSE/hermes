@@ -76,7 +76,7 @@ sub sendRSS( $ )
     }
 
     # FIXME: Make maximum item count configurable
-    pop(@{$rss->{'items'}}) if (@{$rss->{'items'}} == 150); # only allow 150 entries.
+    shift(@{$rss->{'items'}}) if (@{$rss->{'items'}} == 150); # only allow 150 entries.
 
     my $desc = "Personal Hermes RSS Feed";
     $desc .= " for $personInfoRef->{name}" if( $personInfoRef && $personInfoRef->{name} );
@@ -102,20 +102,23 @@ sub sendRSS( $ )
 
       log( 'info', Dumper( $msgRef ));
 
-      $rss->add_item( title => $msgRef->{subject},
-		      link => $Hermes::Config::StarshipBaseUrl . "/messages/" . $msgRef->{msgid} ,
-		      description => ($msgRef->{body} || ''),
-		      dc => {
-			     date       => $tString,
-			     subject    => $msgRef->{subject},
-			     creator    => 'hermes@openSUSE.org',
-			     publisher  => 'hermes@openSUSE.org',
-			     rights     => 'Copyright 2008, openSUSE Project',
-			     language   => 'en-us',
-			    }
-		    );
+      if( $msgRef->{body} ) {
+	my $body = "<pre>" . $msgRef->{body} . "</pre>";
 
-      $rss->save( $rdfFile );
+	$rss->add_item( title => $msgRef->{subject},
+			link => $Hermes::Config::StarshipBaseUrl . "/messages/" . $msgRef->{msgid} ,
+			description => $body,
+			dc => {
+			       date       => $tString,
+			       subject    => $msgRef->{subject},
+			       creator    => 'hermes@openSUSE.org',
+			       publisher  => 'hermes@openSUSE.org',
+			       rights     => 'Copyright 2008, openSUSE Project',
+			       language   => 'en-us',
+			      }
+		      );
+	$rss->save( $rdfFile );
+      }
     }
   }
 }
