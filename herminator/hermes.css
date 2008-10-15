@@ -15,24 +15,42 @@ ul#Navigation {
   padding-top:90px;
   border: 1px dashed #8c0000;
 }
+
+
 ul#Navigation li {
   list-style: none;
   margin: 0; padding: 0.5em;
 }
+
+ul#Navigation ul {
+  font-size: 0.8em;
+  margin: 0; 
+  padding: 0 0 0 5px;
+}
+
+ul#Navigation li li {
+  list-style: none;
+  margin: 0; padding: 1px;
+}
+
 ul#Navigation a {
   display: block;
   padding: 0.2em;
   font-weight: bold;
 }
+
 ul#Navigation a:link {
   color: black; background-color: #eee;
 }
+
 ul#Navigation a:visited {
   color: #666; background-color: #eee;
 }
+
 ul#Navigation a:hover {
   color: black; background-color: white;
 }
+
 ul#Navigation a:active {
   color: white; background-color: gray;
 }

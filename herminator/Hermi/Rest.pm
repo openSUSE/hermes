@@ -259,11 +259,15 @@ sub editType()
   # Get CGI query object
   my $q = $self->query();
   my $type = $q->param( 'type' );
-  return "" unless( $type );
 
   my $tmpl = $self->load_tmpl( 'edittype.tmpl',
 			       die_on_bad_params => 0,
 			       cache => 1 );
+
+  my ($list, $firstType) = templateTypeList();
+  $htmlTmpl->param( ExtraContent => $list );
+
+  $type = $firstType unless( $type );
 
   my $status;
   my $previewTmpl;
@@ -444,6 +448,25 @@ sub ajaxUpdate
   }
 
   return "$value";
+}
+
+sub templateTypeList()
+{
+  my @types;
+  my $sql = "SELECT msgtype FROM msg_types ORDER by msgtype";
+  my $typesRef = $dbh->selectcol_arrayref( $sql );
+
+  my $res = "<p>Message Types:</p><ul>\n";
+
+  my $firstType = @$typesRef[0];
+  foreach my $t ( @$typesRef ) {
+    my $oneEntry;
+    $oneEntry = "<li><a href=\"index.cgi?rm=type&type=$t\">$t</a></li>";
+    $res .= $oneEntry;
+  }
+  $res .= "</ul>\n";
+
+  return ($res, $firstType) ;
 }
 
 $dbh = Hermes::DBI->connect();
