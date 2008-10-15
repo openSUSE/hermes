@@ -25,16 +25,21 @@ the text to edit.</p>
 <tr>
 <td><TMPL_VAR NAME="name"></td>
 <td><span id="<TMPL_VAR NAME="nameSpanId">"><TMPL_VAR NAME="hrName"></span>
-  <script type="text/javascript">
-    <TMPL_VAR NAME="nameEditJs">
-  </script>
+  <TMPL_IF NAME="isAdmin">
+    <script type="text/javascript">
+      <TMPL_VAR NAME="nameEditJs">
+     </script>
+  </TMPL_IF>
 </td>
+
 <td><TMPL_VAR NAME="value"></td>
 
 <td><span id="<TMPL_VAR NAME="descSpanId">"><TMPL_VAR NAME="desc"></span>
-  <script type="text/javascript">
-    <TMPL_VAR NAME="descEditJs">
-  </script>
+  <TMPL_IF NAME="isAdmin">
+    <script type="text/javascript">
+      <TMPL_VAR NAME="descEditJs">
+    </script>
+  </TMPL_IF>
 </td>
 </tr>
 </TMPL_LOOP>
@@ -55,7 +60,7 @@ you can edit the template in the editbox below.</p>
 
 <p>Rendered from file <tt><TMPL_VAR NAME="templateFile"></tt></p>
 
-<TMPL_IF NAME="admin">
+<TMPL_IF NAME="isAdmin">
 <form action="index.cgi?rm=type&type=<TMPL_VAR NAME="type">" method="post">
   <input type="hidden" name="rm" value="type">
   <input type="hidden" name="type" value="<TMPL_VAR NAME="type">">

@@ -296,7 +296,10 @@ sub editType()
     }
   }
 
-  $tmpl->param( isAdmin => $isAdmin{$user} || 0 );
+  my $admin = $isAdmin{$user} || 0;
+  log( 'debug', "User $user is admin: $admin" );
+  $tmpl->param( user  => $user || "unknown" );
+  $tmpl->param( isAdmin => $admin );
   $tmpl->param( type  => $detailsRef->{_type} );
   $tmpl->param( NotiTypeDesc => $detailsRef->{_description} || "not yet defined" );
   $tmpl->param( NotiTypeId => $detailsRef->{_id} );
@@ -312,12 +315,14 @@ sub editType()
 
     push @names, { 'name'   => $name,
 		   'hrName' => $paraRef->{_hrName} || "undefined",
-		   'value'  => $paraRef->{$name},
+		   'value'  => $detailsRef->{$name},
 		   'desc'   => $paraRef->{_desc} || "still empty",
 		   'nameSpanId' => "pd_name_$name",
 		   'descSpanId' => "pd_desc_$name",
 		   'descEditJs' => parameterInplaceEdit( $name, 'desc', $detailsRef->{_id} ),
-		   'nameEditJs' => parameterInplaceEdit( $name, 'name', $detailsRef->{_id}, 15 ) };
+		   'nameEditJs' => parameterInplaceEdit( $name, 'name', $detailsRef->{_id}, 15 ),
+		   'isAdmin' => $admin
+		 };
   }
   $tmpl->param( parameters => \@names );
 
@@ -338,8 +343,6 @@ sub editType()
     }
   }
   $tmpl->param( status => $status );
-  $tmpl->param( admin => $isAdmin{$user} || 0 );
-  $tmpl->param( user  => $user || "unknown" );
   initFrame( "Hermes Notification Type <i>$type</i>" );
   $htmlTmpl->param( Content => $tmpl->output );
 
