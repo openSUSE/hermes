@@ -34,7 +34,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( notificationTemplateDetails notificationDetails templateFileName 
-	       parameterId );
+		  parameterId );
 
 
 
@@ -141,8 +141,8 @@ sub notificationDetails($;$)
       my ($notiId, $msg_type_id, $received, $sender, $generated) = $dbh->selectrow_array( $sql, undef, $msgTypeId );
       $id = $notiId;
     }
-    log('debug', "Getting values for id <$id>" );
-    
+    log('debug', "Getting values for id <$id>" ) if( $id );
+
     my $pSql = "SELECT id, parameter_id, value FROM notification_parameters WHERE notification_id=?";
     my $pSth = $dbh->prepare( $pSql );
     $pSth->execute( $id );
