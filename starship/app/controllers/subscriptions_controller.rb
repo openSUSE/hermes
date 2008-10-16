@@ -3,7 +3,7 @@ class SubscriptionsController < ApplicationController
 
 def simple
   @person = session[:user]
-  @hermestitle = "Subscriptions for #{session[:user].stringid}"
+  @hermestitle = "Subscriptions for #{session[:user].stringid} (#{session[:user].email})"
   @abstraction_groups = ABSTRACTIONGROUPS
   @abstractions = SUBSCRIPTIONABSTRACTIONS
   @subscribedMsgs = @person.subscriptions.find( :all)
