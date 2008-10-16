@@ -1,6 +1,6 @@
 <p>
   <b>Date:</b>
-  <%=h @message.created %>
+  <%=h @message.created.strftime(fmt='%d. %B %Y - %H:%M:%S UTC') %>
 </p>
 
 <p>
@@ -20,8 +20,7 @@
 
 <p>
   <b>Body:</b><br/>
-  <pre>
-  <%=h @message.body %>
+  <pre><%=h @message.body %>
   </pre>
 </p>
 
@@ -41,5 +40,5 @@
 <% end %>
 
 
-<%= link_to "List all messages of type #{@message.type_desc}", :controller => 'msg_types', :action => "show", :id => @message.msg_type.id %>
+<%= link_to "List all messages of type #{@message.msg_type.type_desc}", :controller => 'msg_types', :action => "show", :id => @message.msg_type.id %>
 
