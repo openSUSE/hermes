@@ -149,7 +149,9 @@ sub sendMessageDigest($;$$$)
 
   log('notice', "Fetching messages of all types with delay $delay");
 
-  $query->execute( $delay, 100 ); # FIXME make limit configurable
+  $query->execute( $delay, 1000 ); # FIXME make limit configurable
+
+  my %personSorted;
 
   while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
 	       $header, $deliveryId ) = $query->fetchrow_array()) {
@@ -167,26 +169,36 @@ sub sendMessageDigest($;$$$)
       # The current type is not yet handled.
       my $deliverHashRef = digestList( @msg );
       log( 'info', "sending digest begins ========================================!" );
-      sendHash( $deliverHashRef );
-      log( 'info', "sending digest end    ========================================!" );
-      @msg = ();
+      sendPersonSorted( \%personSorted );
     }
     $knownType = $type;
 
+    $personSorted{$personId} = () unless $personSorted{$personId};
+
     # Store the message for further processing.
-    push @msg, { MsgId => $msgid, Sender => $sender, Subject => $subject, 
-		 Body => $body, Created => $created, Person => $personId,
-		 Header => $header, Delivery => $deliveryId, markSentId => $markSentId,
-	         Type => $type };
+    push @{$personSorted{$personId}}, { MsgId => $msgid, Sender => $sender, Subject => $subject,
+					Body => $body, Created => $created, Person => $personId,
+					Header => $header, Delivery => $deliveryId, markSentId => $markSentId,
+					Type => $type };
   }
 
-  # send whats left over
-  if( @msg ) {
-    log( 'info', "Sending left over digests =====================================!" );
-    my $deliverHashRef = digestList( @msg );
+  # sending left overs
+  sendPersonSorted( \%personSorted );
+}
+
+sub sendPersonSorted( $ )
+{
+  my ($personSorted) = @_;
+
+  # Now send every list of messages sorted by person Ids
+  foreach my $personId ( keys %{$personSorted} ) {
+    next unless( @{$personSorted->{$personId}} );
+    log( 'info', "Sending digests for person <$personId> =====================================!" );
+    my $deliverHashRef = digestList( @{$personSorted->{$personId}} );
     sendHash( $deliverHashRef );
-    log( 'info', "Finished left over digests ====================================!" );
+    log( 'info', "Finished sending digests ====================================!" );
   }
+  $personSorted = {};
 }
 
 sub deliveryIdToString( $ )
@@ -251,7 +263,20 @@ sub digestList( @ )
     }
     $receipientsRef = $deliveryMatrix{$deliveryId};
     push @{$receipientsRef->{sentIds}}, $msgRef->{markSentId};
-    push @{$receipientsRef->{ $msgRef->{Header}}}, $msgRef->{Person};
+
+    # Search through the list of receipients if the new one is already in there.
+    my $gotHim = 0;
+    
+    if( $receipientsRef->{ $msgRef->{Header} } ) {
+      my @existingReceipients = @{$receipientsRef->{$msgRef->{Header}}};
+      foreach ( @existingReceipients ) {
+	if( $_ == $msgRef->{Person} ) {
+	  $gotHim = 1;
+	  last;
+	}
+      }
+    }
+    push @{$receipientsRef->{ $msgRef->{Header}}}, $msgRef->{Person} unless( $gotHim );
     push @{$receipientsRef->{MsgID}}, $msgRef->{MsgId};
 
     unless (defined $preMsg && defined $postMsg ) {
@@ -271,12 +296,12 @@ sub digestList( @ )
 
     unless( $sender ) {
       $sender = $msgRef->{Sender};
+      $receipientsRef->{sender} = $sender;
     } else {
-      if( $subject ne $msgRef->{Sender} ) {
+      if( $sender ne $msgRef->{Sender} ) {
 	log( 'warning', "Sender differs between messages of the same types!" );
       }
     }
-    $receipientsRef->{sender} = $sender;
 
     if( $msgRef->{MsgId} != $oldMsgId ) {
       my ($bodyCont) = getSnippets('BODY', $msgRef->{Body}, 1);
@@ -442,8 +467,15 @@ $sql .= "mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg ";
 $sql .= "JOIN messages_people mp ON (msg.id=mp.message_id) ";
 $sql .= "LEFT JOIN msg_types_people mtp on (msg.msg_type_id=mtp.msg_type_id AND ";
 $sql .= "mp.person_id=mtp.person_id) WHERE mp.sent=0 AND mp.delay=?";
-$sql .= " ORDER BY msg.id LIMIT ?";
+$sql .= " ORDER BY mp.person_id, msg.id LIMIT ?";
 log( 'info', "MessageSender Base Query: $sql\n" );
+
+#  SELECT msg.id, msg.msg_type_id, msg.sender, msg.subject, msg.body, msg.created, 
+#  mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg
+#  JOIN messages_people mp ON (msg.id=mp.message_id)
+#  LEFT JOIN msg_types_people mtp on (msg.msg_type_id=mtp.msg_type_id AND 
+#  mp.person_id=mtp.person_id) WHERE mp.sent=0 AND mp.delay=?
+#   ORDER BY msg.id LIMIT ?
 
 $query = $dbh->prepare( $sql );
 

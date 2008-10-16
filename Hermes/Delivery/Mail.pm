@@ -54,7 +54,9 @@ sub sendMail( $ )
 
   my $mime_msg = MIME::Lite->new( From	  => $msg->{from},
 				  Subject => $msg->{subject},
-				  Data    => $msg->{body} );
+				  Data    => $msg->{body},
+				  Type    => 'TEXT'
+				);
 
   # FIXME: Parametercheck.
 
@@ -89,14 +91,34 @@ sub sendMail( $ )
 
   # Send the message.
   if ($msg->{debug} ) {
-    print STDERR "[ Hermes Mail Module Debug: Start of MIME-encoded message ]\n";
-    print STDERR $mime_msg->as_string;
-    print STDERR "\n[ Hermes Mail Module Debug: End of MIME-encoded message ]\n";
+    saveDebugMail( $toLine, $mime_msg );
+    # print STDERR "[ Hermes Mail Module Debug: Start of MIME-encoded message ]\n";
+    # print STDERR $mime_msg->as_string;
+    # print STDERR "\n[ Hermes Mail Module Debug: End of MIME-encoded message ]\n";
   } else {
     $mime_msg->send();
   }
 
   1;
 }
+
+
+sub saveDebugMail( $ )
+{
+  my ($rec, $msg) = @_;
+
+  my $path = "./debugmails/";
+  return unless( $rec );
+
+  mkdir( $path, 0777 ) unless( -e $path );
+  my $file = $rec;
+  $file =~ s/\@/_/;
+
+  if( open F, ">$path/$file" ) {
+    $msg->print( \*F );
+    close F;
+  }
+}
+
 
 1;
