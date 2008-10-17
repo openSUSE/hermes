@@ -1,3 +1,3 @@
 class Delivery < ActiveRecord::Base
-  has_many :msg_types_people
+  has_many :subscriptions
 end
