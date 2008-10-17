@@ -1,5 +1,5 @@
 class AccountController < ApplicationController
-  skip_before_filter :require_auth
+  skip_before_filter :login_via_ichain, :require_auth, :set_return_to 
 
   def login
     auth_url = "https://hermes.opensuse.org/ICSLogin/?\"https://hermes.opensuse.org" + url_for(session[:return_to] || '/') + "\""

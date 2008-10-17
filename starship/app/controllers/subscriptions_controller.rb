@@ -14,8 +14,7 @@ end
 
 def index
   @person = session[:user]
-  @person.name ||= "unknown"
-  @hermestitle = "Subscriptions for #{@person.name}"
+  @hermestitle = "Subscriptions for #{session[:user].stringid} (#{session[:user].email})"
 
   @subscribedMsgs = @person.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
   #@latestMsgs = @person.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)

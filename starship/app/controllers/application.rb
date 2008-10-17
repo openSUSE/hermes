@@ -23,26 +23,23 @@ class ApplicationController < ActionController::Base
       http_real_name = "#{http_first_name} #{http_last_name}"
       logger.debug("Extracted iChain data: #{user_name} (#{http_email})")
     end  
-
-    loggedin_user = Person.find_or_initialize_by_stringid( user_name )
-
+    
     # FIXME: Get information from api.opensuse.org/person/<user_name> and
     #        update/evaluate our database
     
-    if loggedin_user
-      loggedin_user.email = http_email
-      loggedin_user.name = http_real_name
-      loggedin_user.save
-      session[:user] = loggedin_user
-    else 
-      logger.error("Could not initialize user: #{user_name} (#{http_email})")  
+    if !user_name.nil?
+      @loggedin_user = Person.find_or_initialize_by_stringid( user_name )
+      @loggedin_user.email = http_email
+      @loggedin_user.name = http_real_name
+      @loggedin_user.save
+      session[:user] = @loggedin_user
     end
 
   end
 
 
   def require_auth
-    unless session[:user]
+    unless @loggedin_user
       redirect_to(:controller => 'account', :action => 'login')
     end
   end
