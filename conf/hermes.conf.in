@@ -39,5 +39,9 @@ $OBSAPIBase = "http://api.opensuse.org";
 $OBSAPIUser = "opensuse";
 $OBSAPIPasswd = "secret";
 
+# authentication setting
+# Use ichaintest-<name> to simulate iChain in devel environment.
+$authentication = "ichaintest-termite";
+
 # leave the one at the end.
 1;
