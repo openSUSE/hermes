@@ -1,5 +1,5 @@
 class AccountController < ApplicationController
-  skip_before_filter :require_auth, :set_return_to
+  skip_before_filter :require_auth
 
   def login
     auth_url = "https://hermes.opensuse.org/ICSLogin/?\"https://hermes.opensuse.org" + url_for(session[:return_to] || '/') + "\""
