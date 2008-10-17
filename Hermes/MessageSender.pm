@@ -463,18 +463,18 @@ $dbh = Hermes::DBI->connect();
 #
 my $sql;
 $sql = "SELECT msg.id, msg.msg_type_id, msg.sender, msg.subject, msg.body, msg.created, ";
-$sql .= "mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg ";
+$sql .= "mp.person_id, mp.id, mp.header, subs.delivery_id FROM messages msg ";
 $sql .= "JOIN messages_people mp ON (msg.id=mp.message_id) ";
-$sql .= "LEFT JOIN msg_types_people mtp on (msg.msg_type_id=mtp.msg_type_id AND ";
-$sql .= "mp.person_id=mtp.person_id) WHERE mp.sent=0 AND mp.delay=?";
+$sql .= "LEFT JOIN subscriptions subs on (msg.msg_type_id=subs.msg_type_id AND ";
+$sql .= "mp.person_id=subs.person_id) WHERE mp.sent=0 AND mp.delay=?";
 $sql .= " ORDER BY mp.person_id, msg.id LIMIT ?";
 log( 'info', "MessageSender Base Query: $sql\n" );
 
 #  SELECT msg.id, msg.msg_type_id, msg.sender, msg.subject, msg.body, msg.created, 
-#  mp.person_id, mp.id, mp.header, mtp.delivery_id FROM messages msg
+#  mp.person_id, mp.id, mp.header, subs.delivery_id FROM messages msg
 #  JOIN messages_people mp ON (msg.id=mp.message_id)
-#  LEFT JOIN msg_types_people mtp on (msg.msg_type_id=mtp.msg_type_id AND 
-#  mp.person_id=mtp.person_id) WHERE mp.sent=0 AND mp.delay=?
+#  LEFT JOIN subscriptions subs on (msg.msg_type_id=subs.msg_type_id AND 
+#  mp.person_id=subs.person_id) WHERE mp.sent=0 AND mp.delay=?
 #   ORDER BY msg.id LIMIT ?
 
 $query = $dbh->prepare( $sql );

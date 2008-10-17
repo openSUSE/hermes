@@ -109,7 +109,7 @@ sub expandFromMsgType( $$ )
 
   # query the receivers
   my $sql = "SELECT mtp.id, mtp.person_id, p.stringid FROM ";
-  $sql .= "msg_types_people mtp, msg_types mt, persons p WHERE ";
+  $sql .= "subscriptions mtp, msg_types mt, persons p WHERE ";
   $sql .= "mtp.msg_type_id = mt.id AND mt.msgtype=? AND mtp.person_id=p.id AND enabled=1";
 
   my $query = $dbh->prepare( $sql );

@@ -215,7 +215,7 @@ sub newMessage($$$$\@;\@\@$$)
     # check for a user
 
     # Add the new message to the database.
-    $dbh->do( 'LOCK TABLES messages WRITE, messages_people WRITE, msg_types_people READ' );
+    $dbh->do( 'LOCK TABLES messages WRITE, messages_people WRITE, subscriptions READ' );
     my $sql = 'INSERT INTO messages( msg_type_id, sender, subject, body, created) ' .
 	'VALUES (?, ?, ?, ?, NOW())';
     $dbh->do( $sql, undef, ( $typeId, $from, $subject, $text ) );
@@ -438,7 +438,7 @@ sub userTypeSettings( $$ )
 {
   my ( $typeId, $personId ) = @_;
 
-  my $sql = "SELECT delay_id, delivery_id FROM msg_types_people WHERE msg_type_id=? AND person_id=?";
+  my $sql = "SELECT delay_id, delivery_id FROM subscriptions WHERE msg_type_id=? AND person_id=?";
   my ($delayID, $deliveryID) = @{$dbh->selectcol_arrayref( $sql, undef, ($typeId, $personId ) )};
 
   return $delayID, $deliveryID;
