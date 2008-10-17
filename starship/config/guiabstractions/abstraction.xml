@@ -20,19 +20,15 @@
          <filter parameter="_special" operator="oneof" value="123"/>
       </filterabstract>
 
+      <filterabstract id="my_requests">
+         <summary>My Requests</summary>
+         <description>All requests where you are listed in either the source or the target project.</description>
+         <filter parameter="_special" operator="special" value="_myrequests" />
+      </filterabstract>
+
   </filterabstractions>
 
   <subscriptionabstracts>
-  
-    <group id="fate">
-      <name>Features</name>
-      <subscription id="feature_changed">
-        <summary>Feature changed</summary>
-        <description>Receive a notification every time a feature is changed.</description>
-        <msg_type name="obs_build_success"/>
-        <checkable filterabstract="my_features"/>
-      </subscription>
-    </group>
   
     <group id="build_results">
       <name>Package building results</name>
@@ -42,7 +38,7 @@
         <description>Receive a notification every time a package fails to build.</description>
         <msg_type name="obs_build_fail"/>
         <checkable filterabstract="my_packs"/>
-        <checkable filterabstract="my_projects"/>
+        <!-- <checkable filterabstract="my_projects"/> -->
       </subscription>
 
       <subscription id="build_ok">
@@ -50,7 +46,25 @@
         <description>Receive a notification every time a package was build successfully.</description>
         <msg_type name="obs_build_success"/>
         <checkable filterabstract="my_packs"/>
-        <checkable filterabstract="my_projects"/>
+        <!-- <checkable filterabstract="my_projects"/> -->
+      </subscription>
+    </group>
+
+    <group id="obs_requests">
+      <name>openSUSE Build Service Request Notifications</name>
+
+      <subscription id="obs_request_create">
+        <summary>OBS Request Create</summary>
+        <description>Receive a notification when a request is created.</description>
+        <msg_type name="OBS_SRCSRV_REQUEST_CREATE"/>
+        <checkable filterabstract="my_requests"/>
+      </subscription>
+
+      <subscription id="obs_request_change">
+        <summary>OBS Request Change</summary>
+        <description>Receive a notification when a request state is changed.</description>
+        <msg_type name="OBS_SRCSRV_REQUEST_STATECHANGE"/>
+        <checkable filterabstract="my_requests"/>
       </subscription>
     </group>
 
