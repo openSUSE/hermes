@@ -1,15 +1,4 @@
 class MessagesController < ApplicationController
-  # GET /messages
-  # GET /messages.xml
-
-  def index
-    @showtypes = MsgType.search( params[:search], params[:page], 50 )
-    
-    respond_to do |format|
-      format.html # index.html.erb
-      format.xml  { render :xml => @showtypes }
-    end
-  end
 
   # GET /messages/1
   # GET /messages/1.xml

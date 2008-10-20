@@ -1,15 +1,15 @@
+<h1>Message Types Overview</h1>
+
 <% form_tag({:action=>'index'}, :method => :get) do -%>
   <%= label 'filter', 'Filter Message Type' %>
   <%= text_field_tag 'filter', @filter %>
   <%= submit_tag "OK" %>
 <% end -%>
 
-
-<h1>Message Overview</h1>
 <table class="defaultTable">
 <tr>
-<th>Message Types</th>
-<th>Count</th>
+<th>Message Type</th>
+<th>Message Count</th>
 </tr>
 	
 <% for type in @msg_types %>
@@ -23,3 +23,5 @@
 <%= #will_paginate @showtypes 
 %>
 </p>
+
+<p><%= link_to 'Output as XML', {:action => "index", :controller => "msg_types", :format => 'xml'} %></p>
