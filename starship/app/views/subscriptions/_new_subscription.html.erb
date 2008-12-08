@@ -48,13 +48,14 @@ function update_filter_params(html) {
   
   <table class="defaultTable">
     <tr>
-    <td>No filter means, you will get all notifications for the chosen message type. Multiple filters mean &lt;filter1&gt; AND &lt;filter2&gt;... </td>
+    <td>No filter means, you will get all notifications for the chosen message type.</td>
     </tr>
   </table>
   
   <table class="defaultTable">
     <tbody id="filter_table" style="">
       <tr id='counter'><td><%= hidden_field_tag 'filter_count', 0 %><td></tr>
+      <tr><td colspan=4>Multiple filters mean &lt;filter1&gt; AND &lt;filter2&gt;... </td></tr>
       <tr><td><%= submit_tag %></td></tr>
     </tbody>
   </table>

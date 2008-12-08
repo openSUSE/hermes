@@ -22,6 +22,18 @@ def index
   @avail_types = MsgType.find(:all)
   @avail_deliveries = Delivery.find(:all)
   @avail_delays = Delay.find(:all)
+
+  # Tooltip for the filters of a subscription, to view in the expert overview
+  @filter_tooltips = Hash.new
+  @subscribedMsgs.each {|subs|
+    if subs.filters.count > 0
+      subs.filters.each_with_index{|filt,i|
+          @filter_tooltips[subs.id] ||= "<table><tr><td></td><td><b>Parameter</b></td><td><b>Operator</b></td><td><b>Value</b></td></tr>"
+          @filter_tooltips[subs.id] += "<tr><td>#{i+1}.</td><td>#{filt.parameter.name}</td><td>#{filt.operator}</td><td>#{filt.filterstring}</td></tr>"
+      }
+      @filter_tooltips[subs.id] += "</table>"
+    end
+  }
 end
 
 
