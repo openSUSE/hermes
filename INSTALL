@@ -23,17 +23,21 @@ Dependencies:
    MIME::Lite               perl-MIME-Lite
    XML::RSS                 -no openSUSE package yet-
 
-The Hermes Server:
-=================
+The Hermes Server Herminator
+============================
 
 The Hermes server is a server which takes notifications and messages
-over HTTP and stores it to a database. Clients that want to post 
-messages to Hermes use the Hermes server.
+over HTTP and stores it to a database. Clients access Herminator over
+the HTTP interface. 
+
+Herminator comes with a little web application that for administration
+purposes.
 
 Dependencies:
 
 - mysql
 - Hermes Baselibs
+- HTTP Server (Apache), able to serv perl cgis
 - perl
   perl Modules:
   * CGI::Application        perl-CGI-Application
@@ -43,6 +47,8 @@ Hermes Starship
 
 Hermes Starship is a Ruby on Rails application that enables people to
 manage their subscriptions to notifications in the hermes system.
+That means that user can say which notifications they want to see
+approaching them in which way and when.
 
 Dependencies:
 

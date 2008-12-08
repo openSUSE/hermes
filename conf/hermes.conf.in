@@ -15,6 +15,10 @@ $DefaultDelivery = 2;
 # also check with database content 
 $NotifyDefaultDelay = 1;
 
+#
+# Default Sender - the stringid of the default sender user
+$DefaultSender = 'hermes';
+
 # Worker: the hour and minute when the daily messages should go out
 $DailySendHour = 9;
 $DailySendHourMinute = 12;
@@ -36,10 +40,12 @@ $WorkerInitJabber = 0;
 #
 # OBS API Connection, with credentials
 $OBSAPIBase = "http://api.opensuse.org";
-$OBSAPIUser = "opensuse";
-$OBSAPIPasswd = "secret";
+
+#
+# 
 
 # authentication setting
+# Use the term ichain to use Novell iChain authentication.
 # Use ichaintest-<name> to simulate iChain in devel environment.
 $authentication = "ichaintest-termite";
 

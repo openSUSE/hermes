@@ -25,14 +25,16 @@ use strict;
 use Exporter;
 
 use Hermes::Config;
-use Hermes::DBI;
+use Hermes::DB;
 use Hermes::Log;
+use Hermes::Util;
 
+use Data::Dumper;
 
-use vars qw( @ISA @EXPORT @EXPORT_OK $dbh);
+use vars qw( @ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( personInfo );
+@EXPORT	    = qw( personInfo createSubscription createPerson );
 
 #
 # This sub returns a hash ref that contains some information about
@@ -54,7 +56,7 @@ sub personInfo( $ )
   }
 
   if( $id ) {
-    my $sth = $dbh->prepare( $sql );
+    my $sth = dbh()->prepare( $sql );
     $sth->execute( $id );
 
     $personInfoRef = $sth->fetchrow_hashref;
@@ -66,6 +68,70 @@ sub personInfo( $ )
   return $personInfoRef;
 }
 
-$dbh = Hermes::DBI->connect();
+sub createSubscription( $$$;$ )
+{
+  my ($msgTypeId, $personId, $deliveryId, $delayId) = @_;
+
+  my $notiTypeRef = notificationTemplateDetails( $msgTypeId );
+
+  # get the person
+  my $personInfoRef = personInfo( $personId );
+
+  log( 'info', "Creating a subscription for <$personInfoRef->{stringid}> on <$msgTypeId/$notiTypeRef->{_hrName}>" );
+
+  unless( $deliveryId ) {
+    log( 'warning', "No valid delivery id given!" );
+    return undef;
+  }
+
+  my $delay = $delayId || $notiTypeRef->{_defaultdelay};
+
+  my $id;
+
+  my $sql = "SELECT id FROM subscriptions WHERE msg_type_id=? AND person_id=? AND delay_id=? AND delivery_id=?";
+  my $selSth = dbh()->prepare( $sql );
+  $selSth->execute( $notiTypeRef->{_id}, $personInfoRef->{id}, $delay, $deliveryId );
+  ($id) = $selSth->fetchrow_array();
+
+  # if we found one, return.
+  if( $id ) {
+    log( 'info', "Found existing subscription: $id" );
+    return $id;
+  }
+
+  $sql = "INSERT INTO subscriptions (msg_type_id, person_id, delay_id, delivery_id) VALUES (?, ?, ?, ?)";
+  my $sth = dbh()->prepare( $sql );
+  # print Dumper $personInfoRef;
+
+  if( $personInfoRef->{id} && $notiTypeRef->{_id} ) {
+
+    $sth->execute( $notiTypeRef->{_id}, $personInfoRef->{id}, $delay, $deliveryId );
+
+    $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
+  } else {
+    log( 'info', "Not enough information here!" );
+  }
+  return $id;
+}
+
+sub createPerson( $$$ )
+{
+  my ($email, $name, $stringid) = @_;
+
+  # stringid must be unique
+  my $sql = "SELECT id FROM persons WHERE stringid=?";
+  my $sth = dbh()->prepare( $sql );
+  $sth->execute( $stringid );
+
+  my ($id) = $sth->fetchrow_array();
+
+  unless( $id ) {
+    $sql = "INSERT INTO persons (email, name, stringid) VALUES (?, ?, ? )";
+    $sth = dbh()->prepare( $sql );
+    $sth->execute( $email, $name, $stringid );
+    $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
+  }
+  return $id;
+}
 
 1;

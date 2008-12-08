@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 23) do
+ActiveRecord::Schema.define(:version => 25) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -23,6 +23,13 @@ ActiveRecord::Schema.define(:version => 23) do
   end
 
   add_index "deliveries", ["name"], :name => "name"
+
+  create_table "generated_notifications", :force => true do |t|
+    t.integer  "notification_id", :null => false
+    t.integer  "subscription_id", :null => false
+    t.datetime "created_at"
+    t.datetime "sent"
+  end
 
   create_table "messages", :force => true do |t|
     t.integer  "msg_type_id",                :null => false
@@ -92,7 +99,9 @@ ActiveRecord::Schema.define(:version => 23) do
     t.string  "name"
     t.string  "jid"
     t.string  "stringid"
-    t.boolean "admin",    :default => false
+    t.boolean "admin",           :default => false
+    t.string  "hashed_password"
+    t.string  "salt"
   end
 
   create_table "subscription_filters", :force => true do |t|

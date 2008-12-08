@@ -44,6 +44,13 @@ $DB{ 'default' } = { 'type'	=>  'mysql',
 		     'user'	=>  'root',
 		     'pass'	=>  undef };
 
+$DB{ 'test' } = { 'type'     =>  'mysql',
+                     'host'     =>  'localhost',
+                     'port'     =>  3306,
+                     'name'     =>  'hermes_test',
+                     'user'     =>  'root',
+                     'pass'     =>  undef };
+
 #--[ Local Configuration ]--------------------------------------------------
 # Read local configuration file, if this exists. This is meant to be used to
 # override configuration values with specific values.

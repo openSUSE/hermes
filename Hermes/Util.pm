@@ -25,16 +25,18 @@ use strict;
 use Exporter;
 
 use Hermes::Config;
-use Hermes::DBI;
 use Hermes::Log;
+use Hermes::DB;
 
 use Data::Dumper;
 
-use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
+use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( notificationTemplateDetails notificationDetails templateFileName 
-		  parameterId );
+		  parameterId delayStringToValue 
+		  SendNow SendMinutely SendHourly SendDaily SendWeekly SendMonthly
+	          deliveryStringToId deliveryIdToString typeIdToString);
 
 
 
@@ -61,7 +63,7 @@ sub parameterId( $ )
   my $id;
 
   my $sql = "SELECT * FROM parameters WHERE name=?";
-  my $sth = $dbh->prepare( $sql );
+  my $sth = dbh()->prepare( $sql );
   $sth->execute( $name );
 
   ($id) = $sth->fetchrow_array();
@@ -92,17 +94,23 @@ sub notificationTemplateDetails($)
   my %re;
 
   my $sql = "SELECT * FROM msg_types mt WHERE mt.msgtype=?";
-  my $sth = $dbh->prepare( $sql );
+  if( $type =~ /^\d+$/ ) {
+    # its a number
+    $sql = "SELECT * FROM msg_types mt WHERE mt.id=?";
+  }
+  my $sth = dbh()->prepare( $sql );
 
   $sth->execute( $type );
-  my ($id, $msgtype, $added, $defaultdelay, $desc) = $sth->fetchrow_array();
+  my ($msgTypeId, $msgtype, $added, $defaultdelay, $desc) = $sth->fetchrow_array();
+
+  log('info', "Found message type id <$msgTypeId>, name <$msgtype> for <$type>" );
 
   $sql = "SELECT p.id, p.name, p.hr_name, mtp.description, mtp.id ";
   $sql .= "FROM msg_types_parameters mtp, parameters p WHERE mtp.parameter_id = p.id ";
   $sql .= "AND mtp.msg_type_id=?";
 
-  my $paramSth = $dbh->prepare( $sql );
-  $paramSth->execute( $id );
+  my $paramSth = dbh()->prepare( $sql );
+  $paramSth->execute( $msgTypeId );
   my @paramList;
   while( my( $id, $name, $hr_name, $desc, $mtpId ) = $paramSth->fetchrow_array() ) {
     $re{$id} = $name;
@@ -118,7 +126,7 @@ sub notificationTemplateDetails($)
   }
 
   $re{_parameterList} = \@paramList;
-  $re{_id} = $id;
+  $re{_id} = $msgTypeId;
   $re{_type} = $msgtype;
   $re{_added} = $added;
   $re{_defaultdelay} = $defaultdelay;
@@ -138,13 +146,13 @@ sub notificationDetails($;$)
 
     unless( $id ) {
       my $sql = "SELECT * FROM notifications WHERE msg_type_id=? ORDER BY received DESC LIMIT 1";
-      my ($notiId, $msg_type_id, $received, $sender, $generated) = $dbh->selectrow_array( $sql, undef, $msgTypeId );
+      my ($notiId, $msg_type_id, $received, $sender, $generated) = dbh()->selectrow_array( $sql, undef, $msgTypeId );
       $id = $notiId;
     }
     log('debug', "Getting values for id <$id>" ) if( $id );
 
     my $pSql = "SELECT id, parameter_id, value FROM notification_parameters WHERE notification_id=?";
-    my $pSth = $dbh->prepare( $pSql );
+    my $pSth = dbh()->prepare( $pSql );
     $pSth->execute( $id );
 
     while( my($npId, $paramId, $value ) = $pSth->fetchrow_array() ) {
@@ -173,9 +181,119 @@ sub templateFileName( $ )
   }
 }
 
-#
-# some initialisations
-#
-$dbh = Hermes::DBI->connect();
+sub delayStringToValue( $ )
+{
+  my ($str) = @_;
+
+  return SendNow() unless( $str );
+
+  if( $str =~ /NOW|IMMEDIATELY/i ) {
+    return SendNow();
+  } elsif( $str =~ /HOUR/i ) {
+    return SendHourly();
+  } elsif( $str =~ /DAILY/i ) {
+    return SendDaily();
+  } elsif( $str =~ /WEEK/i ) {
+    return SendWeekly();
+  } elsif( $str =~ /MONTH/i ) {
+    return SendMonthly();
+  }
+  return SendNow(); # Default
+}
+
+sub loadDelays()
+{
+  # Load the existing delay values
+  my $sth = dbh()->prepare( 'SELECT id, name FROM delays order by seconds asc' );
+  $sth->execute();
+  while ( my ($id, $name) = $sth->fetchrow_array ) {
+    # log( 'info', "Storing delay value $name with id $id" );
+    $delayHash{$name} = $id;
+  }
+}
+
+sub SendNow
+{
+  loadDelays() unless( keys %delayHash );
+  return $delayHash{'NO_DELAY'};
+}
+
+sub SendMinutely
+{
+  loadDelays() unless( keys %delayHash );
+  return $delayHash{'PER_MINUTE'};
+}
+
+sub SendHourly
+{
+  loadDelays() unless( keys %delayHash );
+  return $delayHash{'PER_HOUR'};
+}
+
+sub SendDaily
+{
+  loadDelays() unless( keys %delayHash );
+  return $delayHash{'PER_DAY'};
+}
+
+sub SendWeekly
+{
+  loadDelays() unless( keys %delayHash );
+  return $delayHash{'PER_WEEK'};
+}
+
+sub SendMonthly
+{
+  loadDelays() unless( keys %delayHash );
+  return $delayHash{'PER_MONTH'};
+}
+
+
+sub deliveryIdToString( $ )
+{
+  my ($delivery) = @_;
+  my $re;
+
+  if( $delivery =~ /^\s*\d+\s*$/ ) {
+    my $sql = "SELECT name FROM deliveries WHERE id=?";
+    my $sth = dbh()->prepare( $sql );
+    $sth->execute( $delivery );
+
+    ($re) = $sth->fetchrow_array;
+  }
+  return $re;
+}
+
+sub deliveryStringToId( $ )
+{
+  my ($str) = @_;
+
+  my $id;
+
+  if( $str ) {
+    my $sql = "SELECT id FROM deliveries WHERE name=?";
+    my $sth = dbh()->prepare( $sql );
+    $sth->execute( $str );
+
+    ($id) = $sth->fetchrow_array;
+  }
+  return $id;
+}
+
+sub typeIdToString( $ )
+{
+  my ($typeId) = @_;
+  my $re;
+
+  if( $typeId =~ /^\s*\d+\s*$/ ) {
+    my $sql = "SELECT msgtype FROM msg_types WHERE id=?";
+    my $sth = dbh()->prepare( $sql );
+    $sth->execute( $typeId);
+
+    ($re) = $sth->fetchrow_array;
+  }
+  return $re;
+}
+
 
 1;

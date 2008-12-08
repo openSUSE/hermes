@@ -25,12 +25,15 @@
 
 use strict;
 use Getopt::Std;
+use Data::Dumper;
 
 use Hermes::Log;
-use Time::HiRes qw( gettimeofday tv_interval );
+use Hermes::DB;
 use Hermes::Message;
 
-use vars qw ( $opt_h $opt_s $opt_l $opt_w $opt_o );
+use Time::HiRes qw( gettimeofday tv_interval );
+
+use vars qw ( $opt_h $opt_s $opt_l $opt_w $opt_o $opt_t );
 
 
 sub usage()
@@ -49,6 +52,7 @@ sub usage()
   -s:  silent, no output is generated.
   -l limit: limit processing to limit notifications
   -w delay: sleeping time in seconds, default 10
+  -t database name as of the Config.pm file
 
 END
 ;
@@ -58,32 +62,39 @@ END
 # ---------------------------------------------------------------------------
 
 # Process the commandline arguments.
-getopts('odhl:w:');
+getopts('ohl:w:t:');
 
 usage() if ($opt_h );
+
+print "Connecting to database $opt_t\n" if defined $opt_t;
+
+connectDB( $opt_t );
 
 my $silent = 0;
 $silent = 1 if( $opt_s );
 
-my $limit = $opt_l || 100;
+my $limit = 100;
+$limit = 0+$opt_l if( $opt_l && $opt_l =~ /^\d+$/ );
 
 my $delay = $opt_w || 10; # ten seconds default delay
-
-my $dbh = Hermes::DBI->connect();
 
 log( 'info', "#################################### generator rocks the show" );
 
 my $sql = "SELECT n.*, msgt.msgtype FROM notifications n, msg_types msgt WHERE ";
 $sql   .= "n.generated IS NULL AND n.msg_type_id=msgt.id order by n.received limit $limit";
 log( 'info', "SQL: $sql " );
-my $notiSth = $dbh->prepare( $sql );
+my $notiSth = dbh()->prepare( $sql );
 
 $sql = "SELECT np.*, mtp.name FROM notification_parameters np, parameters mtp ";
 $sql .= "WHERE np.parameter_id=mtp.id AND np.notification_id=?";
-my $paramSth = $dbh->prepare( $sql );
+my $paramSth = dbh()->prepare( $sql );
 
 $sql = "UPDATE notifications SET generated=NOW() WHERE id=?";
-my $updateSth = $dbh->prepare( $sql );
+my $generatedSth = dbh()->prepare( $sql );
+
+$sql = "INSERT INTO generated_notifications(notification_id, subscription_id, created_at) " .
+       "VALUES (?, ?, CURRENT_TIMESTAMP)";
+my $genSth = dbh()->prepare( $sql );
 
 while( 1 ) {
     # my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -94,39 +105,63 @@ while( 1 ) {
 
     my $cnt = 0;
     while( my ($id, $msgTypeId, $received, $sender, $gen, $type ) = $notiSth->fetchrow_array() ) {
-	print " Type [$type]" unless( $silent );
+	print " [$type]" unless( $silent );
 	$paramSth->execute( $id );
 	my %params;
 	my $pCount = 0;
-	while( my ($id, $notiId, $paramId, $val, $name) = $paramSth->fetchrow_array()) {
+	while( my ($nId, $notiId, $paramId, $val, $name) = $paramSth->fetchrow_array()) {
 	    # print "$name = $val\n" unless( $silent );
 	    $params{$name} = $val;
 	    $pCount++;
 	}
-	my $msgId = sendNotification( $type, \%params );
-	print " with $pCount Arguments";
-	if( $msgId ) {
-	    print ", message $id created!\n";
-	} elsif( $msgId == 0 ) {
-	    print ", no message created!\n";
-	} else {
-	    print ", ERROR happened, check logfile!\n";
+	print " with $pCount Arguments:" unless( $silent );
+	# my $msgId = sendNotification( $type, \%params );
+
+	# generateNotification returns the count of generated notifications
+	my $subsIdsRef = generateNotification( $type,  \%params );
+	unless( $subsIdsRef ) {
+	    print " no subscribers!\n";
+	    next;
 	}
 
-	if( defined $msgId && $msgId =~ /^\d+$/ ) {
-	    $dbh->do( 'LOCK TABLES notifications WRITE' );
-	    $updateSth->execute( $id );
-	    $dbh->do( 'UNLOCK TABLES' );
+	my $genCnt = @{$subsIdsRef}; # amount of entries
+
+	if( $genCnt ) {
+	    print ", $genCnt notifications generated!\n" unless( $silent );
+	} elsif( $genCnt == 0 ) {
+	    print ", no notifications created!\n" unless( $silent );
+	} else {
+	    print ", ERROR happened, check logfile!\n" unless( $silent );
 	}
-        $cnt++;
+
+	# write records into generated_notifications table. This connects the 
+	# notification and a subscription. 
+	# Do that only if there are really subscriptions interested in this type.
+	if( $genCnt > 0 ) {
+	    dbh()->do( 'LOCK TABLES generated_notifications WRITE' );
+	    foreach my $subsId ( @{$subsIdsRef} ) {
+		$genSth->execute( $id, $subsId );
+	    }
+	    dbh()->do( 'UNLOCK TABLES' );
+	    $cnt++;
+	}
+	# Even if there were no subscriber, set the notification to sent.
+	if( $genCnt >= 0 ) {
+	    dbh()->do( 'LOCK TABLES notifications WRITE' );
+	    $generatedSth->execute( $id );
+	    dbh()->do( 'UNLOCK TABLES' );
+	}
     }
 
     my $elapsed = tv_interval ($t0);
-    log 'info', "Created $cnt messages in $elapsed sec.\n";
-    print "Created $cnt messages in $elapsed sec.\n" unless( $silent );
+    log 'info', "Generated $cnt notifications in $elapsed sec.\n";
+    print "Generated $cnt notifications in $elapsed sec.\n" unless( $silent );
     
-    exit if( $opt_o );
-
+    if( $opt_o ) {
+	log('info', "################################### generator exits" );
+	exit;
+    }
+    log( 'info', ">>> Generator sleeping for $delay seconds" );
     sleep( $delay );
 }
 

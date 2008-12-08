@@ -27,7 +27,8 @@ use strict;
 use Getopt::Std;
 
 use Hermes::MessageSender;
-use Hermes::Message;
+use Hermes::DB;
+use Hermes::Util;
 use Hermes::Delivery::Jabber;
 
 use Time::HiRes qw( gettimeofday tv_interval );
@@ -45,6 +46,7 @@ sub usage()
 
   -o:  send only immediate messages once and stop after that
   -m:  send only minute digests and stop after that
+  -t:  database name as of the Config.pm file
   -h:  help text
   -d:  switch on debug
 END
@@ -59,15 +61,16 @@ getopts('omw:dhst:');
 
 usage() if ($opt_h );
 
+connectDB( $opt_t );
+
 my $silent = 0;
 $silent = 1 if( $opt_s );
 
 my $debug = 0;
-$debug = 1 if( $opt_d );
-
-# Handle optional 'type' parameter, if it's available. FIXME!!
-my $type;
-$type = $opt_t if( $opt_t );
+if( $opt_d ) {
+    $debug = 1;
+    $Hermes::Config::Debug = 2;
+}
 
 if( $Hermes::Config::WorkerInitJabber ) {
     Hermes::Delivery::Jabber::initCommunication();
@@ -84,12 +87,14 @@ my ($t0, $elapsed);
 my $cnt;
 
 if( $opt_m ) {
-    $cnt = 0+sendMessageDigest( SendMinutely() );
+    my $notificationIdsRef = sendMessageDigest( SendMinutely() );
+    $cnt = @{$notificationIdsRef};
+
     print "Sent $cnt messages (minute digests)\n";
-    for( my $i = 0; $i < 20; $i++ ) {
-	log( 'info', "Filler $i" );
+    foreach my $notiId ( @{$notificationIdsRef} ) {
+	log('info', "Sent notification <$notiId>" );
     }
-    
+
     if( $Hermes::Config::WorkerInitJabber ) {
 	Hermes::Delivery::Jabber::quitCommunication();
     }
@@ -112,7 +117,9 @@ while( 1 ) {
     if( $sec >= 0 && $sec < $workerdelay ) {
 	
 	$t0 = [gettimeofday];
-	$cnt = sendMessageDigest( SendMinutely() );
+	my $notificationIdsRef = sendMessageDigest( SendMinutely() );
+	$cnt = @{$notificationIdsRef};
+
 	$elapsed = tv_interval( $t0 );
 	log 'info', "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.";
 	print "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.\n";
@@ -120,7 +127,8 @@ while( 1 ) {
 	if( $min == 0 ) {
 	    log 'info', "Send Hour digest at <$hour/$min/$sec>\n";
 	    $t0 = [gettimeofday];
-	    $cnt = sendMessageDigest( SendHourly() );
+	    my $notificationIdsRef = sendMessageDigest( SendHourly() );
+	    $cnt = @{$notificationIdsRef};
 	    $elapsed = tv_interval($t0);
 	    log 'info', "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.";
 	    print "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.\n";
@@ -129,7 +137,8 @@ while( 1 ) {
 
 	if( $hour == $dailyHour && $min == $dailyMin ) {
 	    $t0 = [gettimeofday];
-	    $cnt = sendMessageDigest( SendDaily() );
+	    my $notificationIdsRef = sendMessageDigest( SendDaily() );
+	    $cnt = @{$notificationIdsRef};
 	    $elapsed = tv_interval($t0);
 	    log 'info', "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
 	    print "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n";

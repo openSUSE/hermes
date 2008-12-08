@@ -25,17 +25,17 @@ use strict;
 use Exporter;
 
 use Hermes::Config;
-use Hermes::DBI;
+use Hermes::DB;
 use Hermes::Log;
+use Hermes::Util;
 
 use Cwd;
 
-use vars qw(@ISA @EXPORT $dbh %delayHash);
+use vars qw(@ISA @EXPORT);
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( newMessage sendNotification notificationToInbox delayStringToValue
-		  SendNow SendMinutely SendHourly SendDaily SendWeekly
-		  SendMonthly );
+@EXPORT	    = qw( newMessage sendNotification generateNotification
+		  notificationToInbox createMsgType );
 
 =head1 NAME
 
@@ -215,13 +215,13 @@ sub newMessage($$$$\@;\@\@$$)
     # check for a user
 
     # Add the new message to the database.
-    $dbh->do( 'LOCK TABLES messages WRITE, messages_people WRITE, subscriptions READ' );
+    dbh()->do( 'LOCK TABLES messages WRITE, messages_people WRITE, subscriptions READ' );
     my $sql = 'INSERT INTO messages( msg_type_id, sender, subject, body, created) ' .
 	'VALUES (?, ?, ?, ?, NOW())';
-    $dbh->do( $sql, undef, ( $typeId, $from, $subject, $text ) );
+    dbh()->do( $sql, undef, ( $typeId, $from, $subject, $text ) );
 
     # Grab the message's ID.
-    my $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+    my $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
     log( 'info', "Last inserted id: $id" );
 
     # Resolve the address lists.  All we want are the numeric PersonID's.
@@ -250,7 +250,7 @@ sub newMessage($$$$\@;\@\@$$)
     }
 
     # Set up the SQL insertion template for the mail addresses.
-    my $sth = $dbh->prepare( "INSERT INTO messages_people( message_id, person_id, header, delay ) "
+    my $sth = dbh()->prepare( "INSERT INTO messages_people( message_id, person_id, header, delay ) "
                             ."VALUES ($id, ?, ?, ?)");
 
     # Adds the addresses to the MailAddresses table.
@@ -278,7 +278,7 @@ sub newMessage($$$$\@;\@\@$$)
 	log( 'error', "Unknown or invalid person, can not store message!" );
       }
     }
-    $dbh->do( 'UNLOCK TABLES' );
+    dbh()->do( 'UNLOCK TABLES' );
     # some of the receipients might want the message immediately.
     # sendMessage( $id );
 
@@ -337,6 +337,7 @@ sub sendNotification( $$ )
     log( 'warning', "$@" );
   } else {
     my $msgHash = expandFromMsgType( $msgType, $params );
+
     return undef unless( $msgHash );
 
     if( $msgHash->{error} ) {
@@ -358,6 +359,28 @@ sub sendNotification( $$ )
   return $id;
 }
 
+sub generateNotification( $$ )
+{
+  my ( $msgType, $params ) = @_;
+
+  my $module = 'Hermes::Buildservice'; # FIXME - better plugin handling
+
+  push @INC, "..";
+  push @INC, ".";
+
+  my $subscriberListRef;
+
+  unless( eval "use $module; 1" ) {
+    log( 'warning', "Error with <$module>" );
+    log( 'warning', "$@" );
+  } else {
+    # Get a list of subscription ids based on msgtype and parameters.
+    $subscriberListRef = expandNotification( $msgType, $params );
+  }
+
+  return $subscriberListRef;
+}
+
 sub notificationToInbox( $$ )
 {
   my ( $msgType, $params ) = @_;
@@ -366,15 +389,15 @@ sub notificationToInbox( $$ )
   my $msgTypeId = createMsgType( $msgType );
 
   if( $msgTypeId ) {
-    my $sender = $params->{sender} || "unknown";
-    $dbh->do( 'LOCK TABLES notifications WRITE, parameters WRITE, notification_parameters WRITE, msg_types_parameters WRITE' );
+    my $sender = $params->{sender} || undef;
+    dbh()->do( 'LOCK TABLES notifications WRITE, parameters WRITE, notification_parameters WRITE, msg_types_parameters WRITE' );
     my $sql = "INSERT into notifications (msg_type_id, received, sender) VALUES (?, NOW(), ?)";
-    my $sth = $dbh->prepare( $sql );
+    my $sth = dbh()->prepare( $sql );
     $sth->execute( $msgTypeId, $sender );
-    $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+    $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
 
     my $cnt = storeNotificationParameters( $id, $msgTypeId, $params );
-    $dbh->do( 'UNLOCK TABLES' );
+    dbh()->do( 'UNLOCK TABLES' );
     log( 'info', "Notification of type <$msgType> added with $cnt parameters" );
   }
   return $id;
@@ -392,14 +415,14 @@ sub storeNotificationParameters($$$ )
 
   return unless( $typeId =~ /^\d+$/ );
 
-  my $paramSth = $dbh->prepare( "SELECT id FROM parameters WHERE name=?" );
-  my $inssth = $dbh->prepare( "INSERT INTO msg_types_parameters (msg_type_id, parameter_id) VALUES ($typeId, ?)" );
-  my $insparamSth = $dbh->prepare( 'INSERT INTO notification_parameters(notification_id, parameter_id, value ) VALUES (?,?,?)' );
+  my $paramSth = dbh()->prepare( "SELECT id FROM parameters WHERE name=?" );
+  my $inssth = dbh()->prepare( "INSERT INTO msg_types_parameters (msg_type_id, parameter_id) VALUES ($typeId, ?)" );
+  my $insparamSth = dbh()->prepare( 'INSERT INTO notification_parameters(notification_id, parameter_id, value ) VALUES (?,?,?)' );
 
   my $msgTypeSql = "SELECT parameter_id FROM msg_types_parameters WHERE msg_type_id=$typeId";
 
   # this call returns a ref to an array containing all parameter-ids for that msg_type
-  my $msgTypesRef = $dbh->selectcol_arrayref( $msgTypeSql );
+  my $msgTypesRef = dbh()->selectcol_arrayref( $msgTypeSql );
 
   foreach my $param  ( keys %{$params} ) {
     # check for the parameter and create if not yet known.
@@ -408,9 +431,9 @@ sub storeNotificationParameters($$$ )
 
     unless( $param_id ) {
       # Create the parameter in the parameters table
-      my $isth = $dbh->prepare( "INSERT INTO parameters (name) VALUES (?)");
+      my $isth = dbh()->prepare( "INSERT INTO parameters (name) VALUES (?)");
       $isth->execute( $param );
-      $param_id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+      $param_id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
     }
 
     # Check if the parameter is known for 
@@ -439,39 +462,9 @@ sub userTypeSettings( $$ )
   my ( $typeId, $personId ) = @_;
 
   my $sql = "SELECT delay_id, delivery_id FROM subscriptions WHERE msg_type_id=? AND person_id=?";
-  my ($delayID, $deliveryID) = @{$dbh->selectcol_arrayref( $sql, undef, ($typeId, $personId ) )};
+  my ($delayID, $deliveryID) = @{dbh()->selectcol_arrayref( $sql, undef, ($typeId, $personId ) )};
 
   return $delayID, $deliveryID;
-}
-
-sub SendNow
-{
-  return $delayHash{'NO_DELAY'};
-}
-
-sub SendMinutely
-{
-  return $delayHash{'PER_MINUTE'};
-}
-
-sub SendHourly
-{
-  return $delayHash{'PER_HOUR'};
-}
-
-sub SendDaily
-{
-  return $delayHash{'PER_DAY'};
-}
-
-sub SendWeekly
-{
-  return $delayHash{'PER_WEEK'};
-}
-
-sub SendMonthly
-{
-  return $delayHash{'PER_MONTH'};
 }
 
 #
@@ -483,16 +476,16 @@ sub createMsgType( $;$ )
 
   $msgType = "straycat" unless( $msgType );
 
-  my $sth = $dbh->prepare( 'SELECT id FROM msg_types WHERE msgtype=?' );
+  my $sth = dbh()->prepare( 'SELECT id FROM msg_types WHERE msgtype=?' );
   $sth->execute( $msgType );
 
   my ($id) = $sth->fetchrow_array();
 
   unless( $id ) {
     my $defaultDelay = $delay || $Hermes::Config::NotifyDefaultDelay;
-    my $sth1 = $dbh->prepare( 'INSERT INTO msg_types (msgtype, defaultdelay, added) VALUES (?, ?, now())' );
+    my $sth1 = dbh()->prepare( 'INSERT INTO msg_types (msgtype, defaultdelay, added) VALUES (?, ?, now())' );
     $sth1->execute( $msgType, $defaultDelay );
-    $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+    $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
   }
 
   log( 'info', "Returning id <$id> for msg_type <$msgType>" );
@@ -508,56 +501,20 @@ sub emailToPersonID( $ )
 {
   my ( $email ) = @_;
 
-  my $sth = $dbh->prepare( 'SELECT id FROM persons WHERE email=?' );
+  my $sth = dbh()->prepare( 'SELECT id FROM persons WHERE email=?' );
   $sth->execute( $email );
 
   my ($id) = $sth->fetchrow_array();
 
   unless( $id ) {
-    my $sth1 = $dbh->prepare( 'INSERT INTO persons (email) VALUES (?)' );
+    my $sth1 = dbh()->prepare( 'INSERT INTO persons (email) VALUES (?)' );
     $sth1->execute( $email);
-    $id = $dbh->last_insert_id( undef, undef, undef, undef, undef );
+    $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
   }
   log( 'info', "Returning id <$id> for email <$email>" );
   return $id;
 }
 
-sub delayStringToValue( $ )
-{
-  my ($str) = @_;
-
-  return SendNow() unless( $str );
-
-  if( $str =~ /NOW|IMMEDIATELY/i ) {
-    return SendNow();
-  } elsif( $str =~ /HOUR/i ) {
-    return SendHourly();
-  } elsif( $str =~ /DAILY/i ) {
-    return SendDaily();
-  } elsif( $str =~ /WEEK/i ) {
-    return SendWeekly();
-  } elsif( $str =~ /MONTH/i ) {
-    return SendMonthly();
-  }
-  return SendNow(); # Default
-}
-
 #
-# some initialisations
-#
-$dbh = Hermes::DBI->connect();
-
-
-#
-# Load the existing delay values
-my $sth = $dbh->prepare( 'SELECT id, name FROM delays order by seconds asc' );
-$sth->execute();
-while ( my ($id, $name) = $sth->fetchrow_array ) {
-  # log( 'info', "Storing delay value $name with id $id" );
-  $delayHash{$name} = $id;
-}
-
-
-log( 'info', "Config-Setting: DefaultDelivery: ". $Hermes::Config::DefaultDelivery );
 1;
 

@@ -28,7 +28,6 @@ use Data::Dumper;
 use MIME::Lite;
 
 use Hermes::Config;
-use Hermes::DBI;
 use Hermes::Log;
 use Hermes::Person;
 
@@ -46,13 +45,15 @@ use vars qw( @ISA @EXPORT @EXPORT_OK );
 #  replyto    => same as sender FIXME !
 #  subject    => string
 #  body       => string
-#  debug      => debug flag, true if debug.
+#  _debug      => debug flag, true if debug.
 # 
 sub sendMail( $ )
 {
   my ($msg) = @_;
 
-  my $mime_msg = MIME::Lite->new( From	  => $msg->{from},
+  my $pSenderRef = personInfo( $msg->{from} );
+
+  my $mime_msg = MIME::Lite->new( From	  => $pSenderRef->{email} || "unknown",
 				  Subject => $msg->{subject},
 				  Data    => $msg->{body},
 				  Type    => 'TEXT'
@@ -85,13 +86,19 @@ sub sendMail( $ )
   }
   $mime_msg->add('Bcc' => join( ', ', @t ) );
 
-  $mime_msg->add('reply-to' => $msg->{replyto} ) if( $msg->{replyto} );
+  if( $msg->{replyto} ) {
+    my $pReplyToRef = personInfo( $msg->{replyto} );
+
+    $mime_msg->add('reply-to' => $pReplyToRef->{email} || "unknown" ) ;
+  }
+
   $mime_msg->add('X-hermes-msg-type:' => $msg->{type} ) if( $msg->{type} );
   $mime_msg->replace('X-Mailer' => 'openSUSE Notification System');
 
   # Send the message.
-  if ($msg->{debug} ) {
-    saveDebugMail( $toLine, $mime_msg );
+  if ($msg->{_debug} ) {
+    log('info', "Saving debug mail for noti Id " . $msg->{_notiId} );
+    saveDebugMail( $msg->{_notiId}, $toLine, $mime_msg );
     # print STDERR "[ Hermes Mail Module Debug: Start of MIME-encoded message ]\n";
     # print STDERR $mime_msg->as_string;
     # print STDERR "\n[ Hermes Mail Module Debug: End of MIME-encoded message ]\n";
@@ -103,15 +110,15 @@ sub sendMail( $ )
 }
 
 
-sub saveDebugMail( $ )
+sub saveDebugMail( $$$ )
 {
-  my ($rec, $msg) = @_;
+  my ($id, $rec, $msg) = @_;
 
   my $path = "./debugmails/";
   return unless( $rec );
 
   mkdir( $path, 0777 ) unless( -e $path );
-  my $file = $rec;
+  my $file = $rec . "_$id";
   $file =~ s/\@/_/;
 
   if( open F, ">$path/$file" ) {

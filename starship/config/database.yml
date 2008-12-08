@@ -40,7 +40,7 @@ test:
 production:
   adapter: mysql
   encoding: utf8
-  database: starship_production
-  username: root
-  password: 
+  database: hermes 
+  username: hermes
+  password: hermes 
   socket: /var/lib/mysql/mysql.sock

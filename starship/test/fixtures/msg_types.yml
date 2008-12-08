@@ -1,5 +1,20 @@
 # Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
 
+test_type1:
+  id:        1
+  msgtype:   MsgType1
+  added:     NOW()
+  defaultdelay: 1
+  description:  The test message type number 1
+
+test_type2:
+  id:        2
+  msgtype:   MsgType2
+  added:     NOW()
+  defaultdelay: 1
+  description:  The test message type number 2
+
+
 # one:
 #   column: value
 #

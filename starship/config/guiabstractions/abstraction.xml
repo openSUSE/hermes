@@ -36,7 +36,7 @@
       <subscription id="build_fail">
         <summary>Build Failure</summary>
         <description>Receive a notification every time a package fails to build.</description>
-        <msg_type name="obs_build_fail"/>
+        <msg_type name="sbs_build_fail"/>
         <checkable filterabstract="my_packs"/>
         <!-- <checkable filterabstract="my_projects"/> -->
       </subscription>
@@ -44,26 +44,26 @@
       <subscription id="build_ok">
         <summary>Build Success</summary>
         <description>Receive a notification every time a package was build successfully.</description>
-        <msg_type name="obs_build_success"/>
+        <msg_type name="sbs_build_success"/>
         <checkable filterabstract="my_packs"/>
         <!-- <checkable filterabstract="my_projects"/> -->
       </subscription>
     </group>
 
-    <group id="obs_requests">
+    <group id="sbs_requests">
       <name>openSUSE Build Service Request Notifications</name>
 
       <subscription id="obs_request_create">
-        <summary>OBS Request Create</summary>
+        <summary>SBS Request Create</summary>
         <description>Receive a notification when a request is created.</description>
-        <msg_type name="OBS_SRCSRV_REQUEST_CREATE"/>
+        <msg_type name="SBS_SRCSRV_REQUEST_CREATE"/>
         <checkable filterabstract="my_requests"/>
       </subscription>
 
       <subscription id="obs_request_change">
-        <summary>OBS Request Change</summary>
+        <summary>SBS Request Change</summary>
         <description>Receive a notification when a request state is changed.</description>
-        <msg_type name="OBS_SRCSRV_REQUEST_STATECHANGE"/>
+        <msg_type name="SBS_SRCSRV_REQUEST_STATECHANGE"/>
         <checkable filterabstract="my_requests"/>
       </subscription>
     </group>

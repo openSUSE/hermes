@@ -131,7 +131,7 @@
           <li><a href="<%= url_for(:controller => "msg_types") %>">Hermes Messages</a></li>
 		      <li><a href="http://en.opensuse.org/Hermes/Documentation">Documentation</a></li>
           
-          <% if session[:user].admin %>
+          <% if session[:user] && session[:user].admin %>
           <li><a href="https://notify.opensuse.org/">Hermes Admin</a></li>
           <% end %>
           
@@ -186,7 +186,10 @@
           <% if session[:user] %>
             Logged in as <a href="https://users.opensuse.org/my/profile"><%= session[:user].stringid %></a>
             <br/>
-            <%= link_to 'Logout', :controller => 'account', :action => 'logout' -%>
+            <%= link_to 'Logout', :controller => 'account', :action => 'logout' -%> <br/>
+            <% if ICHAIN_MODE.to_s != "on" %>
+              <%= link_to 'Change Password', :controller => 'account', :action => 'change_password' -%>
+            <% end %>
           <% else %>
            <!-- Begin Personal links (Login, etc.) -->
            <a href="/">Create an account or log in</a>

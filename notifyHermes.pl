@@ -90,13 +90,7 @@ if( $opt_o ) {
 
 die "No notification type specified" unless( defined $type );
 
-my $id;
-if( $opt_r ) {
-    print "Creating raw notification!\n";
-    $id = notificationToInbox( $type, \%params );
-} else {
-    $id = sendNotification( $type, \%params );
-}
+my $id = notificationToInbox( $type, \%params );
 
 if( $id ) {
     print "Message created: $id\n";

@@ -30,17 +30,17 @@ use LWP::UserAgent;
 use URI::Escape;
 
 use Hermes::Config;
-use Hermes::DBI;
+use Hermes::DB;
 use Hermes::Log;
 use Hermes::Person;
 use Hermes::Util;
 
 use Data::Dumper;
 
-use vars qw(@ISA @EXPORT @EXPORT_OK $dbh );
+use vars qw(@ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( expandFromMsgType );
+@EXPORT	    = qw( expandFromMsgType expandNotification );
 
 our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedWatchlist);
 
@@ -108,13 +108,12 @@ sub expandFromMsgType( $$ )
   $re->{body} = $text;
 
   # query the receivers
-  my $sql = "SELECT mtp.id, mtp.person_id, p.stringid FROM ";
-  $sql .= "subscriptions mtp, msg_types mt, persons p WHERE ";
-  $sql .= "mtp.msg_type_id = mt.id AND mt.msgtype=? AND mtp.person_id=p.id AND enabled=1";
+  my $sql = "SELECT subs.id, subs.person_id, p.stringid FROM ";
+  $sql .= "subscriptions subs, msg_types mt, persons p WHERE ";
+  $sql .= "subs.msg_type_id = mt.id AND mt.msgtype=? AND subs.person_id=p.id AND enabled=1";
 
-  my $query = $dbh->prepare( $sql );
+  my $query = dbh()->prepare( $sql );
   $query->execute( $type );
-  my $userListRef = undef;
 
   invalidateCache();
 
@@ -158,6 +157,49 @@ sub expandFromMsgType( $$ )
   return $re;
 }
 
+#
+# generates a list of subscriptions which want to receive the incoming 
+# notification type based on the parameters. The subscriptions are identified
+# by their database ids. The subscriptions have all the information like receiver,
+# delivery and delay which is needed.
+#
+sub expandNotification( $$ )
+{
+  my( $msgType, $paramRef ) = @_;
+
+  # query the receivers
+  my $sql = "SELECT subs.id, subs.person_id, p.stringid FROM ";
+  $sql .= "subscriptions subs, msg_types mt, persons p WHERE ";
+  $sql .= "subs.msg_type_id = mt.id AND mt.msgtype=? AND subs.person_id=p.id AND enabled=1";
+
+  my $query = dbh()->prepare( $sql );
+  $query->execute( $msgType );
+  my @subsIds;
+  invalidateCache();
+
+  while( my ($subscriptId, $personId, $personString) = $query->fetchrow_array()) {
+    # and the personId is user in the project.
+    my @filters = getFilters( $subscriptId );
+    # loop over all filters. Since these filter are implicit AND connected, all
+    # filters have to apply.
+    my $filterOk = 1;
+    foreach my $filterRef ( @filters ) {
+      $filterOk = applyFilter( $paramRef, $filterRef );
+      if( ! $filterOk ) {
+	log( 'info', "Filter $filterRef->{filterlog} failed!" );
+	last;
+      }
+      log( 'info', $filterRef->{filterlog} . " adds user to to-line: $personString ($personId)." );
+    }
+    if( $filterOk ) {
+      log('info', "Subscription $subscriptId wants this notification!" );
+      push @subsIds, $subscriptId;
+    }
+  }
+  return \@subsIds;
+}
+
+
 sub getFilters( $ ) 
 {
   my( $subscriptId ) = @_;
@@ -166,7 +208,7 @@ sub getFilters( $ )
   $sql   .= "subscription_filters filter, parameters p WHERE "; 
   $sql   .= "filter.parameter_id=p.id AND filter.subscription_id=?";
 
-  my $query = $dbh->prepare( $sql );
+  my $query = dbh()->prepare( $sql );
   $query->execute( $subscriptId );
 
   my @re;
@@ -480,8 +522,6 @@ sub extractProjectsFromPersonMeta( $ )
   }
   return \%retwatchlist;
 }
-
-$dbh = Hermes::DBI->connect();
 
 $hermesUserInfoRef = personInfo( 'hermes2' ); # Get the hermes user info
 if( $hermesUserInfoRef->{id} ) {

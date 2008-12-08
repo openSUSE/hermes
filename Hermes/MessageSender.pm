@@ -27,18 +27,33 @@ use Exporter;
 use Data::Dumper;
 
 use Hermes::Config;
-use Hermes::DBI;
+use Hermes::DB;
 use Hermes::Log;
+use Hermes::Util;
 use Hermes::Delivery::Mail;
-use Hermes::Delivery::RSS;
+# use Hermes::Delivery::RSS;
 use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;
 
-use vars qw(@ISA @EXPORT $dbh $query );
+use HTML::Template;
+
+use vars qw(@ISA @EXPORT $query );
+
+#
+# This is the general query used by the most sending methods here. It is prepared and 
+# stored in a module global variable, which only causes trouble if its used multiple 
+# times.
+#
+use constant SQL => scalar "SELECT gn.id, gn.notification_id, gn.created_at, subs.msg_type_id,\
+ subs.person_id, subs.delay_id, subs.delivery_id FROM generated_notifications gn\
+ JOIN subscriptions subs ON subs.id = gn.subscription_id\
+ WHERE gn.sent is NULL AND subs.enabled=1 AND subs.delay_id=?\
+ ORDER BY gn.notification_id, subs.person_id LIMIT ?";
+
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( sendMessageDigest sendImmediateMessages deliveryIdToString );
+@EXPORT	    = qw( sendMessageDigest sendImmediateMessages );
 
 
 ######################################################################
@@ -48,50 +63,36 @@ use vars qw(@ISA @EXPORT $dbh $query );
 # success and false on failure.
 ######################################################################
 
-sub markSent( @ )
+sub markSent( $ )
 {
-  my ($msgPeopleIds) = @_;
+  my ($notiIds) = @_;
 
-  my $sql = 'UPDATE LOW_PRIORITY messages_people SET sent = NOW() WHERE id = ?';
-  my $sth = $dbh->prepare( $sql );
+  my $sql = 'UPDATE LOW_PRIORITY generated_notifications SET sent = NOW() WHERE id = ?';
+  my $sth = dbh()->prepare( $sql );
 
   my $res = 0;
 
-  foreach my $id ( @$msgPeopleIds ) {
-    log( 'notice', "set messages_people id <$id> to sent!" );
-    if( $Hermes::Config::Debug ) {
-      log( 'info', "skipping to mark sent for messages_people id <$id>" );
-    } else {
-      $res += $sth->execute( $id );
+  if( ref $notiIds eq "ARRAY" ) {
+    foreach my $id ( @$notiIds) {
+      my $logMsg = "set generated_notification id <$id> to sent!";
+      if( $Hermes::Config::Debug > 0 && $Hermes::Config::Debug != 2 ) {
+	$logMsg = "DEBUG - SKIPPED: " . $logMsg;
+      } else {
+	$res += $sth->execute( $id );
+      }
+      log( 'notice', $logMsg );
     }
+  } else { # Assume that it is a scalar id from sendImmediate
+    my $logMsg = "set generated_notification id <$notiIds> to sent!";
+    $logMsg .= " + Debug: " . $Hermes::Config::Debug;
+    if( $Hermes::Config::Debug > 0 && $Hermes::Config::Debug != 2 ) {
+      $logMsg = "DEBUG - SKIPPED: " . $logMsg;
+    } else {
+      $res = $sth->execute( $notiIds );
+    }
+    log( 'info', $logMsg );
   }
   return ($res > 0);
-}
-
-
-######################################################################
-# sub getSnippets
-# -------------------------------------------------------------------
-# Returns the snippets in text which is between the marker tags.
-######################################################################
-
-sub getSnippets($$;$) {
-    my ($marker, $text, $max_number) = @_;
-    $max_number = -1 if (!$max_number);
-
-    my $openMarker = '<' . $marker . '>';
-    my $closeMarker = '</' . $marker . ">";
-
-    my @snippets = ();
-
-    # Multiline and case-sensitive
-    while ( $max_number && $text =~ /$openMarker(.+?)$closeMarker/gsi ) {
-       push(@snippets, $1);
-       $max_number = $max_number - 1;
-       log('debug', "Found Snippet: '$marker'");
-    }
-
-    return @snippets;
 }
 
 
@@ -130,196 +131,110 @@ Returns the number of messages sent in this digest run.
 
 =cut
 
-sub sendMessageDigest($;$$$)
+sub sendMessageDigest($;)
 {
-  my ($delay, $type, $debug, $subject) = @_;
-
-  if ( $Hermes::Config::Debug ) {
-    log( 'warning', "Mail sending switched off (debug) due to Config-Setting!" );
-    $debug = 1;
-  }
+  my ($delay, $subject) = @_;
 
   # Find all messages of the same type and delay that haven't been sent.
-  my $sql = '';
   my $sth;
   my $cnt = 0;
   my $knownType;
   my @markSentIds;
+  my @handledIds;
   my @msg;
 
   log('notice', "Fetching messages of all types with delay $delay");
 
-  $query->execute( $delay, 1000 ); # FIXME make limit configurable
+  $query = dbh()->prepare( SQL ) unless( $query );
+  $query->execute( $delay, 1000 );
 
-  my %personSorted;
+  my $currentPerson;
+  my $currentDelivery;
+  my $currentType;
 
-  while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
-	       $header, $deliveryId ) = $query->fetchrow_array()) {
-    # The query returns a message id multiple times, depending on the amount of 
-    # receipients.
-    log( 'info', "MessagePeople ID <$markSentId> handling!" );
+  my $renderedRef;
+  my $summedBody = "";
+  my @genNotiIds;
 
-    $deliveryId = $Hermes::Config::DefaultDelivery unless( $deliveryId );
+  while( my( $genNotiId, $notiId, $genNotiCreated, $msgTypeId, $personId, $delayId, $deliveryId )
+	 = $query->fetchrow_array() ) {
 
+    # set sensible start values if the current- values are undefined.
+    $currentPerson = $personId unless( $currentPerson );
+    $currentDelivery = $deliveryId unless( $currentDelivery );
+    $currentType = $msgTypeId unless( $currentType );
 
-    log( 'info', "Sending <$msgid> with <$personId> as <$header>" );
+    log( 'info', "Current Person $personId <=> $currentPerson" );
+    log( 'info', "Current Delivery $deliveryId <=> $currentDelivery" );
+    log( 'info', "Current Type $msgTypeId <=> $currentType" );
 
-    # if a new type starts, we have to combine the messages and form a message
-    if( defined $knownType && $type != $knownType ) {
-      # The current type is not yet handled.
-      my $deliverHashRef = digestList( @msg );
-      log( 'info', "sending digest begins ========================================!" );
-      sendPersonSorted( \%personSorted );
-    }
-    $knownType = $type;
-
-    $personSorted{$personId} = () unless $personSorted{$personId};
-
-    # Store the message for further processing.
-    push @{$personSorted{$personId}}, { MsgId => $msgid, Sender => $sender, Subject => $subject,
-					Body => $body, Created => $created, Person => $personId,
-					Header => $header, Delivery => $deliveryId, markSentId => $markSentId,
-					Type => $type };
-  }
-
-  # sending left overs
-  sendPersonSorted( \%personSorted );
-}
-
-sub sendPersonSorted( $ )
-{
-  my ($personSorted) = @_;
-
-  # Now send every list of messages sorted by person Ids
-  foreach my $personId ( keys %{$personSorted} ) {
-    next unless( @{$personSorted->{$personId}} );
-    log( 'info', "Sending digests for person <$personId> =====================================!" );
-    my $deliverHashRef = digestList( @{$personSorted->{$personId}} );
-    sendHash( $deliverHashRef );
-    log( 'info', "Finished sending digests ====================================!" );
-  }
-  $personSorted = {};
-}
-
-sub deliveryIdToString( $ )
-{
-  my ($delivery) = @_;
-  my $re;
-
-  if( $delivery =~ /^\s*\d+\s*$/ ) {
-    my $sql = "SELECT name FROM deliveries WHERE id=?";
-    my $sth = $dbh->prepare( $sql );
-    $sth->execute( $delivery );
-
-    ($re) = $sth->fetchrow_array;
-  }
-  return $re;
-}
-
-sub typeIdToString( $ )
-{
-  my ($typeId) = @_;
-  my $re;
-
-  if( $typeId =~ /^\s*\d+\s*$/ ) {
-    my $sql = "SELECT msgtype FROM msg_types WHERE id=?";
-    my $sth = $dbh->prepare( $sql );
-    $sth->execute( $typeId);
-
-    ($re) = $sth->fetchrow_array;
-  }
-  return $re;
-}
-
-sub digestList( @ )
-{
-  my @msges = @_;
-
-  # go through the incoming list of hash refs with non yet digested messages
-  # these messages are all of the same type.
-  #
-  # The message parts of the new message
-  my ( $preMsg, $msgText, $postMsg, $body );
-  my $oldMsgId = 0;
-  my $subject;
-  my $sender;
-  my $receipientsRef;
-
-  my %deliveryMatrix;
-
-  foreach my $msgRef ( @msges ) {
-
-    my $deliveryId = $msgRef->{Delivery};
-
-    unless(  $deliveryMatrix{ $deliveryId } ) {
-      $deliveryMatrix{$deliveryId} = {};
-      $receipientsRef = $deliveryMatrix{$deliveryId};
-      $receipientsRef->{type} = $msgRef->{Type};
-      $receipientsRef->{to} = ();
-      $receipientsRef->{cc} = ();
-      $receipientsRef->{bcc} = ();
-      $receipientsRef->{sentIds} = ();
-      $receipientsRef->{MsgID} = (); # $msgRef->{MsgId};
-    }
-    $receipientsRef = $deliveryMatrix{$deliveryId};
-    push @{$receipientsRef->{sentIds}}, $msgRef->{markSentId};
-
-    # Search through the list of receipients if the new one is already in there.
-    my $gotHim = 0;
-    
-    if( $receipientsRef->{ $msgRef->{Header} } ) {
-      my @existingReceipients = @{$receipientsRef->{$msgRef->{Header}}};
-      foreach ( @existingReceipients ) {
-	if( $_ == $msgRef->{Person} ) {
-	  $gotHim = 1;
-	  last;
-	}
+    if( $currentPerson   != $personId  ||
+	$currentType     != $msgTypeId ||
+	$currentDelivery != $deliveryId ) {
+      # This means that the collected content needs to be sent because
+      # the receiver changed or the receiver is the same but the delivery
+      # is different or the message type has changed.
+      $renderedRef->{subject} = $subject if( $subject );
+      if( sendSummedMessage( $renderedRef, $summedBody, $currentDelivery ) ) {
+	markSent( \@genNotiIds );
+	@genNotiIds = ();
       }
-    }
-    push @{$receipientsRef->{ $msgRef->{Header}}}, $msgRef->{Person} unless( $gotHim );
-    push @{$receipientsRef->{MsgID}}, $msgRef->{MsgId};
-
-    unless (defined $preMsg && defined $postMsg ) {
-      ($preMsg)  = getSnippets('PRE',  $msgRef->{Body}, 1);
-      ($postMsg) = getSnippets('POST', $msgRef->{Body}, 1);
-    }
-
-    unless( $subject ) {
-      $subject = $msgRef->{Subject};
+      $summedBody = "";
     } else {
-      if( $subject ne $msgRef->{Subject} ) {
-	log( 'warning', "Subject differs between messages of the same types <$msgRef->{MsgId}>: ".
-	   "<$subject> ne <$msgRef->{Subject}" );
-      }
+      # all parameters are still fine, we continue to collect gen_notification details
     }
-    $receipientsRef->{subject} = $subject;
 
-    unless( $sender ) {
-      $sender = $msgRef->{Sender};
-      $receipientsRef->{sender} = $sender;
+    # render the message and get the digest text out.
+    $renderedRef = renderMessage( $msgTypeId, $notiId, $personId, $delayId, $deliveryId );
+    unless( $renderedRef->{body} ) {
+      log( 'error', "Message without body is sad..." );
+      next;
+    }
+
+      log('info', "Rendered Body: $renderedRef->{body}" );
+
+    # get the <digest></digest> limited text out of the body.
+    if( $renderedRef->{body} =~ /<digest>(.+?)<\/digest>/gsi ) {
+      # append the text part beween the digest tags to the summed body
+      $summedBody .= "= $genNotiCreated =>" . $1;
     } else {
-      if( $sender ne $msgRef->{Sender} ) {
-	log( 'warning', "Sender differs between messages of the same types!" );
-      }
+      # no digest sektion, append the whole text
+      $summedBody .= $renderedRef->{body};
     }
-
-    if( $msgRef->{MsgId} != $oldMsgId ) {
-      my ($bodyCont) = getSnippets('BODY', $msgRef->{Body}, 1);
-
-      $bodyCont = $msgRef->{Body} if (!$bodyCont);
-      $body .= $bodyCont . "\n==>\n";
-    }
-
-    $oldMsgId = $msgRef->{MsgId};
+    $currentPerson = $personId;
+    $currentDelivery = $deliveryId;
+    $currentType = $msgTypeId;
+    push @genNotiIds, $genNotiId; # Needed to mark the notifications sent
+    push @handledIds, $notiId;
+    $cnt++;
   }
 
-  # Set the combined body in all messages in the delivery matrix
-  foreach my $msgRef ( values %deliveryMatrix ) {
-    $msgRef->{body} = $body;
+  # Send left overs.
+  if( $renderedRef ) {
+    $renderedRef->{subject} = $subject if( $subject );
+    log('info', "Sending left overs: " . Dumper $renderedRef );
+    if( sendSummedMessage( $renderedRef, $summedBody, $currentDelivery ) ) {
+      markSent( \@genNotiIds );
+    }
   }
-
-  return \%deliveryMatrix;
+  return \@handledIds;
 }
+
+sub sendSummedMessage( $$$ )
+{
+  my ($msgRef, $summedBody, $deliveryId ) = @_;
+
+  # Replace the body of the message with the collected body.
+  if( $msgRef->{body} =~ /<digest>/ ) {
+    $msgRef->{body} =~ s/<digest>.+?<\/digest>/$summedBody/gsi;
+  } else {
+    $msgRef->{body} = $summedBody;
+  }
+
+  return deliverMessage( $deliveryId, $msgRef );
+}
+
+
 
 
 #
@@ -337,7 +252,7 @@ sub deliverMessage( $$ )
   unless( $deliveryString ) {
     log('warning', "Problem: Delivery <$delivery> seems to be unknown!" );
   } else {
-    log( 'info', "Delivery is <$delivery> => $deliveryString" );
+    log( 'info', "Delivering this message: <$msgRef->{body}> with <$delivery> => $deliveryString" );
 
     # FIXME: Better detection of the delivery type
     if( $deliveryString =~ /mail/i ) {
@@ -347,8 +262,9 @@ sub deliverMessage( $$ )
       sendJabber( $msgRef );
       $res = 1;
     } elsif( $deliveryString =~ /RSS/i ) {
-      sendRSS( $msgRef );
-      $res = 1;
+      # sendRSS( $msgRef );
+      log( 'error', "Unable to send RSS at the moment!" );
+      # $res = 1;
     } else {
       log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
     }
@@ -357,127 +273,143 @@ sub deliverMessage( $$ )
   return $res;
 }
 
-
 #
-# takes a hash that is structured by the delivery id where we loop over.
-# Called from the sendImmediateMessage and from the digest list generator
-#
-# This sub has to set the human readable type from the id
-#
-sub sendHash( $ )
+# return the parameters with their values for one generated notification. 
+# Digest messages have more of them.
+sub getGeneratedNotificationParameters( $ ) 
 {
-  my ( $deliveryMatrixRef ) = @_;
+  my ($notiId) = @_;
 
-  log( 'info', "Delivering Msg: " . Dumper( $deliveryMatrixRef ) );
-  foreach my $delivery ( keys %$deliveryMatrixRef ) {
+  # get all the information about the notification and its paramters
+  my $sql = "SELECT n.sender,mt.msgtype, p.name, np.value FROM notifications n ";
+  $sql .= "LEFT JOIN notification_parameters np ON( n.id=np.notification_id) ";
+  $sql .= "LEFT JOIN parameters p ON (np.parameter_id=p.id) ";
+  $sql .= "JOIN msg_types mt ON(mt.id=n.msg_type_id) WHERE n.id=?";
+  
+  my $sth = dbh()->prepare( $sql );
+  $sth->execute( $notiId );
+  my %paramHash;
+  my $sender;
+  my $type;
+  while( my( $s, $mt, $paraName, $paraValue) = $sth->fetchrow_array()) {
+    
+    if( $paraName ) {
+      $paramHash{$paraName} = $paraValue || "";
+    }
+    $sender = $s unless( $sender );
+    $type = $mt unless( $type );
+  }
 
-    my $type = typeIdToString( $deliveryMatrixRef->{$delivery}->{type} );
+  $sender = $Hermes::Config::DefaultSender unless( $sender );
+  return ($sender, $type, \%paramHash );
+}
 
-    if( deliverMessage( $delivery,
-			{ from       => $deliveryMatrixRef->{$delivery}->{sender},
-			  to         => $deliveryMatrixRef->{$delivery}->{to},
-			  cc         => $deliveryMatrixRef->{$delivery}->{cc},
-			  bcc        => $deliveryMatrixRef->{$delivery}->{bcc},
-			  type       => $type,
-			  replyto    => $deliveryMatrixRef->{$delivery}->{sender},
-			  subject    => $deliveryMatrixRef->{$delivery}->{subject},
-			  body       => $deliveryMatrixRef->{$delivery}->{body},
-			  msgid      => $deliveryMatrixRef->{$delivery}->{MsgID},
-			  debug      => $Hermes::Config::Debug } ) ) {
-      log( 'info', "Successfully delivered message!!" );
-      markSent( $deliveryMatrixRef->{$delivery}->{sentIds} );
+sub renderMessage( $$$$$ )
+{
+  my ($msgTypeId, $notiId, $personId, $delayId, $deliveryId) = @_;
+
+  # for the moment we render all delivery- and delay types same way.
+
+  my ($sender, $type, $paramHash) = getGeneratedNotificationParameters( $notiId );
+
+  my $text;
+  my $subject;
+
+  my $tmpl = getTemplate( $type );
+  if( $tmpl ) {
+    # Fill the template
+    $tmpl->param( $paramHash );
+    $text = $tmpl->output;
+
+    # extract the subject
+    if( $text =~ /^\s*\@subject: ?(.+)$/im ) {
+      $subject = $1;
+      log( 'info', "Extracted subject <$subject> from template!" );
+      $text =~ s/^\s*\@subject:.*$//im;
+    }
+
+    # remove a potential <digest> tag
+    $text =~ s/<digest>//gsi;
+    $text =~ s/<\/digest>//gsi;
+    # log('info', "Template body: <$text>" );
+
+  } else {
+    log( 'warning', "No valid template found, using default" );
+    $text = "Hermes received the notification <$type>\n\n";
+    $subject = "Notification $type arrived!";
+    if( keys %$paramHash ) {
+      $text .= "These parameters were added to the notification:\n";
+      foreach my $key( keys %$paramHash ) {
+	$text .= "   $key = " . $paramHash->{$key} . "\n";
+      }
     }
   }
+
+  return { _notiId    => $notiId,
+	   from       => $sender,
+	   to         => [$personId],
+	   cc         => [],
+	   bcc        => [],
+	   type       => $type,
+	   replyto    => $sender,
+	   subject    => $subject,
+	   body       => $text,
+	   _debug      => $Hermes::Config::Debug };
+
+}
+
+
+#
+# FIXME: get template depending on user, delivery and delay
+# from database.
+#
+sub getTemplate( $;$$ )
+{
+  my ($type, $delayId, $deliveryId ) = @_;
+
+  my $text;
+  my $filename = templateFileName( $type );
+
+  if( $filename && -r "$filename" ) {
+    log( 'info', "template filename: <$filename>" );
+    my $tmpl = HTML::Template->new(filename => "$filename",
+				   die_on_bad_params => 0,
+				   cache => 1 );
+
+    return $tmpl;
+  } else {
+    log( 'debug', "Template not existing for type <$type>" );
+  }
+
+  return undef;
 }
 
 sub sendImmediateMessages(;$)
 {
   my ($type) = @_;
 
-  # FIXME: Honour message type parameter
-
   my $cnt = 0;
-  my %deliveryMatrix;
-  my $last_id = -1;
-
+  $query = dbh()->prepare(SQL) unless( $query );
   $query->execute( SendNow(), 1000 );
 
-  while ( my ( $msgid, $type, $sender, $subject, $body, $created, $personId, $markSentId,
-	       $header, $deliveryId ) = $query->fetchrow_array()) {
-    # The query returns a message id multiple times, depending on the amount of
-    # receipients.
-    # push @markSentIds, $markSentId; # if of the record in messages_people
+  while( my( $genNotiId, $notiId, $genNotiCreated, $msgTypeId, $personId, $delayId, $deliveryId )
+	 = $query->fetchrow_array() ) {
+    my $renderedMsgRef = renderMessage( $msgTypeId, $notiId, $personId, $delayId, $deliveryId );
 
-    # reasonable default for empty delivery id. That happens if the user does not have
-    # a preference, it's the default delivery. FIXME
-    $deliveryId = $Hermes::Config::DefaultDelivery unless( $deliveryId );
-    log('info', "Last ID: $last_id" );
-    if ( $msgid != $last_id ) {
-      # we have a new id and do the actual sending. 
-      if ( $last_id > -1 ) {
-	sendHash( \%deliveryMatrix );
-	%deliveryMatrix = ();
-	$cnt++;
-      }
-      $last_id = $msgid;
+    if( deliverMessage( $deliveryId, $renderedMsgRef ) ) {
+      # Successfully sent!
+      markSent( $genNotiId );
+      $cnt ++;
+      log( 'info', "Successfully sent generated notification <$genNotiId>: ". 
+	   Dumper( $renderedMsgRef ) );
     }
-
-    my $receipientsRef;
-    log( 'info', "Storing MsgID <$msgid> with <$personId> as <$header> in DeliveryID <$deliveryId>" );
-
-    # if we do not yet have a hash for this delivery method, create one.
-    unless( $deliveryMatrix{$deliveryId} ) {
-      $deliveryMatrix{$deliveryId} = {};
-      $receipientsRef = $deliveryMatrix{$deliveryId};
-      $receipientsRef->{to} = ();
-      $receipientsRef->{cc} = ();
-      $receipientsRef->{bcc} = ();
-      $receipientsRef->{sentIds} = ();
-      $receipientsRef->{MsgID} = $msgid;
-      $receipientsRef->{type} = $type;
-      $receipientsRef->{subject} = $subject;
-      $receipientsRef->{sender} = $sender;
-      $receipientsRef->{body} = $body;
-    }
-    $receipientsRef = $deliveryMatrix{$deliveryId};
-    push @{$receipientsRef->{sentIds}}, $markSentId;
-    push @{$receipientsRef->{ $header }}, $personId
   }
-  # don't forget the last hash fill.
-  log( 'info', "Sending left overs" );
-  if( %deliveryMatrix ) {
-    sendHash( \%deliveryMatrix );
-    $cnt++; # because of the last hash sending
-  }
-
   return $cnt;
 }
 
-
-$dbh = Hermes::DBI->connect();
-
 #
-# This is the general query used by the most sending methods here. It is prepared and 
-# stored in a module global variable, which only causes trouble if its used multiple 
-# times.
-#
-my $sql;
-$sql = "SELECT msg.id, msg.msg_type_id, msg.sender, msg.subject, msg.body, msg.created, ";
-$sql .= "mp.person_id, mp.id, mp.header, subs.delivery_id FROM messages msg ";
-$sql .= "JOIN messages_people mp ON (msg.id=mp.message_id) ";
-$sql .= "LEFT JOIN subscriptions subs on (msg.msg_type_id=subs.msg_type_id AND ";
-$sql .= "mp.person_id=subs.person_id) WHERE mp.sent=0 AND mp.delay=?";
-$sql .= " ORDER BY mp.person_id, msg.id LIMIT ?";
-log( 'info', "MessageSender Base Query: $sql\n" );
 
-#  SELECT msg.id, msg.msg_type_id, msg.sender, msg.subject, msg.body, msg.created, 
-#  mp.person_id, mp.id, mp.header, subs.delivery_id FROM messages msg
-#  JOIN messages_people mp ON (msg.id=mp.message_id)
-#  LEFT JOIN subscriptions subs on (msg.msg_type_id=subs.msg_type_id AND 
-#  mp.person_id=subs.person_id) WHERE mp.sent=0 AND mp.delay=?
-#   ORDER BY msg.id LIMIT ?
-
-$query = $dbh->prepare( $sql );
-
+log( 'info', "MessageSender Base Query: " . SQL );
 
 1;
+

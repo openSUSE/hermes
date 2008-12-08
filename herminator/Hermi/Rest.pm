@@ -33,12 +33,12 @@ use Hermes::Log;
 use Hermes::Message;
 use Hermes::Statistics;
 use Hermes::Util;
-use Hermes::DBI;
+use Hermes::DB;
 
 # sub do_stuff : Path('do/stuff') { ... }
 # sub do_more_stuff : Regex('^/do/more/stuff\/?$') { ... }
 # sub do_something_else : Regex('do/something/else/(\w+)/(\d+)$') { ... }
-use vars qw( $dbh $htmlTmpl %isAdmin $user );
+use vars qw( $htmlTmpl %isAdmin $user );
 
 sub setup {
   my $self = shift;
@@ -95,7 +95,7 @@ sub cgiapp_prerun
 
   if( $loggedInUser ) {
     my $sql = "SELECT admin FROM persons WHERE stringid=?";
-    my $sth = $dbh->prepare( $sql );
+    my $sth = dbh()->prepare( $sql );
     $sth->execute( $loggedInUser );
     my ($admin) = $sth->fetchrow_array();
     log( 'info', "Admin flag for user <$loggedInUser>: $admin" );
@@ -427,14 +427,14 @@ sub ajaxUpdate
   if( $editId eq "noti_type_desc" && $id =~ /^\d+$/ ) {
     my $sql = "UPDATE msg_types SET description=? WHERE id=?";
 
-    my $sth = $dbh->prepare( $sql );
+    my $sth = dbh()->prepare( $sql );
     $sth->execute( $value, $id );
   } elsif( $editId =~ /pd_desc_(.+)$/ ) {
     # editing parameter description
     my $paraId = parameterId( $1 );
     if( $paraId && $id ) {
       my $sql = "UPDATE msg_types_parameters SET description=? WHERE msg_type_id=? AND parameter_id=?";
-      my $sth = $dbh->prepare( $sql );
+      my $sth = dbh()->prepare( $sql );
       $sth->execute( $value, $id, $paraId );
     }
   } elsif( $editId =~ /pd_name_(.+)$/ ) {
@@ -442,7 +442,7 @@ sub ajaxUpdate
     my $paraId = parameterId( $1 );
     if( $paraId && $id ) {
       my $sql = "UPDATE parameters SET hr_name=? WHERE id=?";
-      my $sth = $dbh->prepare( $sql );
+      my $sth = dbh()->prepare( $sql );
       $sth->execute( $value, $paraId );
     }
   }
@@ -454,7 +454,7 @@ sub templateTypeList()
 {
   my @types;
   my $sql = "SELECT msgtype FROM msg_types ORDER by msgtype";
-  my $typesRef = $dbh->selectcol_arrayref( $sql );
+  my $typesRef = dbh()->selectcol_arrayref( $sql );
 
   my $res = "<p>Message Types:</p><ul>\n";
 
@@ -473,7 +473,5 @@ sub templateTypeList()
 
   return ($res, $firstType) ;
 }
-
-$dbh = Hermes::DBI->connect();
 
 1;

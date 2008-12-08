@@ -1,3 +1,5 @@
+require 'digest/sha1'
+
 class Person < ActiveRecord::Base
   set_table_name "persons"
   has_and_belongs_to_many :messages
@@ -5,6 +7,11 @@ class Person < ActiveRecord::Base
   has_many :filters, :through => :subscriptions
   has_many :subscriptions
 
+  attr_protected :id, :salt
+  attr_accessor :password, :password_confirmation
+
+  # this contains code (basic auth) from 
+  # http://www.aidanf.net/rails_user_authentication_tutorial
 
   def subscribed_to(msgtype)
     not subscriptions.find(:first, :conditions => {:msg_type_id => msgtype}).nil?
@@ -34,6 +41,35 @@ class Person < ActiveRecord::Base
 
     return false
   end
-  
+
+  def self.authenticate(login, pass)
+    u=find(:first, :conditions=>["stringid = ?", login])
+    return nil if u.nil?
+    return u if Person.encrypt(pass, u.salt)==u.hashed_password
+    nil
+  end  
+
+  def password=(pass)
+    @password=pass
+    self.salt = Person.random_string(10) if !self.salt?
+    self.hashed_password = Person.encrypt(@password, self.salt)
+  end
+
+
+
+
+protected
+
+  def self.encrypt(pass, salt)
+    Digest::SHA1.hexdigest(pass+salt)
+  end
+
+  def self.random_string(len)
+    #generat a random password consisting of strings and digits
+    chars = ("a".."z").to_a + ("A".."Z").to_a + ("0".."9").to_a
+    newpass = ""
+    1.upto(len) { |i| newpass << chars[rand(chars.size-1)] }
+    return newpass
+  end
   
 end

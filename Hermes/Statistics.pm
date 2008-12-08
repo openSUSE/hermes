@@ -24,14 +24,12 @@ package Hermes::Statistics;
 use strict;
 use Exporter;
 
-use DBI;
-
 use Hermes::Config;
-use Hermes::DBI;
+use Hermes::DB;
 use Hermes::Log;
 
 
-use vars qw(@ISA @EXPORT @EXPORT_OK $dbh %delayHash);
+use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( latestNMessages countMessages latestNRawNotifications countRawNotificationsInHours);
@@ -43,7 +41,7 @@ sub countRawNotificationsInHours( ;$ )
   $hours = 1 unless( $hours && 0+$hours >0 && 0+$hours < 128 );
   my $sql = "SELECT count(id) FROM notifications WHERE received > NOW() - INTERVAL $hours HOUR";
 
-  my ($cnt) = $dbh->selectrow_array( $sql );
+  my ($cnt) = dbh()->selectrow_array( $sql );
   return $cnt;
 }
 sub latestNRawNotifications( ;$ )
@@ -56,7 +54,7 @@ sub latestNRawNotifications( ;$ )
   $sql .= "FROM notifications n, msg_types msgtypes ";
   $sql .= "WHERE n.msg_type_id=msgtypes.id AND generated IS NULL limit $cnt";
 
-  return $dbh->selectall_arrayref( $sql, { Slice => {} } );
+  return dbh()->selectall_arrayref( $sql, { Slice => {} } );
 }
 
 
@@ -72,12 +70,12 @@ sub latestNMessages( ;$ )
     . "mt.msgtype as msgtype FROM messages m, msg_types mt "
     . "WHERE m.msg_type_id = mt.id order by created desc limit $cnt";
 
-  return $dbh->selectall_arrayref( $sql, { Slice => {} } );
+  return dbh()->selectall_arrayref( $sql, { Slice => {} } );
 }
 
 sub countMessages() {
   my $sql = "SELECT count(id) as count FROM messages;";
-  my ($cnt) =@{ $dbh->selectcol_arrayref( $sql )};
+  my ($cnt) =@{ dbh()->selectcol_arrayref( $sql )};
   return $cnt;
 }
 
@@ -85,7 +83,6 @@ sub countMessages() {
 #
 # some initialisations
 #
-$dbh = Hermes::DBI->connect();
 
 1;
 
