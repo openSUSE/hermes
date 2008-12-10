@@ -1,5 +1,5 @@
 # This file is auto-generated from the current state of the database. Instead of editing this file, 
-# please use the migrations feature of ActiveRecord to incrementally modify your database, and
+# please use the migrations feature of Active Record to incrementally modify your database, and
 # then regenerate this schema definition.
 #
 # Note that this schema.rb definition is the authoritative source for your database schema. If you need
@@ -13,7 +13,7 @@ ActiveRecord::Schema.define(:version => 25) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
-    t.integer "seconds"
+    t.integer "seconds", :limit => 11
   end
 
   add_index "delays", ["name"], :name => "name"
@@ -24,15 +24,8 @@ ActiveRecord::Schema.define(:version => 25) do
 
   add_index "deliveries", ["name"], :name => "name"
 
-  create_table "generated_notifications", :force => true do |t|
-    t.integer  "notification_id", :null => false
-    t.integer  "subscription_id", :null => false
-    t.datetime "created_at"
-    t.datetime "sent"
-  end
-
   create_table "messages", :force => true do |t|
-    t.integer  "msg_type_id",                :null => false
+    t.integer  "msg_type_id", :limit => 11,  :null => false
     t.string   "sender"
     t.string   "subject",     :limit => 128
     t.text     "body"
@@ -44,8 +37,8 @@ ActiveRecord::Schema.define(:version => 25) do
   add_index "messages", ["created"], :name => "created"
 
   create_table "messages_people", :force => true do |t|
-    t.integer  "message_id"
-    t.integer  "person_id",                                  :null => false
+    t.integer  "message_id", :limit => 11
+    t.integer  "person_id",  :limit => 11,                   :null => false
     t.string   "header",     :limit => 16, :default => "to", :null => false
     t.integer  "delay",      :limit => 4,  :default => 0
     t.datetime "sent",                                       :null => false
@@ -57,23 +50,23 @@ ActiveRecord::Schema.define(:version => 25) do
   create_table "msg_types", :force => true do |t|
     t.string   "msgtype",      :limit => 64
     t.datetime "added",                      :null => false
-    t.integer  "defaultdelay"
+    t.integer  "defaultdelay", :limit => 11
     t.text     "description"
   end
 
   add_index "msg_types", ["msgtype"], :name => "msgtype"
 
   create_table "msg_types_parameters", :force => true do |t|
-    t.integer "msg_type_id",  :null => false
-    t.integer "parameter_id", :null => false
+    t.integer "msg_type_id",  :limit => 11, :null => false
+    t.integer "parameter_id", :limit => 11, :null => false
     t.text    "description"
   end
 
   add_index "msg_types_parameters", ["msg_type_id", "parameter_id"], :name => "msg_type_parameter_id", :unique => true
 
   create_table "notification_parameters", :force => true do |t|
-    t.integer "notification_id", :null => false
-    t.integer "parameter_id"
+    t.integer "notification_id", :limit => 11, :null => false
+    t.integer "parameter_id",    :limit => 11
     t.string  "value"
   end
 
@@ -81,7 +74,7 @@ ActiveRecord::Schema.define(:version => 25) do
   add_index "notification_parameters", ["parameter_id"], :name => "index_notification_parameters_on_msg_type_parameter_id"
 
   create_table "notifications", :force => true do |t|
-    t.integer  "msg_type_id",               :null => false
+    t.integer  "msg_type_id", :limit => 11, :null => false
     t.datetime "received"
     t.string   "sender",      :limit => 64
     t.datetime "generated"
@@ -105,23 +98,23 @@ ActiveRecord::Schema.define(:version => 25) do
   end
 
   create_table "subscription_filters", :force => true do |t|
-    t.integer "subscription_id", :null => false
-    t.integer "parameter_id",    :null => false
-    t.string  "operator",        :null => false
-    t.string  "filterstring",    :null => false
+    t.integer "subscription_id", :limit => 11, :null => false
+    t.integer "parameter_id",    :limit => 11, :null => false
+    t.string  "operator",                      :null => false
+    t.string  "filterstring",                  :null => false
   end
 
   add_index "subscription_filters", ["subscription_id"], :name => "subscription_id"
   add_index "subscription_filters", ["parameter_id"], :name => "parameter_id"
 
   create_table "subscriptions", :force => true do |t|
-    t.integer "msg_type_id",                   :null => false
-    t.integer "person_id",                     :null => false
-    t.integer "delay_id"
-    t.integer "delivery_id"
+    t.integer "msg_type_id", :limit => 11,                   :null => false
+    t.integer "person_id",   :limit => 11,                   :null => false
+    t.integer "delay_id",    :limit => 11
+    t.integer "delivery_id", :limit => 11
     t.text    "comment"
     t.boolean "private"
-    t.boolean "enabled",     :default => true
+    t.boolean "enabled",                   :default => true
   end
 
   add_index "subscriptions", ["person_id", "msg_type_id"], :name => "person_id"
