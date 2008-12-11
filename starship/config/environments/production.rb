@@ -19,4 +19,10 @@ config.log_level = :debug
 
 # Disable delivery errors, bad email addresses will be ignored
 # config.action_mailer.raise_delivery_errors = false
+
 ICHAIN_MODE = :on
+
+#No longer used. The IChain URL is created with request.host
+#ICHAIN_LOGIN_URL = "https://mercurius.suse.de/ICSLogin/?\"https://mercurius.suse.de"
+#ICHAIN_LOGOUT_URL = "https://mercurius.suse.de/cmd/ICSLogout/"
+

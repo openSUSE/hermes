@@ -1,10 +1,14 @@
+require 'ichain_auth'
+
 class AccountController < ApplicationController
   skip_before_filter :authenticate, :set_return_to 
 
   def login
     if ICHAIN_MODE.to_s == 'on' || ICHAIN_MODE.to_s == 'simulate'
-      auth_url = "https://mercurius.suse.de/ICSLogin/?\"https://mercurius.suse.de" + url_for(session[:return_to] || '/') + "\""
-      redirect_to(auth_url)
+      IChainAuth.login(session[:return_to],request.host)
+      #auth_url = "https://" + request.host + "/ICSLogin/?\"https://" + request.host + url_for(session[:return_to] || '/') + "\"" 
+      #logger.debug("Using iChain url #{auth_url}")
+      #redirect_to(auth_url)
     else
       if request.post?
         if session[:user] = Person.authenticate(params[:user][:login], params[:user][:password])
@@ -21,7 +25,8 @@ class AccountController < ApplicationController
     reset_session
     flash[:message] = 'Logged out'
     if ICHAIN_MODE.to_s == 'on' || ICHAIN_MODE.to_s == 'simulate'
-      redirect_to("https://mercurius.suse.de/cmd/ICSLogout/")
+      IChainAuth.logout( host )
+      #redirect_to("https://" + request.host + "/cmd/ICSLogout/")
     else 
       redirect_to :action => 'login'
     end

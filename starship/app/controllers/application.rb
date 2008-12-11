@@ -1,6 +1,8 @@
 # Filters added to this controller apply to all controllers in the application.
 # Likewise, all the methods added will be available for all controllers.
 
+require 'ichain_auth'
+
 class ApplicationController < ActionController::Base
   helper :all # include all helpers, all the time
   before_filter :set_return_to, :authenticate
@@ -64,22 +66,23 @@ class ApplicationController < ActionController::Base
       http_real_name = "Hans Peter Termitenhans"
       logger.debug("iChain debug mode, using static user #{user_name} (#{http_email})")
     else
-      user_name  = request.env['HTTP_X_USERNAME']
-      http_email = request.env['HTTP_X_EMAIL']
-      http_first_name = request.env['HTTP_X_FIRSTNAME'] || ""
-      http_last_name  = request.env['HTTP_X_LASTNAME'] || ""
-      http_real_name = "#{http_first_name} #{http_last_name}"
-      logger.debug("Extracted iChain data: #{user_name} (#{http_email})")
-      logger.debug request.env.inspect
+      user = IChainAuth.authorize(request.env)
+      #user_name  = request.env['HTTP_X_USERNAME']
+      #http_email = request.env['HTTP_X_EMAIL']
+      #http_first_name = request.env['HTTP_X_FIRSTNAME'] || ""
+      #http_last_name  = request.env['HTTP_X_LASTNAME'] || ""
+      #http_real_name = "#{http_first_name} #{http_last_name}"
+      #logger.debug("Extracted iChain data: #{user_name} (#{http_email})")
+      #logger.debug request.env.inspect
     end  
     
     # FIXME: Get information from api.opensuse.org/person/<user_name> and
     #        update/evaluate our database
     
-    if !user_name.nil?
-      @loggedin_user = Person.find_or_initialize_by_stringid( user_name )
-      @loggedin_user.email = http_email
-      @loggedin_user.name = http_real_name
+    if !user['username'].nil?
+      @loggedin_user = Person.find_or_initialize_by_stringid( user['username'] )
+      @loggedin_user.email = user['email']
+      @loggedin_user.name = user['realname']
       @loggedin_user.save
       session[:user] = @loggedin_user
     else
