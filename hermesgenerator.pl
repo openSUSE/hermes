@@ -115,8 +115,7 @@ while( 1 ) {
 	    $pCount++;
 	}
 	print " with $pCount Arguments:" unless( $silent );
-	# my $msgId = sendNotification( $type, \%params );
-
+	
 	# generateNotification returns the count of generated notifications
 	my $subsIdsRef = generateNotification( $type,  \%params );
 	unless( $subsIdsRef ) {
