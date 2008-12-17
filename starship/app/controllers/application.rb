@@ -60,20 +60,17 @@ class ApplicationController < ActionController::Base
   def login_via_ichain
 
     # :ICHAIN_MODE is set in config/environments/development.rb
+    user = Hash.new
     if ICHAIN_MODE.to_s == 'simulate'
-      user_name = "termite"
-      http_email = "termite@suse.de"
-      http_real_name = "Hans Peter Termitenhans"
-      logger.debug("iChain debug mode, using static user #{user_name} (#{http_email})")
+      user['username'] = "termite"
+      user['email'] = "termite@suse.de"
+      user['firstname'] = "Hans Peter"
+      user['lastname'] = "Dynamit"
+      user['real_name'] = "Hans Peter Dynamit"
+
+      logger.debug("iChain debug mode, using static user #{user['username']} (#{user['email']})")
     else
       user = IChainAuth.authorize(request.env)
-      #user_name  = request.env['HTTP_X_USERNAME']
-      #http_email = request.env['HTTP_X_EMAIL']
-      #http_first_name = request.env['HTTP_X_FIRSTNAME'] || ""
-      #http_last_name  = request.env['HTTP_X_LASTNAME'] || ""
-      #http_real_name = "#{http_first_name} #{http_last_name}"
-      #logger.debug("Extracted iChain data: #{user_name} (#{http_email})")
-      #logger.debug request.env.inspect
     end  
     
     # FIXME: Get information from api.opensuse.org/person/<user_name> and
