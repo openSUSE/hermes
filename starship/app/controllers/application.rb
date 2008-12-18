@@ -59,6 +59,7 @@ class ApplicationController < ActionController::Base
 
   def login_via_ichain
 
+    user = Hash.new
     # :ICHAIN_MODE is set in config/environments/development.rb
     user = Hash.new
     if ICHAIN_MODE.to_s == 'simulate'

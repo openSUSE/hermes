@@ -23,13 +23,13 @@ package Hermes::Delivery::RSS;
 
 use strict;
 use Exporter;
-use XML::RSS;
 
 use vars qw(@ISA @EXPORT);
 
 use Hermes::Log;
 use Hermes::Person;
 use Hermes::Config;
+use Hermes::DB;
 use Data::Dumper;
 
 @ISA     = qw( Exporter );
@@ -40,85 +40,32 @@ use Data::Dumper;
 #  * Hermes::Config::StarshipBase .- the webapp dir
 #  * Hermes::Config::rdfBasePath - the directory where to store the RDFs
 
+sub sendRSSRails( $ )
+{
+  my ($msgRef) = @_;
+
+  # let rails deliver the feed, sorted by the type. All we do here is to fill
+  # a table that acts as a base for RSS generation.
+  my $sql = "INSERT INTO starship_messages( notification_id, sender, user, type, ";
+  $sql .= "subject, replyto, body, created ) ";
+  $sql .= "VALUES( ?,?,?,?,?,?,?, NOW() )";
+
+  my $sth = dbh()->prepare( $sql );
+
+  $sth->execute( $msgRef->{_notiId}, $msgRef->{from}, @{$msgRef->{to}}[0], $msgRef->{type},
+		 $msgRef->{subject}, $msgRef->{replyto}, $msgRef->{body} );
+
+  my $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
+
+  return $id;
+}
 
 sub sendRSS( $ )
 {
   my ($msgRef) = @_;
 
-  # Parametercheck
-  my @receiver;
-  push @receiver, @{$msgRef->{to}} if( $msgRef->{to} );
-  push @receiver, @{$msgRef->{cc}} if( $msgRef->{cc} );
-  push @receiver, @{$msgRef->{bcc}} if( $msgRef->{bcc} );
-
-  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-  $mon = $mon+1;
-  $year = 1900+$year;
-  my $tString = sprintf( "%4d-%02d-%02dT%02d:%02d+02:00", $year, $mon, $mday, $hour, $min );
-  log('debug', "Time string for RSS channel and items: " . $tString );
-
-  foreach my $p ( @receiver ) {
-    log( 'info', "RSS-Feed for person $p" );
-    my $rss;
-
-    # Loop over the to-list and write RSS feeds for everybody.
-    my $personInfoRef = personInfo( $p );
-
-    my $rdfPath = $Hermes::Config::RdfBasePath . "/$personInfoRef->{feedPath}";
-    mkdir( $rdfPath, 0777 ) unless( -e $rdfPath );
-
-    my $rdfFile = "$rdfPath/personal.rdf";
-    if( -w $rdfFile ) {
-      $rss = new XML::RSS( version => '1.0');
-      $rss->parsefile( $rdfFile );
-    } else {
-      $rss = new XML::RSS( version => '1.0');
-    }
-
-    # FIXME: Make maximum item count configurable
-    shift(@{$rss->{'items'}}) if (@{$rss->{'items'}} == 150); # only allow 150 entries.
-
-    my $desc = "Personal Hermes RSS Feed";
-    $desc .= " for $personInfoRef->{name}" if( $personInfoRef && $personInfoRef->{name} );
-
-
-    $rss->channel( title        => "openSUSE Hermes",
-		   link         => $Hermes::Config::StarshipBaseUrl . "/messages/",
-		   description  => "Personal Hermes RSS Feed",
-		   dc => {
-			  date       => $tString,
-			  subject    => "openSUSE Buildservice",
-			  creator    => 'hermes@openSUSE.org',
-			  publisher  => 'hermes@openSUSE.org',
-			  rights     => 'Copyright 2008, openSUSE Project',
-			  language   => 'en-us',
-			 }
-		 );
-
-
-    if( -e $rdfPath ) {
-
-      log( 'info', "Writing RDF feed for user $personInfoRef->{email} to <$rdfFile>" );
-
-      log( 'info', Dumper( $msgRef ));
-
-      if( $msgRef->{body} ) {
-	my $body = "<pre>" . $msgRef->{body} . "</pre>";
-
-	$rss->add_item( title => $msgRef->{subject},
-			link => $Hermes::Config::StarshipBaseUrl . "/messages/" . $msgRef->{msgid} ,
-			description => $body,
-			dc => {
-			       date       => $tString,
-			       subject    => $msgRef->{subject},
-			       creator    => 'hermes@openSUSE.org',
-			       publisher  => 'hermes@openSUSE.org',
-			       rights     => 'Copyright 2008, openSUSE Project',
-			       language   => 'en-us',
-			      }
-		      );
-	$rss->save( $rdfFile );
-      }
-    }
-  }
+  return sendRSSRails( $msgRef );
 }
+
+1;
+

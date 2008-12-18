@@ -17,4 +17,8 @@ config.action_view.cache_template_extensions         = false
 # Don't care if the mailer can't send
 config.action_mailer.raise_delivery_errors = false
 
-ICHAIN_MODE = :off 
+# set this parameter to either
+# :simulate => means the user is hardcoded to termite
+# :on       => iChain is used.
+# :off      => basic auth
+ICHAIN_MODE = :simulate 

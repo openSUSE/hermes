@@ -31,7 +31,7 @@ use Hermes::DB;
 use Hermes::Log;
 use Hermes::Util;
 use Hermes::Delivery::Mail;
-# use Hermes::Delivery::RSS;
+use Hermes::Delivery::RSS;
 use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;
@@ -262,7 +262,7 @@ sub deliverMessage( $$ )
       sendJabber( $msgRef );
       $res = 1;
     } elsif( $deliveryString =~ /RSS/i ) {
-      # sendRSS( $msgRef );
+      sendRSS( $msgRef );
       log( 'error', "Unable to send RSS at the moment!" );
       # $res = 1;
     } else {
