@@ -351,6 +351,7 @@ sub renderMessage( $$$$$ )
 	   cc         => [],
 	   bcc        => [],
 	   type       => $type,
+           _msgTypeId => $msgTypeId,
 	   replyto    => $sender,
 	   subject    => $subject,
 	   body       => $text,

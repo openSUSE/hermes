@@ -24,7 +24,7 @@ package Hermes::Delivery::RSS;
 use strict;
 use Exporter;
 
-use vars qw(@ISA @EXPORT);
+use vars qw(@ISA @EXPORT $mNewState);
 
 use Hermes::Log;
 use Hermes::Person;
@@ -35,10 +35,15 @@ use Data::Dumper;
 @ISA     = qw( Exporter );
 @EXPORT  = qw( sendRSS );
 
-#
-# Configuration needed: 
-#  * Hermes::Config::StarshipBase .- the webapp dir
-#  * Hermes::Config::rdfBasePath - the directory where to store the RDFs
+sub loadNewState
+{
+  my $sql = "SELECT id FROM msg_states WHERE state='new'";
+  my $sth = dbh()->prepare( $sql );
+  $sth->execute();
+
+  ($mNewState) = $sth->fetchrow_array();
+  $mNewState =~ /^\d+$/;
+}
 
 sub sendRSSRails( $ )
 {
@@ -46,13 +51,15 @@ sub sendRSSRails( $ )
 
   # let rails deliver the feed, sorted by the type. All we do here is to fill
   # a table that acts as a base for RSS generation.
-  my $sql = "INSERT INTO starship_messages( notification_id, sender, user, type, ";
-  $sql .= "subject, replyto, body, created ) ";
-  $sql .= "VALUES( ?,?,?,?,?,?,?, NOW() )";
+  loadNewState unless( $mNewState );
+
+  my $sql = "INSERT INTO starship_messages( notification_id, sender, user, msg_type_id, ";
+  $sql .= "subject, replyto, body, msg_state_id, created ) ";
+  $sql .= "VALUES( ?,?,?,?,?,?,?, $mNewState, NOW() )";
 
   my $sth = dbh()->prepare( $sql );
 
-  $sth->execute( $msgRef->{_notiId}, $msgRef->{from}, @{$msgRef->{to}}[0], $msgRef->{type},
+  $sth->execute( $msgRef->{_notiId}, $msgRef->{from}, @{$msgRef->{to}}[0], $msgRef->{_msgTypeId},
 		 $msgRef->{subject}, $msgRef->{replyto}, $msgRef->{body} );
 
   my $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
