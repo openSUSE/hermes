@@ -5,7 +5,7 @@ class Subscription < ActiveRecord::Base
   belongs_to :delay
   belongs_to :delivery
 
-  has_many :messages, :foreign_key => :msg_type_id
+  has_many :starship_messages
   has_many :filters, :class_name => "SubscriptionFilter", :dependent => :destroy
 
   validates_presence_of :delay

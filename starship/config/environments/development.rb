@@ -22,3 +22,4 @@ config.action_mailer.raise_delivery_errors = false
 # :on       => iChain is used.
 # :off      => basic auth
 ICHAIN_MODE = :simulate 
+

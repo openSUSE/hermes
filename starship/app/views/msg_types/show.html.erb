@@ -4,9 +4,11 @@
 
 <% for message in @msgs_to_show %>
 	<tr id="msgtr">
-	<td><%= link_to message.id, message %></td>
+	<td><%= link_to message.id, :action => "show", :controller => "messages", :id => message.id %></td>
+        <td><%=h message.msg_state.state %></td>
 	<td><%=h message.sender %></td>
 	<td><%=h message.subject %></td>
+        <td><%=h message.created %></td>
 	</tr>
 <% end %> 
 

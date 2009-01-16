@@ -10,12 +10,14 @@
 <tr>
 <th>Message Type</th>
 <th>Message Count</th>
+<th>Message Type Description</th>
 </tr>
 	
 <% for type in @msg_types %>
 <tr>
-  <td><%= link_to type[0].type_desc, {:action => "show", :controller => "msg_types", :id => type[0].id} %></td>
+  <td><%= link_to type[0].msgtype, {:action => "show", :controller => "msg_types", :id => type[0].id} %></td>
   <td><%= type[1] %></td>
+  <td><%= type[0].description %></td>
 </tr>
 <% end %>
 </table>

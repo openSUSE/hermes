@@ -3,10 +3,10 @@ class MsgTypesController < ApplicationController
   def index
     if params['filter']
       @filter = params['filter']
-      @msg_types = Message.count(:include => :msg_type, :group => :msg_type,
+      @msg_types = StarshipMessage.count(:include => :msg_type, :group => :msg_type,
         :conditions => ["msg_types.msgtype like ?", "%#@filter%"])
     else
-      @msg_types = Message.count(:group => :msg_type)
+      @msg_types = StarshipMessage.count(:include => :msg_type, :group => :msg_type)
     end
 
     @showtypes = @msg_types.collect {|x| x[0]}
@@ -19,7 +19,7 @@ class MsgTypesController < ApplicationController
   
 
   def show
-    @msgs_to_show = Message.paginate(:page => params[:page], :per_page => 100, 
+    @msgs_to_show = StarshipMessage.paginate(:page => params[:page], :per_page => 100, 
       :conditions => ["msg_type_id =?", params[:id]], :order => "id DESC")
     @msgtype = MsgType.find(params[:id])
     respond_to do |format|

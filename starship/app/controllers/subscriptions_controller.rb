@@ -143,7 +143,6 @@ end
 def edit
   @subscr = Subscription.find(params[:id])
   @filters = @subscr.filters
-  @msgs_for_type = @subscr.messages.find(:all, :include => :msg_type)
   @availDelay = Delay.find(:all)
   @availDeliveries = Delivery.find(:all)
   @avail_params = @subscr.msg_type.parameters

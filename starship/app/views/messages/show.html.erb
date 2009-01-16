@@ -5,7 +5,7 @@
 
 <p>
   <b>Message type:</b>
-  <%=h @message.msg_type.type_desc %> (<%=h @message.msg_type.msgtype %>)
+  <%=h @message.msg_type.msgtype %> (<%=h @message.msg_type.msgtype %>)
 </p>
 
 <p>
@@ -19,7 +19,6 @@
 </p>
 
 <p>
-  <b>Body:</b><br/>
   <pre><%=h @message.body %>
   </pre>
 </p>
@@ -40,5 +39,5 @@
 <% end %>
 
 
-<%= link_to "List all messages of type #{@message.msg_type.type_desc}", :controller => 'msg_types', :action => "show", :id => @message.msg_type.id %>
+<%= link_to "List all messages of type #{@message.msg_type.msgtype}", :controller => 'msg_types', :action => "show", :id => @message.msg_type.id %>
 

@@ -18,9 +18,5 @@ class CreateStarshipMessages < ActiveRecord::Migration
 
   def self.down
     drop_table :starship_messages
-
-    remove_index :starship_messages, :notification_id
-    remove_index :starship_messages, :user
-    remove_index :starship_messages, :type
   end
 end

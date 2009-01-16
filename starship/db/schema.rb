@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 26) do
+ActiveRecord::Schema.define(:version => 27) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -30,8 +30,6 @@ ActiveRecord::Schema.define(:version => 26) do
     t.datetime "created_at"
     t.datetime "sent"
   end
-
-  add_index "generated_notifications", ["sent"], :name => "index_generated_notifications_on_sent"
 
   create_table "messages", :force => true do |t|
     t.integer  "msg_type_id",                :null => false
@@ -55,6 +53,11 @@ ActiveRecord::Schema.define(:version => 26) do
 
   add_index "messages_people", ["message_id", "person_id", "header"], :name => "msg_id"
   add_index "messages_people", ["sent"], :name => "sent_idx"
+
+  create_table "msg_states", :force => true do |t|
+    t.string "state",       :limit => 64
+    t.string "description"
+  end
 
   create_table "msg_types", :force => true do |t|
     t.string   "msgtype",      :limit => 64
@@ -115,6 +118,8 @@ ActiveRecord::Schema.define(:version => 26) do
     t.string   "replyto"
     t.text     "body"
     t.datetime "created"
+    t.integer  "msg_type_id",     :null => false
+    t.integer  "msg_state_id"
   end
 
   add_index "starship_messages", ["notification_id"], :name => "index_starship_messages_on_notification_id"

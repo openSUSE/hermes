@@ -4,6 +4,7 @@ class MsgType < ActiveRecord::Base
   has_many :subscriptions
   #has_and_belongs_to_many :parameters
   has_many :msg_type_parameters
+  has_many :starship_messages
   has_many :parameters, :through => :msg_type_parameters
 
   def self.search( search, page, perpage )
