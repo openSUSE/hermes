@@ -1,13 +1,13 @@
 class StarshipMessageState < ActiveRecord::Migration
   def self.up
-    add_column :starship_messages, :msg_type_id, :integer, :null => false 
+#    add_column :starship_messages, :msg_type_id, :integer, :null => false 
 
-    create_table "msg_states", :force => true do |t|
-      t.string  "state",     :limit => 64
-      t.string  "description"
-    end
+#    create_table "msg_states", :force => true do |t|
+#      t.string  "state",     :limit => 64
+#      t.string  "description"
+#    end
      
-    add_column :starship_messages, :msg_state_id, :integer
+#    add_column :starship_messages, :msg_state_id, :integer, :default => 1
 
     MsgState.create( :state => 'new', :description => 'This message was never displayed nor read' )
     MsgState.create( :state => 'unread', :description => 'This message was not yet read' )

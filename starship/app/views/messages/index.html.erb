@@ -2,6 +2,7 @@
 <table width="100%" class="defaultTable">
 <tr>
   <th>Id</th>
+  <th>State</th>
   <th>Msg Type</th>
   <th>Sender</th>
   <th>Subject</th>
@@ -12,6 +13,7 @@
   <tr>
     <td><%= link_to msg.id.to_s, :controller => "messages", :action => "show",
       :id => msg.id.to_s %></td>
+    <td><%= msg.msg_state.state %></td>
     <td><%= msg.msg_type.msgtype %></td>
     <td><%= msg.sender %></td>
     <td><%= msg.subject %></td>
