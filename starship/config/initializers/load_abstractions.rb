@@ -22,12 +22,13 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
         filter.filterstring = filternode.find("@value").first.value
         db_parameter = Parameter.find(:all, 
                               :conditions => "name='" + filternode.find("@parameter").first.value + "'").first
-        if (!db_parameter.nil?)
-          filter.parameter_id = db_parameter.id
-          filter_abstraction.filters << filter
-        else
-          puts "ERROR: Did not find parameter #{filternode.find("@parameter").first.value} in db, abstraction broken!"
-        end 
+        if (db_parameter.nil?)
+          db_parameter = Parameter.new
+          db_parameter.name = filternode.find("@parameter").first.value
+          db_parameter.save
+        end
+        filter.parameter_id = db_parameter.id
+        filter_abstraction.filters << filter
       end
       
       filterabstractions[node.find("@id").first.value] = filter_abstraction
