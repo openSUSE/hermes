@@ -6,6 +6,9 @@ class StarshipMessageState < ActiveRecord::Migration
       t.string  "description"
     end
 
+    add_column :starship_messages, :msg_type_id, :integer, :null => false 
+    add_column :starship_messages, :msg_state_id, :integer
+
     MsgState.create( :state => 'new', :description => 'This message was never displayed nor read' )
     MsgState.create( :state => 'unread', :description => 'This message was not yet read' )
     MsgState.create( :state => 'read', :description => 'This message was read' )
