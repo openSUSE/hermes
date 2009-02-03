@@ -20,9 +20,14 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
         filter = SubscriptionFilter.new
         filter.operator = filternode.find("@operator").first.value
         filter.filterstring = filternode.find("@value").first.value
-        filter.parameter_id = Parameter.find(:all, 
-                              :conditions => "name='" + filternode.find("@parameter").first.value + "'").first.id
-        filter_abstraction.filters << filter
+        db_parameter = Parameter.find(:all, 
+                              :conditions => "name='" + filternode.find("@parameter").first.value + "'").first
+        if (!db_parameter.nil?)
+          filter.parameter_id = db_parameter.id
+          filter_abstraction.filters << filter
+        else
+          puts "ERROR: Did not find parameter #{filternode.find("@parameter").first.value} in db, abstraction broken!"
+        end 
       end
       
       filterabstractions[node.find("@id").first.value] = filter_abstraction
