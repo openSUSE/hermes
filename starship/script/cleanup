@@ -1,4 +1,14 @@
 #!/usr/bin/env ruby
+#
+# cleanup script for hermes database
+#
+# removes notifications in 2 passes:
+#
+# 1. remove every row from generated_notifications that was sent prior to 
+#    the date set by -d (default 7 days ago)
+# 2. remove every row from notification that has no corresponding
+#    notification_id in generated_notifications
+#
 
 require 'optparse'
 require 'ostruct'
@@ -6,16 +16,21 @@ require 'ostruct'
 options = OpenStruct.new
 options.days = 7
 options.env = "development"
+options.slice = 10000
 
 OptionParser.new do |opts|
   opts.banner = "Usage: script/cleanup [options]"
 
-  opts.on("-d", "--days N", "number of days to keep") do |days|
+  opts.on("-d", "--days N", "number of days to keep (default: #{options.days})") do |days|
     options.days = days
   end
 
-  opts.on("-e", "--env ENV", "rails environment to use") do |env|
+  opts.on("-e", "--env ENV", "rails environment to use (default: #{options.env})") do |env|
     options.env = env
+  end
+
+  opts.on("-s", "--slicelength LEN", "slice length (default: #{options.slice})") do |sl|
+    options.slicelength = sl.to_i
   end
 
   opts.on_tail("-h", "--help", "show this message") do
@@ -31,54 +46,56 @@ require RAILS_ROOT+"/config/environment"
 
 RAILS_DEFAULT_LOGGER.silence do
 delete_time = Time.now - options.days.to_i*60*60*24
-slice_length = 10000
+slice_length = options.slicelength
 
-notifications = Notification.find :all, :select => :id, :conditions => ["generated < ?", delete_time]
+####
+# 1. Delete all GeneratedNotifications that exceed the maximum age
+
+gen_not = GeneratedNotification.find :all, :select => :id, :conditions => ["sent < ? ", delete_time]
+gen_not.map! {|n| n.id}
+@gncount = 0
+
+puts "Deleting #{gen_not.length} generated notifications in blocks of #{slice_length}..."
+while( not (slice = gen_not.slice!(0,slice_length)).empty? )
+  GeneratedNotification.delete slice
+  @gncount += slice.length
+  puts " #@gncount generated notifications deleted, #{gen_not.length} remaining."
+end
+
+####
+# 2. Delete all Notifications that are older than maxage and not referenced
+#    from a GeneratedNotification
+
+notifications = Notification.find_by_sql <<-END_SQL
+  SELECT n.id
+  FROM notifications n
+  LEFT OUTER JOIN generated_notifications gn
+    ON n.id = gn.notification_id
+  WHERE ISNULL(gn.notification_id)
+  AND n.generated < '#{delete_time}'
+END_SQL
 notifications.map! {|n| n.id}
 @ncount = @npcount = 0
 
-puts "Deleting #{notifications.length} notifications in blocks of #{slice_length}..."
+puts "Deleting #{notifications.length} raw notifications in blocks of #{slice_length}..."
 while( not (slice = notifications.slice!(0,slice_length)).empty? )
   Notification.delete slice
   @ncount += slice.length
-  print "  #@ncount notifications deleted, #{notifications.length} remaining. Deleting parameters... "
+  print "  #@ncount raw notifications deleted, #{notifications.length} remaining. Deleting parameters... "
   STDOUT.flush
   nc = NotificationParameter.delete_all :notification_id => slice
   @npcount += nc
   puts "#{nc} deleted."
 end
 
-puts "#@ncount notifications with #@npcount parameters deleted.\n\n"
-
-print "Deleting sent entries in messages_people... "
-STDOUT.flush
-@mpcount = MessagesPeople.delete_all ["sent < ?", delete_time]
-puts "#@mpcount deleted."
-
-messages = Message.find_by_sql <<-END_SQL
-  SELECT m.id
-  FROM messages m
-  LEFT OUTER JOIN messages_people mp
-    ON m.id = mp.message_id
-  WHERE ISNULL(mp.message_id)
-END_SQL
-messages.map {|m| m.id}
-@mcount = 0
-puts "Deleting #{messages.length} unused messages in blocks of #{slice_length}..."
-while( not (slice = messages.slice!(0,slice_length)).empty? )
-  Message.delete slice
-  @mcount += slice.length
-  puts "  #@mcount deleted, #{messages.length} remaining."
-end
+puts "#@ncount raw notifications with #@npcount parameters deleted.\n\n"
 
 puts "\nOptimizing tables..."
 ActiveRecord::Base.connection.execute "OPTIMIZE TABLE notifications"
 puts "  notifications optimized."
 ActiveRecord::Base.connection.execute "OPTIMIZE TABLE notification_parameters"
 puts "  notification_parameters optimized."
-ActiveRecord::Base.connection.execute "OPTIMIZE TABLE messages"
+ActiveRecord::Base.connection.execute "OPTIMIZE TABLE generated_notifications"
 puts "  messages optimized."
-ActiveRecord::Base.connection.execute "OPTIMIZE TABLE messages_people"
-puts "  messages_people optimized."
 puts "done."
 end
