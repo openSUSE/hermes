@@ -178,6 +178,7 @@ sub expandNotification( $$ )
   invalidateCache();
 
   while( my ($subscriptId, $personId, $personString) = $query->fetchrow_array()) {
+    $paramRef->{_userId} = $personString;
     # and the personId is user in the project.
     my @filters = getFilters( $subscriptId );
     # loop over all filters. Since these filter are implicit AND connected, all
