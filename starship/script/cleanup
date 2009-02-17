@@ -16,7 +16,7 @@ require 'ostruct'
 options = OpenStruct.new
 options.days = 7
 options.env = "development"
-options.slice = 10000
+options.slicelength = 10000
 
 OptionParser.new do |opts|
   opts.banner = "Usage: script/cleanup [options]"
@@ -29,7 +29,7 @@ OptionParser.new do |opts|
     options.env = env
   end
 
-  opts.on("-s", "--slicelength LEN", "slice length (default: #{options.slice})") do |sl|
+  opts.on("-s", "--slicelength LEN", "slice length (default: #{options.slicelength})") do |sl|
     options.slicelength = sl.to_i
   end
 
