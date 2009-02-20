@@ -13,11 +13,17 @@
 <th>Message Type Description</th>
 </tr>
 	
-<% for type in @msg_types %>
+<% for cnt in 0..(@msg_types.length-1)
+     msg = @msg_types.at(cnt)
+     if cnt < (@msg_types.length-1): nextId = @msg_types.at( cnt+1)[0].id end
+     if cnt > 0: prevId = @msg_types.at( cnt-1)[0].id end
+ %>
+
 <tr>
-  <td><%= link_to type[0].msgtype, {:action => "show", :controller => "msg_types", :id => type[0].id} %></td>
-  <td><%= type[1] %></td>
-  <td><%= type[0].description %></td>
+  <td><%= link_to msg[0].msgtype, 
+          { :action => "show", :controller => "msg_types", :prev => prevId, :next => nextId, :id => msg[0].id } %></td>
+  <td><%= msg[1] %></td>
+  <td><%= msg[0].description %></td>
 </tr>
 <% end %>
 </table>

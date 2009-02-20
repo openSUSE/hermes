@@ -16,6 +16,13 @@ class MessagesController < ApplicationController
 	@menu_expand = false
     end	
 
+    # set message to read
+    if @message.msg_state.state == 'new' || @message.msg_state.state == 'unread'
+       read_state = MsgState.find( :first, :conditions => "state ='read'" )
+       @message.msg_state = read_state
+       @message.save!
+    end
+
     respond_to do |format|
       format.html # show.html.erb
       format.xml  { render :xml => @message }
