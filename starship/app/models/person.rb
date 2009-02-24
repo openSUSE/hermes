@@ -6,6 +6,7 @@ class Person < ActiveRecord::Base
   has_many :msg_types, :through => :subscriptions
   has_many :filters, :through => :subscriptions
   has_many :subscriptions
+  has_many :starship_messages
 
   attr_protected :id, :salt
   attr_accessor :password, :password_confirmation

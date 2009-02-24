@@ -1,5 +1,5 @@
 # This file is auto-generated from the current state of the database. Instead of editing this file, 
-# please use the migrations feature of Active Record to incrementally modify your database, and
+# please use the migrations feature of ActiveRecord to incrementally modify your database, and
 # then regenerate this schema definition.
 #
 # Note that this schema.rb definition is the authoritative source for your database schema. If you need
@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 27) do
+ActiveRecord::Schema.define(:version => 28) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -31,8 +31,6 @@ ActiveRecord::Schema.define(:version => 27) do
     t.datetime "sent"
   end
 
-  add_index "generated_notifications", ["sent"], :name => "index_generated_notifications_on_sent"
-
   create_table "messages", :force => true do |t|
     t.integer  "msg_type_id",                :null => false
     t.string   "sender"
@@ -49,7 +47,7 @@ ActiveRecord::Schema.define(:version => 27) do
     t.integer  "message_id"
     t.integer  "person_id",                                  :null => false
     t.string   "header",     :limit => 16, :default => "to", :null => false
-    t.integer  "delay",                    :default => 0
+    t.integer  "delay",      :limit => 4,  :default => 0
     t.datetime "sent",                                       :null => false
   end
 
@@ -112,20 +110,20 @@ ActiveRecord::Schema.define(:version => 27) do
   end
 
   create_table "starship_messages", :force => true do |t|
-    t.integer  "notification_id", :null => false
+    t.integer  "notification_id",                :null => false
     t.string   "sender"
-    t.string   "user",            :null => false
-    t.string   "type",            :null => false
+    t.integer  "user_id"
+    t.string   "type",                           :null => false
     t.string   "subject"
     t.string   "replyto"
     t.text     "body"
     t.datetime "created"
-    t.integer  "msg_type_id",     :null => false
-    t.integer  "msg_state_id"
+    t.integer  "msg_type_id",                    :null => false
+    t.integer  "msg_state_id",    :default => 1
   end
 
   add_index "starship_messages", ["notification_id"], :name => "index_starship_messages_on_notification_id"
-  add_index "starship_messages", ["user"], :name => "index_starship_messages_on_user"
+  add_index "starship_messages", ["user_id"], :name => "index_starship_messages_on_user"
   add_index "starship_messages", ["type"], :name => "index_starship_messages_on_type"
 
   create_table "subscription_filters", :force => true do |t|
