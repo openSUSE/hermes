@@ -53,7 +53,7 @@ sub sendRSSRails( $ )
   # a table that acts as a base for RSS generation.
   loadNewState unless( $mNewState );
 
-  my $sql = "INSERT INTO starship_messages( notification_id, sender, user, msg_type_id, ";
+  my $sql = "INSERT INTO starship_messages( notification_id, sender, user_id, msg_type_id, ";
   $sql .= "subject, replyto, body, msg_state_id, created ) ";
   $sql .= "VALUES( ?,?,?,?,?,?,?, $mNewState, NOW() )";
 
