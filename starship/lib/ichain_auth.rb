@@ -12,12 +12,12 @@ class IChainAuth
       logger.debug("Extracted iChain user: #{authorized_user['username']} (#{authorized_user['email']})")
       return authorized_user
     else
-      return nil
+      return {}
     end
   end
 
   def self.login( return_to_url, host )
-    auth_url = "https://" + host + "/ICSLogin/?\"https://" + host + url_for(return_to_url || '/') + "\""
+    auth_url = "https://" + host + "/ICSLogin/?\"https://" + host + (return_to_url || '/') + '"'
     logger.debug("Redirecting to iChain Login URL #{auth_url}")
     redirect_to( auth_url )
   end

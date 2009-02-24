@@ -61,7 +61,6 @@ class ApplicationController < ActionController::Base
 
     user = Hash.new
     # :ICHAIN_MODE is set in config/environments/development.rb
-    user = Hash.new
     if ICHAIN_MODE.to_s == 'simulate'
       user['username'] = "termite"
       user['email'] = "termite@suse.de"
