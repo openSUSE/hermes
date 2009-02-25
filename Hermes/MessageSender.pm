@@ -32,7 +32,7 @@ use Hermes::Log;
 use Hermes::Util;
 use Hermes::Delivery::Mail;
 use Hermes::Delivery::RSS;
-use Hermes::Delivery::Jabber;
+# use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;
 
@@ -259,12 +259,12 @@ sub deliverMessage( $$ )
       sendMail( $msgRef );
       $res = 1;
     } elsif( $deliveryString =~ /jabber personal/i ) {
-      sendJabber( $msgRef );
+      # sendJabber( $msgRef );
       $res = 1;
     } elsif( $deliveryString =~ /RSS/i ) {
       sendRSS( $msgRef );
       log( 'error', "Unable to send RSS at the moment!" );
-      # $res = 1;
+      $res = 1;
     } else {
       log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
     }
@@ -401,8 +401,8 @@ sub sendImmediateMessages(;$)
       # Successfully sent!
       markSent( $genNotiId );
       $cnt ++;
-      log( 'info', "Successfully sent generated notification <$genNotiId>: ". 
-	   Dumper( $renderedMsgRef ) );
+      # log( 'info', "Successfully sent generated notification <$genNotiId>: ". 
+      #  	   Dumper( $renderedMsgRef ) );
     }
   }
   return $cnt;
