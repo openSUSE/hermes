@@ -9,6 +9,8 @@ ActionController::Routing::Routes.draw do |map|
 
   map.connect '/login',   :controller => 'account', :action => 'login'
   map.connect '/logout',  :controller => 'account', :action => 'logout'
+  
+  map.connect '/feeds/:person/:action.:format', :controller => 'feeds'
 
   map.connect ':controller/:action/:id'
   map.connect ':controller/:action/:id.:format'
