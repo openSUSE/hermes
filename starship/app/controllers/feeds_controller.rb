@@ -6,6 +6,6 @@ class FeedsController < ApplicationController
       return
     end
 
-    @items = StarshipMessage.find :all, :limit => 10
+    @items = user.starship_messages.find :all, :limit => 100, :order => "created desc"
   end
 end
