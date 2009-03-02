@@ -2,14 +2,14 @@ class MessagesController < ApplicationController
 
   def index
     @messages = StarshipMessage.paginate( :page => params[:page], :per_page => 50, 
-                                          :conditions => ["user_id=?", @loggedin_user.id ],
+                                          :conditions => ["person_id=?", @loggedin_user.id ],
 					  :order => "id DESC" )
   end
   # GET /messages/1
   # GET /messages/1.xml
 
   def show
-    @message = StarshipMessage.find( :first, :conditions => ["id=? AND user_id=?", params[:id], @loggedin_user.id] )
+    @message = StarshipMessage.find( :first, :conditions => ["id=? AND person_id=?", params[:id], @loggedin_user.id] )
     user = session[:user]
 
     # set message to read

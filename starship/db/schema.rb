@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 29) do
+ActiveRecord::Schema.define(:version => 30) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -30,8 +30,6 @@ ActiveRecord::Schema.define(:version => 29) do
     t.datetime "created_at"
     t.datetime "sent"
   end
-
-  add_index "generated_notifications", ["sent"], :name => "index_generated_notifications_on_sent"
 
   create_table "messages", :force => true do |t|
     t.integer  "msg_type_id",                :null => false
@@ -81,7 +79,7 @@ ActiveRecord::Schema.define(:version => 29) do
   create_table "notification_parameters", :force => true do |t|
     t.integer "notification_id", :null => false
     t.integer "parameter_id"
-    t.string  "value"
+    t.text    "value"
   end
 
   add_index "notification_parameters", ["notification_id"], :name => "index_notification_parameters_on_notification_id"
