@@ -93,6 +93,7 @@ sub sendMail( $ )
   }
 
   $mime_msg->add('X-hermes-msg-type' => $msg->{type} ) if( $msg->{type} );
+  $mime_msg->replace('Precedence' => 'bulk');
   $mime_msg->replace('X-Mailer' => 'openSUSE Notification System');
 
   # Send the message.
