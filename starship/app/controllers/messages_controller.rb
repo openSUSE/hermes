@@ -12,6 +12,11 @@ class MessagesController < ApplicationController
     @message = StarshipMessage.find( :first, :conditions => ["id=? AND person_id=?", params[:id], @loggedin_user.id] )
     user = session[:user]
 
+    if @message.nil?
+      render :text => "No message found", :layout => "application"
+      return
+    end
+
     # set message to read
     if @message.msg_state.state == 'new' || @message.msg_state.state == 'unread'
        read_state = MsgState.find( :first, :conditions => "state ='read'" )
