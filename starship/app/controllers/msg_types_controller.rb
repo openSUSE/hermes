@@ -3,12 +3,10 @@ class MsgTypesController < ApplicationController
   def index
     if params['filter']
       @filter = params['filter']
-      @msg_types = StarshipMessage.count(:include => :msg_type, :group => :msg_type,
-        :conditions => ["person_id=? AND msg_types.msgtype like ?", @loggedin_user.id, "%#@filter%"])
-    else
-      @msg_types = StarshipMessage.count(:include => :msg_type, :group => :msg_type,
-        :conditions => ["person_id=?", @loggedin_user.id] )
+      conditions = ["msg_types.msgtype like ?", "%#@filter%"]
     end
+    @msg_types = @loggedin_user.starship_messages.count( :include => :msg_type, :group => :msg_type, 
+                                                         :conditions => conditions )
 
     @showtypes = @msg_types.collect {|x| x[0]}
 
@@ -20,9 +18,9 @@ class MsgTypesController < ApplicationController
   
 
   def show
-    @msgs_to_show = StarshipMessage.paginate(:page => params[:page], :per_page => 100, 
-      :conditions => ["person_id = ? AND msg_type_id =?", @loggedin_user.id, params[:id] ],
-      :order => "id DESC" )
+    @msgs_to_show = @loggedin_user.starship_messages.paginate( :page => params[:page], :per_page => 10,
+                                                               :conditions => ["msg_type_id =?", params[:id]],
+                                                               :order => "id DESC" ) 
     @msgtype = MsgType.find(params[:id])
 
     # set all new messages to unread 
