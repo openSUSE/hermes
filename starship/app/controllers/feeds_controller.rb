@@ -1,4 +1,6 @@
 class FeedsController < ApplicationController
+  skip_before_filter :authenticate
+
   def personal
     user = Person.find_by_stringid params[:person]
     if user.nil?
