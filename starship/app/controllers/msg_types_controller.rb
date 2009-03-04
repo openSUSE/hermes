@@ -18,7 +18,7 @@ class MsgTypesController < ApplicationController
   
 
   def show
-    @msgs_to_show = @loggedin_user.starship_messages.paginate( :page => params[:page], :per_page => 10,
+    @msgs_to_show = @loggedin_user.starship_messages.paginate( :page => params[:page], :per_page => 100,
                                                                :conditions => ["msg_type_id =?", params[:id]],
                                                                :order => "id DESC" ) 
     @msgtype = MsgType.find(params[:id])
