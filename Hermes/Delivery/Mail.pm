@@ -96,6 +96,12 @@ sub sendMail( $ )
   $mime_msg->replace('Precedence' => 'bulk');
   $mime_msg->replace('X-Mailer' => 'openSUSE Notification System');
 
+  # set the date manually because MIME:Lite does it with UT instead of UTC
+  my ($u_wdy, $u_mon, $u_mdy, $u_time, $u_y4) = split /\s+/, gmtime()."";
+  my $date = "$u_wdy, $u_mdy $u_mon $u_y4 $u_time UTC";
+  $mime_msg->add("date", $date);
+
+
   # Send the message.
   if ($msg->{_debug} ) {
     log('info', "Saving debug mail for noti Id " . $msg->{_notiId} );
