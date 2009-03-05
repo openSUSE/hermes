@@ -26,6 +26,7 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
           db_parameter = Parameter.new
           db_parameter.name = filternode.find("@parameter").first.value
           db_parameter.save
+          puts "Created parameter #{db_parameter.name} because it's used in an abstraction."
         end
         filter.parameter_id = db_parameter.id
         filter_abstraction.filters << filter
@@ -44,6 +45,15 @@ Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
         abstraction.summary = subscription_node.find("summary").first.text
         abstraction.description = subscription_node.find("description").first.text
         abstraction.msg_type = subscription_node.find("msg_type/@name").first.value
+        
+        if (MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'").nil?)
+          msg_type = MsgType.new
+          msg_type.msgtype = abstraction.msg_type
+          msg_type.added = Time.now
+          msg_type.save
+          puts "Created msg_type #{abstraction.msg_type} because it's used in an abstraction."
+        end
+        
         abstraction.id = subscription_node.find("@id").first.value
         abstraction.filterabstracts = Hash.new
         
