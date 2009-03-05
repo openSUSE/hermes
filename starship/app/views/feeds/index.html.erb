@@ -1,0 +1,36 @@
+<% @hermestitle = "Available web feeds for #{session[:user].stringid} (#{session[:user].email})" %>
+
+
+<% if @feed_subscriptions.length > 0 %>
+
+<table class="defaultTable">
+<tr>
+<th>Subscription</th>
+<th>Feed name</th>
+<th>Message Count</th>
+<th>Formats</th>
+</tr>
+
+<% @feed_subscriptions.each  { |feed| %>
+<tr>
+
+<td><%= feed.msg_type.type_desc %> (<%= feed.filters.count %> filters)</td> 
+
+<td>  </td>
+
+<td>  </td>
+
+<td>
+<%= link_to 'web', {:action => "show", :controller => "feeds", :id => feed.id} %>
+<%= link_to 'rss', {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rss'} %>
+
+</td>
+</tr> 
+<% } %>
+</table>
+
+<% else %>
+
+You currently have no feeds available. A feed is created with the first message that arrives for it. 
+
+<% end %>

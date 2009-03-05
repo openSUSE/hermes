@@ -1,0 +1,17 @@
+<h1>Listing messages for feed: <%= @msgtype.type_desc %></h1>
+<table class="ruler">
+
+
+<% for message in @msgs_to_show %>
+	<tr id="msgtr">
+	<td><%= link_to message.id, :action => "show", :controller => "messages", :id => message.id %></td>
+        <td><%=h message.msg_state.state %></td>
+	<td><%=h message.sender %></td>
+	<td><%=h message.subject %></td>
+        <td><%=h message.created %></td>
+	</tr>
+<% end %> 
+
+
+</table>
+<%= will_paginate @msgs_to_show %>
