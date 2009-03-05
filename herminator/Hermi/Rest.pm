@@ -285,7 +285,7 @@ sub editType()
     if ( $q->param( 'dosave' ) && $q->param('dosave') eq ' Save ' ) {
       log('debug', "SAVING the template" );
       # save the template
-      if ( -w $tmplFile ) {
+      if ( ! -e $tmplFile || -w $tmplFile ) {
 	if ( open F, ">$tmplFile" ) {
 	  print F $previewTmpl;
 	  close F;
@@ -464,8 +464,8 @@ sub templateTypeList()
   foreach my $t ( @$typesRef ) {
     my $dipType = $t;
 
-    if( length( $dipType ) > 25 ) {
-      $dipType = "..." . substr( $dipType, -25 );
+    if( length( $dipType ) > 22 ) {
+      $dipType = "..." . substr( $dipType, -22 );
     }
     my $oneEntry;
     $oneEntry = "<li title=\"$t\"><a href=\"index.cgi?rm=type&type=$t\">$dipType</a></li>";
