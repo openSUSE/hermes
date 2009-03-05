@@ -3,6 +3,9 @@
 <p>Please select below for which events you want to receive notifications.</p>
 
 <% simple_subscriptions = 0 %>
+
+<% if (@abstraction_groups.length > 0) %>
+
 <table class="defaultTable">
 
 <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
@@ -56,6 +59,13 @@
   <% end %>
 
   </table>
+  
+<% else %>
+
+There are no simple subscriptions configured, please use the expert interface. 
+
+<% end %>
+  
 <br/>
 
 <% if ( @subscribedMsgs.size > simple_subscriptions ) %>  
