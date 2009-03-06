@@ -120,7 +120,6 @@ class SubscriptionsController < ApplicationController
   end
   
   
-  
   def redirect_to_index(msg = nil)
     flash[:notice] = msg
     redirect_to :action => :index
@@ -194,7 +193,8 @@ class SubscriptionsController < ApplicationController
   private
   
   def replace_filterstring (filterstring)
-    return filterstring.gsub!(/\$\{username\}/, "#{session[:user].stringid}")
+    filterstring = filterstring.gsub(/\$\{username\}/, "#{session[:user].stringid}")
+    return filterstring
   end
   
 end

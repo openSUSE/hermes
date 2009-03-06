@@ -17,13 +17,14 @@ class FeedsController < ApplicationController
     # TODO: maybe we want mail delivered subscriptions also to be archived and viewable here?
     # TODO: How do I put the select{} into the find() ?
     @feed_subscriptions = session[:user].subscriptions.find( 
-      :all, :include => [:msg_type,:delay,:delivery]).select{|s| s.delivery.name = 'RSS' }     
+      :all, :include => [:msg_type, :delay, :delivery]).select{|s| s.delivery.name = 'RSS' }     
+  
   end
 
 
   # shows a feed either as RSS or web list. 
   def show
-    @subscription = Subscription.find(:all, :conditions => ["id =?", params[:id]]).first
+    @subscription = Subscription.find(:first, :conditions => ["id =?", params[:id]])
     if (@subscription.nil?)
       flash[:error] = "Feed with id: #{params[:id]} not found"
       redirect_to :action => :index
