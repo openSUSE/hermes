@@ -1,6 +1,0 @@
-<% form_for :comm, @to_save_comment, :url => { :action => 'save_comment' } do |f| %>
-	<%= f.text_area :comment, :size => "50x5" %>
-	<%= f.hidden_field :message_id %>
-	<br/>
-	<%= f.submit "Save" %>
-<% end %>
