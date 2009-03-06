@@ -1,5 +1,5 @@
 # This file is auto-generated from the current state of the database. Instead of editing this file, 
-# please use the migrations feature of ActiveRecord to incrementally modify your database, and
+# please use the migrations feature of Active Record to incrementally modify your database, and
 # then regenerate this schema definition.
 #
 # Note that this schema.rb definition is the authoritative source for your database schema. If you need
@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 30) do
+ActiveRecord::Schema.define(:version => 31) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",    :limit => 64
@@ -31,28 +31,7 @@ ActiveRecord::Schema.define(:version => 30) do
     t.datetime "sent"
   end
 
-  create_table "messages", :force => true do |t|
-    t.integer  "msg_type_id",                :null => false
-    t.string   "sender"
-    t.string   "subject",     :limit => 128
-    t.text     "body"
-    t.datetime "created",                    :null => false
-  end
-
-  add_index "messages", ["msg_type_id"], :name => "fk_messages_msgtype"
-  add_index "messages", ["sender"], :name => "sender"
-  add_index "messages", ["created"], :name => "created"
-
-  create_table "messages_people", :force => true do |t|
-    t.integer  "message_id"
-    t.integer  "person_id",                                  :null => false
-    t.string   "header",     :limit => 16, :default => "to", :null => false
-    t.integer  "delay",      :limit => 4,  :default => 0
-    t.datetime "sent",                                       :null => false
-  end
-
-  add_index "messages_people", ["message_id", "person_id", "header"], :name => "msg_id"
-  add_index "messages_people", ["sent"], :name => "sent_idx"
+  add_index "generated_notifications", ["sent"], :name => "index_generated_notifications_on_sent"
 
   create_table "msg_states", :force => true do |t|
     t.string "state",       :limit => 64
@@ -110,16 +89,17 @@ ActiveRecord::Schema.define(:version => 30) do
   end
 
   create_table "starship_messages", :force => true do |t|
-    t.integer  "notification_id",                :null => false
+    t.integer  "notification_id",                 :null => false
     t.string   "sender"
-    t.integer  "person_id"
-    t.string   "type",                           :null => false
+    t.integer  "person_id",       :default => 1,  :null => false
+    t.string   "type",            :default => "", :null => false
     t.string   "subject"
     t.string   "replyto"
     t.text     "body"
     t.datetime "created"
-    t.integer  "msg_type_id",                    :null => false
-    t.integer  "msg_state_id",    :default => 1
+    t.integer  "msg_type_id",                     :null => false
+    t.integer  "msg_state_id"
+    t.integer  "subscription_id",                 :null => false
   end
 
   add_index "starship_messages", ["notification_id"], :name => "index_starship_messages_on_notification_id"
@@ -127,23 +107,24 @@ ActiveRecord::Schema.define(:version => 30) do
   add_index "starship_messages", ["type"], :name => "index_starship_messages_on_type"
 
   create_table "subscription_filters", :force => true do |t|
-    t.integer "subscription_id", :null => false
-    t.integer "parameter_id",    :null => false
-    t.string  "operator",        :null => false
-    t.string  "filterstring",    :null => false
+    t.integer "subscription_id",                 :null => false
+    t.integer "parameter_id",                    :null => false
+    t.string  "operator",        :default => "", :null => false
+    t.string  "filterstring",    :default => "", :null => false
   end
 
   add_index "subscription_filters", ["subscription_id"], :name => "subscription_id"
   add_index "subscription_filters", ["parameter_id"], :name => "parameter_id"
 
   create_table "subscriptions", :force => true do |t|
-    t.integer "msg_type_id",                   :null => false
-    t.integer "person_id",                     :null => false
-    t.integer "delay_id"
-    t.integer "delivery_id"
-    t.text    "comment"
-    t.boolean "private"
-    t.boolean "enabled",     :default => true
+    t.integer  "msg_type_id",                   :null => false
+    t.integer  "person_id",                     :null => false
+    t.integer  "delay_id"
+    t.integer  "delivery_id"
+    t.text     "comment"
+    t.boolean  "private"
+    t.boolean  "enabled",     :default => true
+    t.datetime "updated_at"
   end
 
   add_index "subscriptions", ["person_id", "msg_type_id"], :name => "person_id"
