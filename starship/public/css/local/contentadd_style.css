@@ -127,7 +127,7 @@ textarea {
 }
 
 #notification_box #left_col {
-  width: 6.7em;
+  width: 5em;
   max-width: 100px;
   position: absolute;
   text-align: center;
@@ -144,7 +144,7 @@ textarea {
 }
 
 #notification_box #right_col {
-  margin-left: 9em; 
+  margin-left: 5em; 
 }
 
 #notification_box #right_col p {
