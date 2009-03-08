@@ -1,0 +1,58 @@
+<% @hermestitle = "Available web feeds for #{session[:user].stringid} (#{session[:user].email})" %>
+
+
+<% if @feed_subscriptions.length > 0 %>
+
+<table class="defaultTable">
+<tr>
+<th>Subscription</th>
+<th>Message Count</th>
+<th>Formats</th>
+</tr>
+
+<% @feed_subscriptions.each  { |feed| %>
+<tr>
+
+<td><%= feed.subscription_desc %></td> 
+
+
+<td><%= feed.starship_messages.count %></td>
+
+<td>
+<% if (feed.starship_messages.count > 0) %>
+
+<%= link_to 'web', {:action => "show", :controller => "feeds", :id => feed.id} %>
+<%= link_to 'rss', {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rdf'} %>
+
+<% end %>
+</td>
+</tr> 
+<% } %>
+</table>
+
+
+Special feeds: <br/>
+<br/>
+- All your feeds merged in one: /feeds/<%= @username %> {.rdf|.html}
+<br/>
+- Selected feeds merged to one: /feeds/&lt;id&gt;,&lt;id&gt;,&lt;id&gt; {.rdf|.html}
+ 
+
+<% else %>
+
+<div id="notification_box" class="notice">
+<div id="left_col">
+<div id="notification_icon">
+<span>Notice</span>
+</div>
+</div>
+<div id="right_col">
+<p>
+You currently have no personal feeds available. A feed is created for each of your 
+subscriptions with delivery type "<i>Web / RSS Newsfeed</i>". 
+</p>
+</div>
+</div>
+
+
+<% end %>

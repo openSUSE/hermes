@@ -33,7 +33,7 @@
     <td valign='top' width="60%">
     <%= filter_abstract.summary %> <br/>
     <i><%= filter_abstract.description %></i>
-    </td><td valign='top'>
+    </td><td valign='top'><div id="<%= "#{abstraction.id}||#{filter_abstract.id}||options" %>">
     <% if ( subscription ) 
          deliveryid = subscription.delivery.id
          delayid = subscription.delay.id
@@ -42,10 +42,11 @@
          deliveryid = nil
          delayid = nil
     end %>
+    <p>
     <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delivery", options_for_select(@avail_deliveries, deliveryid) %>
-    </td><td valign='top'>
+    </p><p>
     <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delay", options_for_select(@avail_delays, delayid) %>
-    </td>
+    </p></div></td>
     </tr>
   <% end %>
   </table>
