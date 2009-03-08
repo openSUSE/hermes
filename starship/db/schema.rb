@@ -9,17 +9,19 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 31) do
+ActiveRecord::Schema.define(:version => 32) do
 
   create_table "delays", :force => true do |t|
-    t.string  "name",    :limit => 64
+    t.string  "name",        :limit => 64
     t.integer "seconds"
+    t.string  "description"
   end
 
   add_index "delays", ["name"], :name => "name"
 
   create_table "deliveries", :force => true do |t|
-    t.string "name", :limit => 64, :default => "", :null => false
+    t.string "name",        :limit => 64, :default => "", :null => false
+    t.string "description"
   end
 
   add_index "deliveries", ["name"], :name => "name"
@@ -89,17 +91,17 @@ ActiveRecord::Schema.define(:version => 31) do
   end
 
   create_table "starship_messages", :force => true do |t|
-    t.integer  "notification_id",                 :null => false
+    t.integer  "notification_id",                :null => false
     t.string   "sender"
-    t.integer  "person_id",       :default => 1,  :null => false
-    t.string   "type",            :default => "", :null => false
+    t.integer  "person_id",       :default => 1, :null => false
+    t.string   "type",                           :null => false
     t.string   "subject"
     t.string   "replyto"
     t.text     "body"
     t.datetime "created"
-    t.integer  "msg_type_id",                     :null => false
-    t.integer  "msg_state_id"
-    t.integer  "subscription_id",                 :null => false
+    t.integer  "msg_type_id",                    :null => false
+    t.integer  "msg_state_id",    :default => 1
+    t.integer  "subscription_id",                :null => false
   end
 
   add_index "starship_messages", ["notification_id"], :name => "index_starship_messages_on_notification_id"
@@ -107,14 +109,14 @@ ActiveRecord::Schema.define(:version => 31) do
   add_index "starship_messages", ["type"], :name => "index_starship_messages_on_type"
 
   create_table "subscription_filters", :force => true do |t|
-    t.integer "subscription_id",                 :null => false
-    t.integer "parameter_id",                    :null => false
-    t.string  "operator",        :default => "", :null => false
-    t.string  "filterstring",    :default => "", :null => false
+    t.integer "subscription_id", :null => false
+    t.integer "parameter_id",    :null => false
+    t.string  "operator",        :null => false
+    t.string  "filterstring",    :null => false
   end
 
-  add_index "subscription_filters", ["subscription_id"], :name => "subscription_id"
   add_index "subscription_filters", ["parameter_id"], :name => "parameter_id"
+  add_index "subscription_filters", ["subscription_id"], :name => "subscription_id"
 
   create_table "subscriptions", :force => true do |t|
     t.integer  "msg_type_id",                   :null => false
@@ -125,6 +127,9 @@ ActiveRecord::Schema.define(:version => 31) do
     t.boolean  "private"
     t.boolean  "enabled",     :default => true
     t.datetime "updated_at"
+    t.string   "description"
+    t.string   "name"
+    t.string   "config"
   end
 
   add_index "subscriptions", ["person_id", "msg_type_id"], :name => "person_id"
