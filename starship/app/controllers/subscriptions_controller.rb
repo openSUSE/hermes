@@ -6,9 +6,9 @@ class SubscriptionsController < ApplicationController
     @hermestitle = "Subscriptions for #{session[:user].stringid} (#{session[:user].email})"
     @abstraction_groups = ABSTRACTIONGROUPS
     @abstractions = SUBSCRIPTIONABSTRACTIONS
-    @subscribedMsgs = @person.subscriptions.find( :all)
-    @avail_deliveries = Delivery.find(:all, :order => 'id').map {|d| [d.name, d.id]}
-    @avail_delays = Delay.find(:all, :order => 'id').map {|d| [d.name, d.id]}
+    @subscribedMsgs = @person.subscriptions.find(:all)
+    @avail_deliveries = Delivery.find(:all, :order => 'id').map {|d| [d.description, d.id]}
+    @avail_delays = Delay.find(:all, :order => 'id').map {|d| [d.description, d.id]}
   end
   
   
@@ -54,7 +54,7 @@ class SubscriptionsController < ApplicationController
           # same in update function
           params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
           logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
-          sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],:filterstring => replace_filterstring(params["filter_value_#{counter}"]) )
+          sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => SubscriptionFilter.filterstring(params["filter_value_#{counter}"], session[:user].stringid) )
         }
         if sub.save
           redirect_to_index()
@@ -82,11 +82,13 @@ class SubscriptionsController < ApplicationController
                 
                 subscription = Subscription.new(:msg_type_id => MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'").id, 
                   :person_id => session[:user].id, :delay_id => params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i, 
-                  :delivery_id => params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i)
+                  :delivery_id => params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i, 
+                  :description => "#{abstraction.summary} / #{filterabstract.summary}")
                 
                 filterabstract.filters.each do | filter |
                   subscription.filters <<  SubscriptionFilter.new( :parameter_id => filter.parameter_id, 
-                    :operator => filter.operator, :filterstring => replace_filterstring(filter.filterstring) )
+                    :operator => filter.operator, 
+                    :filterstring => SubscriptionFilter.replaced_filterstring(filter.filterstring, session[:user].stringid) )
                 end
                 if subscription.save
                   flash[:success] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} has been added.\n"
@@ -187,14 +189,6 @@ class SubscriptionsController < ApplicationController
       @status = "Enabled"
     end
     @curr_sub.save
-  end
-
-
-  private
-  
-  def replace_filterstring (filterstring)
-    filterstring = filterstring.gsub(/\$\{username\}/, "#{session[:user].stringid}")
-    return filterstring
   end
   
 end

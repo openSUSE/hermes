@@ -14,14 +14,10 @@ class Person < ActiveRecord::Base
   # this contains code (basic auth) from 
   # http://www.aidanf.net/rails_user_authentication_tutorial
 
-  def subscribed_to(msgtype)
-    not subscriptions.find(:first, :conditions => {:msg_type_id => msgtype}).nil?
-  end
-   
-  
+ 
   def subscribed_to_abstraction(group_id, abstraction_id, filter_abstraction_id)    
     abstraction = SUBSCRIPTIONABSTRACTIONS[group_id][abstraction_id]
-    
+
     # use the first subscription of the user that matches all criteria from the abstraction (msgtype, filters)
     subscriptions.find(:all, :conditions => [ "subscriptions.enabled = 1 and msg_types.msgtype = ?", abstraction.msg_type],
       :include => [:msg_type] ).each do | subscription | 
@@ -30,7 +26,7 @@ class Person < ActiveRecord::Base
           #logger.debug "Checking for filter #{filter.inspect} in user subscription : #{subscription.filters.inspect}" 
           
           if ( not subscription.filters.find(:first, :conditions => {:parameter_id => filter.parameter_id, 
-            :operator => filter.operator, :filterstring => filter.filterstring}).nil? )
+            :operator => filter.operator, :filterstring => SubscriptionFilter.replaced_filterstring(filter.filterstring, stringid)}).nil? )
             hits += 1
           end
         end
@@ -39,9 +35,9 @@ class Person < ActiveRecord::Base
           return subscription
         end
     end
-
     return false
   end
+
 
   def self.authenticate(login, pass)
     u=find(:first, :conditions=>["stringid = ?", login])
@@ -49,6 +45,7 @@ class Person < ActiveRecord::Base
     return u if Person.encrypt(pass, u.salt)==u.hashed_password
     nil
   end  
+
 
   def password=(pass)
     @password=pass

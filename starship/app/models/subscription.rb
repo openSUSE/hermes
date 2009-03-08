@@ -10,4 +10,14 @@ class Subscription < ActiveRecord::Base
 
   validates_presence_of :delay
   validates_presence_of :delivery
+  
+  
+  def subscription_desc
+    if (description)
+      return description
+    end
+   return  "#{msg_type.type_desc} (#{filters.count}  filters)"
+    
+  end
+  
 end
