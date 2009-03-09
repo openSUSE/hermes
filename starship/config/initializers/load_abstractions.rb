@@ -23,7 +23,7 @@ if (ENV['RAILS_ENV'])
           filter.operator = filternode.find("@operator").first.value
           filter.filterstring = filternode.find("@value").first.value
           db_parameter = Parameter.find(:all, 
-                                :conditions => "name='" + filternode.find("@parameter").first.value + "'").first
+                                        :conditions => "name='" + filternode.find("@parameter").first.value + "'").first
           if (db_parameter.nil?)
             db_parameter = Parameter.new
             db_parameter.name = filternode.find("@parameter").first.value
@@ -41,7 +41,7 @@ if (ENV['RAILS_ENV'])
         group_id = node.find("@id").first.value
         abstractiongroups[group_id] = node.find("name").first.text
         abstractions[group_id] = Hash.new
-  
+        
         node.find("subscription").each do | subscription_node | 
           abstraction = SubscriptionAbstract.new()
           abstraction.summary = subscription_node.find("summary").first.text
@@ -64,7 +64,9 @@ if (ENV['RAILS_ENV'])
             abstraction.filterabstracts[filterabstract_name] = filterabstractions[filterabstract_name]
             # add connection msg_type <-> parameter
             filterabstractions[filterabstract_name].filters.each do |subsfilter|
-              msg_type.parameters << Parameter.find(:first, :conditions => ["id= ?", subsfilter.parameter_id])
+              if (msg_type.parameters.find(:first, :conditions => ["parameter_id= ?", subsfilter.parameter_id]).nil?)
+                msg_type.parameters << Parameter.find(:first, :conditions => ["id= ?", subsfilter.parameter_id])
+              end
             end
           end
           msg_type.save
