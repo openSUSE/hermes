@@ -23,7 +23,7 @@
       <filterabstract id="my_features">
          <summary>My Features</summary>
          <description>All features where you are listed as "interested" or in any other role.</description>
-         <filter parameter="to" operator="regexp" value=".*${username}.*" />
+         <filter parameter="to" operator="containsitem" value="${username}" />
       </filterabstract>
 
   </filterabstractions>
