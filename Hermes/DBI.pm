@@ -38,8 +38,8 @@ sub connect
 
     my $db_type = $Hermes::Config::DB{$connectTo}->{'type'};
     my $db_name = $Hermes::Config::DB{$connectTo}->{'name'};
-    my $db_host = $Hermes::Config::DB{$connectTo}->{'host'};
-    my $db_port = $Hermes::Config::DB{$connectTo}->{'port'};
+    my $db_host = $Hermes::Config::DB{$connectTo}->{'host'} || '';
+    my $db_port = $Hermes::Config::DB{$connectTo}->{'port'} || '';
     my $db_user = $Hermes::Config::DB{$connectTo}->{'user'};
     my $db_pass = $Hermes::Config::DB{$connectTo}->{'pass'};
 
@@ -48,7 +48,7 @@ sub connect
 	die( "Can not connect to database <$connectTo>, no DB name configured.\n" .
 	     "Check AddDB-Parameter in Config.pm\n" );
     }
-
+    
     my $data_source = "dbi:$db_type:$db_name;host=$db_host;port=$db_port";
 
     $db_pass = undef if( !defined $db_pass || $db_pass =~ /^\s*$/ );

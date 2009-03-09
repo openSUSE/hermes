@@ -129,7 +129,7 @@ sub expandFromMsgType( $$ )
     foreach my $filterRef ( @filters ) {
       $filterOk = applyFilter( $paramHash, $filterRef );
       if( ! $filterOk ) {
-	log( 'info', "Filter $filterRef->{filterlog} failed!" );
+	log( 'info', "$filterRef->{filterlog} failed!" );
 	last;
       }
       log( 'info', $filterRef->{filterlog} . " adds user to to-line: " . $personId );
@@ -317,7 +317,7 @@ sub applyFilter( $$ )
       my @possibleValues = split( /\s*,\s*/, $str );
       my $success = grep( /$searchStr/, @possibleValues );
       log( 'info', "Filtering oneof <$searchStr> in [" . join( "|", @possibleValues ) . "]: " . $success );
-      
+
       if( $success ) {
 	$res = 1;
       } else {
@@ -326,6 +326,22 @@ sub applyFilter( $$ )
     } else {
       log( 'warning', "Filter references on non existing param <$filterRef->{param}>" );
       $res = 0;
+    }
+  } elsif( $filterRef->{operator} eq "containsitem" ) {
+    # the parameter contains a comma separated list and this filter returns true if the 
+    # filter string is in the list.
+    $res = 0;
+    if( $paramHash->{ $filterRef->{param} } ) {
+      my $listStr = $paramHash->{ $filterRef->{param} };
+      my @list = split( /\s*[|,]\s*/, $listStr );
+      my $sstr = quotemeta( $filterRef->{string} );
+      # log('debug', "containsItem search-String: $sstr" );
+      my $cnt = grep ( /$sstr/, @list );
+      # log('debug', "containsitem-Filter: Search in list: " . join( ' - ', @list ) . " #hits=$cnt" );
+      if( $cnt > 0 ) {
+	$res = 1;
+      }
+      log( 'debug', "containsitem-Filter: $filterRef->{string} is part of $listStr?: $res" );
     }
   } elsif( $filterRef->{operator} eq "regexp" ) {
     # the parameter value must match the regexp in the filter
