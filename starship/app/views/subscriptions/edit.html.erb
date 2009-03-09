@@ -47,6 +47,38 @@
   </tbody>
 </table>
 
+<hr/>
+<h3>Hints for Filter Creation</h3>
+
+<p>Filters for subscriptions consist of three different settings:</p>
+<ol>
+<li><b>Parameter:</b> The first combo box contains a list of the parameters
+  which belong to selected message type. The filter operation works on the 
+  content of the parameter.</li>
+<li><b>Operator:</b> The operator sets the type of the filter. There are some 
+types of filters so far:
+  <ul>
+   <li><b>oneof:</b>The oneof filter checks if the parameter value equals one
+     of the list entries in value. The list of values is built by splitting the
+     filter value at the commas.</b></li>
+   <lI><b>containsitem:</b> The containsitem filter checks if the list of
+     filter values contains the value of the selected parameter. Again, the
+     list is computed by splitting on commas.</li>
+   <li><b>regexp:</b>The regexp-filter checks if the selected parameter value 
+     matches the regexp given in the value. Be careful!</li>
+   <li><b>special:</b>The special-operator provides special filters. The
+     parameter value is ignored here. The filter value can be one of 
+     <ul><li>_mypackages: The filter matches if this notification is about one
+             of the users packages</li>
+         <li>_myprojects: The filter matches if this notification is about one
+             of the users projects</li>
+         <li>_myrequests: The filter matches if this notification is about one
+            of the users requests.</li>
+     </ul>
+  </ul>
+<li><b>Value:</b> The filter value with different meaning depending on the
+  operator</li>
+</ol>
 
 <% end %>
 
