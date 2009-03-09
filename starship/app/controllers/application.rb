@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
   helper :all # include all helpers, all the time
   before_filter :set_return_to, :authenticate
 
-  $OPERATORS = %w{ oneof regexp special }
+  $OPERATORS = %w{ oneof containsitem regexp special }
   
   def authenticate
 
