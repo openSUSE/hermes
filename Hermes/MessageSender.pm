@@ -45,8 +45,9 @@ use vars qw(@ISA @EXPORT $query );
 # stored in a module global variable, which only causes trouble if its used multiple 
 # times.
 #
-use constant SQL => scalar "SELECT gn.id, gn.notification_id, gn.created_at, subs.msg_type_id,\
- subs.person_id, subs.delay_id, subs.delivery_id FROM generated_notifications gn\
+use constant SQL => scalar "SELECT gn.id, gn.notification_id, gn.created_at, subs.id, \
+ subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
+ generated_notifications gn\
  JOIN subscriptions subs ON subs.id = gn.subscription_id\
  WHERE gn.sent is NULL AND subs.enabled=1 AND subs.delay_id=?\
  ORDER BY gn.notification_id, subs.person_id LIMIT ?";
@@ -156,7 +157,8 @@ sub sendMessageDigest($;)
   my $summedBody = "";
   my @genNotiIds;
 
-  while( my( $genNotiId, $notiId, $genNotiCreated, $msgTypeId, $personId, $delayId, $deliveryId )
+  while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId, $personId, 
+	     $delayId, $deliveryId )
 	 = $query->fetchrow_array() ) {
 
     # set sensible start values if the current- values are undefined.
@@ -185,7 +187,8 @@ sub sendMessageDigest($;)
     }
 
     # render the message and get the digest text out.
-    $renderedRef = renderMessage( $msgTypeId, $notiId, $personId, $delayId, $deliveryId );
+    $renderedRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId, 
+				  $delayId, $deliveryId );
     unless( $renderedRef->{body} ) {
       log( 'error', "Message without body is sad..." );
       next;
@@ -304,9 +307,9 @@ sub getGeneratedNotificationParameters( $ )
   return ($sender, $type, \%paramHash );
 }
 
-sub renderMessage( $$$$$ )
+sub renderMessage( $$$$$$ )
 {
-  my ($msgTypeId, $notiId, $personId, $delayId, $deliveryId) = @_;
+  my ($msgTypeId, $notiId, $subscriptId, $personId, $delayId, $deliveryId) = @_;
 
   # for the moment we render all delivery- and delay types same way.
 
@@ -345,17 +348,18 @@ sub renderMessage( $$$$$ )
     }
   }
 
-  return { _notiId    => $notiId,
-	   from       => $sender,
-	   to         => [$personId],
-	   cc         => [],
-	   bcc        => [],
-	   type       => $type,
-           _msgTypeId => $msgTypeId,
-	   replyto    => $sender,
-	   subject    => $subject,
-	   body       => $text,
-	   _debug      => $Hermes::Config::Debug };
+  return { _notiId      => $notiId,
+	   _subscriptId => $subscriptId,
+	   from         => $sender,
+	   to           => [$personId],
+	   cc           => [],
+	   bcc          => [],
+	   type         => $type,
+           _msgTypeId   => $msgTypeId,
+	   replyto      => $sender,
+	   subject      => $subject,
+	   body         => $text,
+	   _debug       => $Hermes::Config::Debug };
 
 }
 
@@ -393,9 +397,10 @@ sub sendImmediateMessages(;$)
   $query = dbh()->prepare(SQL) unless( $query );
   $query->execute( SendNow(), 1000 );
 
-  while( my( $genNotiId, $notiId, $genNotiCreated, $msgTypeId, $personId, $delayId, $deliveryId )
-	 = $query->fetchrow_array() ) {
-    my $renderedMsgRef = renderMessage( $msgTypeId, $notiId, $personId, $delayId, $deliveryId );
+  while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId,
+	     $personId, $delayId, $deliveryId ) = $query->fetchrow_array() ) {
+    my $renderedMsgRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
+					$delayId, $deliveryId );
 
     if( deliverMessage( $deliveryId, $renderedMsgRef ) ) {
       # Successfully sent!

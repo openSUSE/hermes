@@ -54,13 +54,13 @@ sub sendRSSRails( $ )
   loadNewState unless( $mNewState );
 
   my $sql = "INSERT INTO starship_messages( notification_id, sender, person_id, msg_type_id, ";
-  $sql .= "subject, replyto, body, msg_state_id, created ) ";
-  $sql .= "VALUES( ?,?,?,?,?,?,?, $mNewState, NOW() )";
+  $sql .= "subject, replyto, body, msg_state_id, subscription_id, created ) ";
+  $sql .= "VALUES( ?,?,?,?,?,?,?, $mNewState, ?, NOW() )";
 
   my $sth = dbh()->prepare( $sql );
 
   $sth->execute( $msgRef->{_notiId}, $msgRef->{from}, @{$msgRef->{to}}[0], $msgRef->{_msgTypeId},
-		 $msgRef->{subject}, $msgRef->{replyto}, $msgRef->{body} );
+		 $msgRef->{subject}, $msgRef->{replyto}, $msgRef->{body}, $msgRef->{_subscriptId} );
 
   my $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
 
