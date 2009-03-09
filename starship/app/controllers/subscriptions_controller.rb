@@ -39,29 +39,23 @@ class SubscriptionsController < ApplicationController
   
   def create
     if request.post?
-  
       sub_param = params[:subscr]
       sub_param[:person_id] = session[:user].id
-  
-      if Subscription.find(:first, :conditions => sub_param)
-        redirect_to_index("Subscription entry already exists.")
+      sub = Subscription.new(sub_param)
+      logger.debug("Creating subscription for #{params["sub_param"]}")
+      0.upto(params[:filter_count].to_i-1) { |counter|
+        # with the special operator no parameter_id is set
+        # needs to be a valid parameter_id, otherwise the filters wont evaluated by hermes
+        # same in update function
+        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
+        logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
+        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => SubscriptionFilter.filterstring(params["filter_value_#{counter}"], session[:user].stringid) )
+      }
+      if sub.save
+        redirect_to_index()
       else
-        sub = Subscription.new(sub_param)
-        logger.debug("Creating subscription for #{params["sub_param"]}")
-        0.upto(params[:filter_count].to_i-1) { |counter|
-          # with the special operator no parameter_id is set
-          # needs to be a valid parameter_id, otherwise the filters wont evaluated by hermes
-          # same in update function
-          params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
-          logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
-          sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => SubscriptionFilter.filterstring(params["filter_value_#{counter}"], session[:user].stringid) )
-        }
-        if sub.save
-          redirect_to_index()
-        else
-          redirect_to_index(sub.errors.full_messages())
-          sub.errors.clear()
-        end
+        redirect_to_index(sub.errors.full_messages())
+        sub.errors.clear()
       end
     end
   end

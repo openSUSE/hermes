@@ -48,11 +48,10 @@ if (ENV['RAILS_ENV'])
           abstraction.description = subscription_node.find("description").first.text
           abstraction.msg_type = subscription_node.find("msg_type/@name").first.value
           
-          if (MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'").nil?)
+          if ((msg_type = MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'")).nil?)
             msg_type = MsgType.new
             msg_type.msgtype = abstraction.msg_type
             msg_type.added = Time.now
-            msg_type.save
             puts "Created msg_type #{abstraction.msg_type} because it's used in an abstraction."
           end
           
@@ -63,7 +62,12 @@ if (ENV['RAILS_ENV'])
           subscription_node.find("checkable").each do | checkable_node |
             filterabstract_name = checkable_node.find("@filterabstract").first.value
             abstraction.filterabstracts[filterabstract_name] = filterabstractions[filterabstract_name]
+            # add connection msg_type <-> parameter
+            filterabstractions[filterabstract_name].filters.each do |subsfilter|
+              msg_type.parameters << Parameter.find(:first, :conditions => ["id= ?", subsfilter.parameter_id])
+            end
           end
+          msg_type.save
           abstractions[group_id][abstraction.id] = abstraction
         end
         
