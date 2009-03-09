@@ -260,10 +260,10 @@ sub deliverMessage( $$ )
       $res = 1;
     } elsif( $deliveryString =~ /jabber personal/i ) {
       # sendJabber( $msgRef );
+      log( 'debug', "Unable to send Jabber at the moment!" );
       $res = 1;
     } elsif( $deliveryString =~ /RSS/i ) {
       sendRSS( $msgRef );
-      log( 'error', "Unable to send RSS at the moment!" );
       $res = 1;
     } else {
       log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
@@ -281,7 +281,7 @@ sub getGeneratedNotificationParameters( $ )
   my ($notiId) = @_;
 
   # get all the information about the notification and its paramters
-  my $sql = "SELECT n.sender,mt.msgtype, p.name, np.value FROM notifications n ";
+  my $sql = "SELECT n.sender, mt.msgtype, p.name, np.value FROM notifications n ";
   $sql .= "LEFT JOIN notification_parameters np ON( n.id=np.notification_id) ";
   $sql .= "LEFT JOIN parameters p ON (np.parameter_id=p.id) ";
   $sql .= "JOIN msg_types mt ON(mt.id=n.msg_type_id) WHERE n.id=?";
@@ -292,7 +292,7 @@ sub getGeneratedNotificationParameters( $ )
   my $sender;
   my $type;
   while( my( $s, $mt, $paraName, $paraValue) = $sth->fetchrow_array()) {
-    
+
     if( $paraName ) {
       $paramHash{$paraName} = $paraValue || "";
     }

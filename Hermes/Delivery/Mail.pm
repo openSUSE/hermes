@@ -53,7 +53,7 @@ sub sendMail( $ )
 
   my $pSenderRef = personInfo( $msg->{from} );
 
-  my $mime_msg = MIME::Lite->new( From	  => $pSenderRef->{email} || "unknown",
+  my $mime_msg = MIME::Lite->new( From	  => $pSenderRef->{email} || $Hermes::Config::DefaultSender,
 				  Subject => $msg->{subject},
 				  Data    => $msg->{body},
 				  Type    => 'TEXT'

@@ -44,7 +44,7 @@ use Exporter;
 use Hermes::Config;
 use IO::Handle;
 
-use vars qw($VERSION @ISA @EXPORT $name);
+use vars qw($VERSION @ISA @EXPORT $name $openChecked);
 
 ($VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
@@ -54,13 +54,21 @@ use vars qw($VERSION @ISA @EXPORT $name);
 
 sub _init()
 {
+  return if( $openChecked );
+
   my %params = %{$Hermes::Config::LOG{'params'}};
   my $f = $params{'filename'};
   $name = $params{'name' };
 
   if( $f && open HANDLE, ">>$f" ) {
     HANDLE->autoflush(1);
+  } else {
+    print "##########################################################################\n";
+    print "## ERROR: Could not write to logfile $f\n";
+    print "## $!\n";
+    print "##########################################################################\n";
   }
+  $openChecked = 1;
 }
 
 
@@ -135,8 +143,13 @@ sub log($$;$)
       $hour = "0" . $hour;
     }
     my $n = $name || "";
-
-    print HANDLE "$n\[$level $$ $hour:$min:$sec] $message\n"; 
+    if( HANDLE->opened() ) {
+      print HANDLE "$n\[$level $$ $hour:$min:$sec] $message\n"; 
+    } else {
+      print STDERR "$n\[$level $$ $hour:$min:$sec] $message\n"; 
+    }
 }
+
+$openChecked = 0;
 
 1;

@@ -191,7 +191,12 @@ sub notificationToInbox( $$ )
     $sth->execute( $msgTypeId, $sender );
     $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
 
-    my $cnt = storeNotificationParameters( $id, $msgTypeId, $params );
+    my $cnt = 0;
+    if( $id ) {
+      $cnt = storeNotificationParameters( $id, $msgTypeId, $params );
+    } else {
+      log('error', "Could not create notification - no result of last_insert_id" );
+    }
     dbh()->do( 'UNLOCK TABLES' );
     log( 'info', "Notification of type <$msgType> added with $cnt parameters" );
   }
