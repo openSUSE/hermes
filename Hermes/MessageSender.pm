@@ -157,7 +157,7 @@ sub sendMessageDigest($;)
   my $summedBody = "";
   my @genNotiIds;
 
-  while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId, $personId, 
+  while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId, $personId,
 	     $delayId, $deliveryId )
 	 = $query->fetchrow_array() ) {
 
@@ -187,7 +187,7 @@ sub sendMessageDigest($;)
     }
 
     # render the message and get the digest text out.
-    $renderedRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId, 
+    $renderedRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
 				  $delayId, $deliveryId );
     unless( $renderedRef->{body} ) {
       log( 'error', "Message without body is sad..." );
@@ -197,12 +197,16 @@ sub sendMessageDigest($;)
       log('info', "Rendered Body: $renderedRef->{body}" );
 
     # get the <digest></digest> limited text out of the body.
+    $summedBody .= "== $genNotiCreated =>\n";
     if( $renderedRef->{body} =~ /<digest>(.+?)<\/digest>/gsi ) {
       # append the text part beween the digest tags to the summed body
-      $summedBody .= "= $genNotiCreated =>" . $1;
+      $summedBody .= $1;
     } else {
-      # no digest sektion, append the whole text
-      $summedBody .= $renderedRef->{body};
+      # no digest sektion, append the whole text without signature
+      my $sumBody = $renderedRef->{body};
+      $sumBody =~ s/^-- \n.*$//si;
+      log('info', "Add to summed up body: $sumBody" );
+      $summedBody .= $sumBody;
     }
     $currentPerson = $personId;
     $currentDelivery = $deliveryId;
