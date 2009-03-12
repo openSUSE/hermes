@@ -99,7 +99,7 @@ sub sendMail( $ )
   # set the date manually because MIME:Lite does it with UT instead of UTC
   my ($u_wdy, $u_mon, $u_mdy, $u_time, $u_y4) = split /\s+/, gmtime()."";
   my $date = "$u_wdy, $u_mdy $u_mon $u_y4 $u_time UTC";
-  $mime_msg->add("date", $date);
+  $mime_msg->replace("date", $date);
 
 
   # Send the message.
