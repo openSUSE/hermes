@@ -4,6 +4,6 @@ class RemoveTypeCol < ActiveRecord::Migration
   end
 
   def self.down
-    add_column :starship_messages, :string
+    add_column :starship_messages, :type, :string
   end
 end
