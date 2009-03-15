@@ -59,4 +59,3 @@ Rails::Initializer.run do |config|
   #
 end
 
-Mime::Type.register "application/rdf+xml", :rdf
