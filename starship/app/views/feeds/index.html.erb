@@ -1,2 +1,58 @@
+<% @hermestitle = "Public web feeds" %>
 
-public feeds: ...
+
+<% if @feed_subscriptions.length > 0 %>
+
+<p>This is a list of available feeds for the most popular topics.
+</p>
+
+<table class="defaultTable">
+<tr>
+<th>ID</th>
+<th>Subscription name</th>
+<th>Message Count</th>
+<th>Formats</th>
+</tr>
+
+<% @feed_subscriptions.each  { |feed| %>
+<tr>
+<td><%= feed.id %></td> 
+<td><%= feed.subscription_desc %></td> 
+<td><%= feed.starship_messages.count %></td>
+<td>
+<% if (feed.starship_messages.count > 0) %>
+  <%= link_to 'web', {:action => "show", :controller => "feeds", :id => feed.id} %>
+  <%= link_to 'rss', {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rdf'} %>
+  <%= link_to image_tag("feeds.png"), {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rdf'} %>
+<% end %>
+</td>
+</tr> 
+<% } %>
+</table>
+
+<br/><p>
+<b>Special feeds:</b></p>
+<p>
+- Multiple feeds merged to one: /feeds/&lt;id&gt;,&lt;id&gt;,&lt;id&gt; {.rdf|.html}
+<br/>
+- You can also create <%= link_to 'personal feeds', {:action => "index", :controller => "feeds"} %> based on your own needs.  
+
+</p>
+
+<% else %>
+
+<div id="notification_box" class="notice">
+<div id="left_col">
+<div id="notification_icon">
+<span>Notice</span>
+</div>
+</div>
+<div id="right_col">
+<p>
+There are currently no public feeds configured. :-( 
+</p>
+</div>
+</div>
+
+
+<% end %>

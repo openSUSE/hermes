@@ -3,40 +3,49 @@
 
 <% if @feed_subscriptions.length > 0 %>
 
+<p>
+This page shows a list of your personal created feeds. 
+A feed is created for each of your 
+subscriptions with delivery type "<i>Web / RSS Newsfeed</i>".
+</p>
+
 <table class="defaultTable">
 <tr>
-<th>Subscription</th>
+<th>ID</th>
+<th>Subscription name</th>
 <th>Message Count</th>
 <th>Formats</th>
 </tr>
 
 <% @feed_subscriptions.each  { |feed| %>
 <tr>
-
+<td><%= feed.id %></td> 
 <td><%= feed.subscription_desc %></td> 
-
-
 <td><%= feed.starship_messages.count %></td>
-
 <td>
 <% if (feed.starship_messages.count > 0) %>
-
-<%= link_to 'web', {:action => "show", :controller => "feeds", :id => feed.id} %>
-<%= link_to 'rss', {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rdf'} %>
-
+  <%= link_to 'web', {:action => "show", :controller => "feeds", :id => feed.id} %>
+  <%= link_to 'rss', {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rdf'} %>
+  <%= link_to image_tag("feeds.png"), {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rdf'} %>
 <% end %>
 </td>
 </tr> 
 <% } %>
 </table>
 
+<br/><p>
+<b>Special feeds:</b></p>
+<p>
+- All your feeds merged in one: /feeds/<%= session[:user].stringid %> 
+{ <%= link_to '.rdf', {:action => "person", :controller => "feeds", :person => session[:user].stringid, :format => 'rdf'} %>
+|
+<%= link_to '.html', {:action => "person", :controller => "feeds", :person => session[:user].stringid, :format => 'html'} %> }
+<br/>
+- Multiple feeds merged to one: /feeds/&lt;id&gt;,&lt;id&gt;,&lt;id&gt; {.rdf|.html}
+<br/>
+- <%= link_to 'Public feeds', {:action => "index", :controller => "feeds"} %> of the most popular topics.  
 
-Special feeds: <br/>
-<br/>
-- All your feeds merged in one: /feeds/<%= @username %> {.rdf|.html}
-<br/>
-- Selected feeds merged to one: /feeds/&lt;id&gt;,&lt;id&gt;,&lt;id&gt; {.rdf|.html}
- 
+</p>
 
 <% else %>
 

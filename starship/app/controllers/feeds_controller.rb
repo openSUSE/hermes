@@ -19,16 +19,18 @@ class FeedsController < ApplicationController
 
   # displaying list of public feeds here, does not need authentication
   def index
-    
-    
+    feed_user = Person.find_or_initialize_by_stringid( CONFIG['feed_user'] )
+    @feed_subscriptions = feed_user.subscriptions.find( 
+      :all, :conditions => [ "deliveries.name = 'RSS'"], 
+      :include => [:msg_type, :delay, :delivery])
   end
+  
   
   # list the configured feeds of a single user
   def personal
     @feed_subscriptions = session[:user].subscriptions.find( 
       :all, :conditions => [ "deliveries.name = 'RSS'"], 
       :include => [:msg_type, :delay, :delivery])
-    @username = session[:user].stringid
   end
 
 
