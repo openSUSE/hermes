@@ -131,8 +131,8 @@
           <li><a href="<%= url_for(:controller => "subscriptions" , :action => "simple") %>">My Subscriptions</a></li>
           <li><a href="<%= url_for(:controller => 'feeds', :action => 'personal') %>">My Feeds</a></li>
           <li><a href="<%= url_for(:controller => 'feeds', :action => 'index') %>">Public Feeds</a></li>          
-          <li><a href="<%= url_for(:controller => "msg_types") %>">Hermes Messages</a></li>
-		      <li><a href="http://en.opensuse.org/Hermes/Documentation">Documentation</a></li>
+          <!-- <li><a href="<%= url_for(:controller => "msg_types") %>">Hermes Messages</a></li> -->
+		  <li><a href="http://en.opensuse.org/Hermes/Documentation">Documentation</a></li>
           
           <% if session[:user] && session[:user].admin %>
           <li><a href="https://notify.opensuse.org/">Hermes Admin</a></li>
