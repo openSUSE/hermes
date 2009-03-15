@@ -36,7 +36,6 @@ class SubscriptionsController < ApplicationController
     }
   end
   
-  
   def create
     if request.post?
       sub_param = params[:subscr]
@@ -44,12 +43,10 @@ class SubscriptionsController < ApplicationController
       sub = Subscription.new(sub_param)
       logger.debug("Creating subscription for #{params["sub_param"]}")
       0.upto(params[:filter_count].to_i-1) { |counter|
-        # with the special operator no parameter_id is set
-        # needs to be a valid parameter_id, otherwise the filters wont evaluated by hermes
-        # same in update function
+        # set the parameter_id of the _special filter
         params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
         logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
-        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => SubscriptionFilter.filterstring(params["filter_value_#{counter}"], session[:user].stringid) )
+        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => SubscriptionFilter.replaced_filterstring(params["filter_value_#{counter}"], session[:user].stringid) )
       }
       if sub.save
         redirect_to_index()
