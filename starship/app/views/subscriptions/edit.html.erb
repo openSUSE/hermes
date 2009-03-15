@@ -13,6 +13,11 @@
   </tr>
 
   <tr>
+    <td><strong>Description: </strong></td>
+    <td><%= text_field_tag('subscr[description]', @subscr.description ) %></td>
+  </tr>
+
+  <tr>
     <td valign=top><strong> <%= link_to_function "Comment", "$('comment_box').toggle()" %></strong></td>
 
     <td> <div id="comment_box" style="display: none;"><%= text_area('subscr','comment', :size => "50x5") %></div></td>
