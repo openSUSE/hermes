@@ -1,0 +1,21 @@
+# Config file example (intendation of sub-tags required):
+# keeper:
+#   url: http://keeperdmz.suse.de/
+#
+# Usage example (CONFIG is loaded automatically at initializers/load_config.rb):
+# userid = CONFIG['user']['user_id']
+
+# public feeds of this user are the standard public feeds
+feed_user: opensuse_hermes
+
+# TODO configure login method and debug user here
+login_method: 
+user: 
+  user_id: digitaltomm
+  user_lastname: 
+  user_email:
+
+# TODO use ichain secret
+ichain: 
+  secret: 
+  
