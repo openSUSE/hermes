@@ -53,6 +53,7 @@ class FeedsController < ApplicationController
                                     :order => "id DESC", 
                                     :conditions => ["subscription_id IN (?)", params[:id]])     
     @title = @subscriptions.first.subscription_desc
+    @feed_id = params[:id]
      render_feed()
   end
 

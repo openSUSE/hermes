@@ -8,6 +8,9 @@
 # public feeds of this user are the standard public feeds
 feed_user: opensuse_hermes
 
+# this url is used in the feeds to create links
+feed_url: https://hermes.opensuse.org
+
 # TODO configure login method and debug user here
 login_method: 
 user: 

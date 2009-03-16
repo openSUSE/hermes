@@ -1,4 +1,8 @@
-<h1>Listing messages for feed: <%= @title %></h1>
+
+<%= auto_discovery_link_tag(:rss, :action => 'show', :format => "rdf", :id => @feed_id) %>
+
+
+<h2>Listing messages for feed: <%= @title %></h2>
 <table class="ruler">
 
 
