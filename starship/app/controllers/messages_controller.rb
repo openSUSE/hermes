@@ -1,17 +1,14 @@
 class MessagesController < ApplicationController
 
+  # Shows all messages from all feeds the current user is subscribed to
   def index
     @messages = StarshipMessage.paginate( :page => params[:page], :per_page => 50, 
-                                          :conditions => ["person_id=?", @loggedin_user.id ],
-					  :order => "id DESC" )
+                                       :conditions => ["person_id=?", @loggedin_user.id ], :order => "id DESC" )
   end
-  # GET /messages/1
-  # GET /messages/1.xml
 
+  # TODO: check if it's a message from a private subscription
   def show
-    @message = StarshipMessage.find( :first, :conditions => ["id=? AND person_id=?", params[:id], @loggedin_user.id] )
-    user = session[:user]
-
+    @message = StarshipMessage.find( :first, :conditions => ["id=?", params[:id]] )
     if @message.nil?
       render :text => "No message found", :layout => "application"
       return
@@ -29,6 +26,7 @@ class MessagesController < ApplicationController
       format.xml  { render :xml => @message }
     end
   end
+
 
   # GET /messages/1/update
   def redirect_to_msg(info=nil,id=nil)
