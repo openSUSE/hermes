@@ -50,8 +50,7 @@ use constant SQL => scalar "SELECT gn.id, gn.notification_id, gn.created_at, sub
  generated_notifications gn\
  JOIN subscriptions subs ON subs.id = gn.subscription_id\
  WHERE gn.sent is NULL AND subs.enabled=1 AND subs.delay_id=?\
- ORDER BY gn.notification_id, subs.person_id LIMIT ?";
-
+ ORDER BY subs.id, gn.created_at DESC LIMIT ?";
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( sendMessageDigest sendImmediateMessages );
