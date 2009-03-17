@@ -185,7 +185,7 @@ sub notificationToInbox( $$ )
 
   if( $msgTypeId ) {
     my $sender = $params->{sender} || undef;
-    dbh()->do( 'LOCK TABLES notifications WRITE, parameters WRITE, notification_parameters WRITE, msg_types_parameters WRITE' );
+    
     my $sql = "INSERT into notifications (msg_type_id, received, sender) VALUES (?, NOW(), ?)";
     my $sth = dbh()->prepare( $sql );
     $sth->execute( $msgTypeId, $sender );
@@ -197,7 +197,7 @@ sub notificationToInbox( $$ )
     } else {
       log('error', "Could not create notification - no result of last_insert_id" );
     }
-    dbh()->do( 'UNLOCK TABLES' );
+   
     log( 'info', "Notification of type <$msgType> added with $cnt parameters" );
   }
   return $id;

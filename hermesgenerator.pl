@@ -93,7 +93,7 @@ $sql = "UPDATE notifications SET generated=NOW() WHERE id=?";
 my $generatedSth = dbh()->prepare( $sql );
 
 $sql = "INSERT INTO generated_notifications(notification_id, subscription_id, created_at) " .
-       "VALUES (?, ?, CURRENT_TIMESTAMP)";
+       "VALUES (?, ?, ?)";
 my $genSth = dbh()->prepare( $sql );
 
 while( 1 ) {
@@ -137,18 +137,14 @@ while( 1 ) {
 	# notification and a subscription. 
 	# Do that only if there are really subscriptions interested in this type.
 	if( $genCnt > 0 ) {
-	    dbh()->do( 'LOCK TABLES generated_notifications WRITE' );
 	    foreach my $subsId ( @{$subsIdsRef} ) {
-		$genSth->execute( $id, $subsId );
+		$genSth->execute( $id, $subsId, $received );
 	    }
-	    dbh()->do( 'UNLOCK TABLES' );
 	    $cnt++;
 	}
 	# Even if there were no subscriber, set the notification to sent.
 	if( $genCnt >= 0 ) {
-	    dbh()->do( 'LOCK TABLES notifications WRITE' );
 	    $generatedSth->execute( $id );
-	    dbh()->do( 'UNLOCK TABLES' );
 	}
     }
 
