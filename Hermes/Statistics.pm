@@ -66,15 +66,19 @@ sub latestNMessages( ;$ )
   $cnt = 10 unless ( $cnt =~ /^\d+$/ );
   $cnt = $cnt < 100 ? $cnt : 100;
 
-  my $sql = "SELECT m.id as id, LEFT( m.subject, 40) as subject, m.created as created, "
-    . "mt.msgtype as msgtype FROM messages m, msg_types mt "
-    . "WHERE m.msg_type_id = mt.id order by created desc limit $cnt";
+  # my $sql = "SELECT m.id as id, LEFT( m.subject, 40) as subject, m.created as created, "
+  #   . "mt.msgtype as msgtype FROM messages m, msg_types mt "
+  #   . "WHERE m.msg_type_id = mt.id order by created desc limit $cnt";
+
+  my $sql = "SELECT n.id as id, mt.msgtype as msgtype, n.received as created ";
+  $sql .= "FROM notifications n, msg_types mt ";
+  $sql .= "WHERE n.msg_type_id = mt.id ORDER BY n.received DESC LIMIT $cnt";
 
   return dbh()->selectall_arrayref( $sql, { Slice => {} } );
 }
 
 sub countMessages() {
-  my $sql = "SELECT count(id) as count FROM messages;";
+  my $sql = "SELECT count(id) as count FROM notifications;";
   my ($cnt) =@{ dbh()->selectcol_arrayref( $sql )};
   return $cnt;
 }

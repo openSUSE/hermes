@@ -63,10 +63,11 @@ sub _init()
   if( $f && open HANDLE, ">>$f" ) {
     HANDLE->autoflush(1);
   } else {
-    print "##########################################################################\n";
-    print "## ERROR: Could not write to logfile $f\n";
-    print "## $!\n";
-    print "##########################################################################\n";
+    # This should not be uncommented in production mode because it makes apache bail out.
+    # print "##########################################################################\n";
+    # print "## ERROR: Could not write to logfile $f\n";
+    # print "## $!\n";
+    # print "##########################################################################\n";
   }
   $openChecked = 1;
 }
@@ -112,7 +113,7 @@ sub log($$;$)
 
     # Make sure we've been given a valid log level string.
     unless ( 1 ) { # We log every log level atm.
-	print STDERR "Invalid log level: '$level'\n";
+	# print STDERR "Invalid log level: '$level'\n";
 	return;
     }
 
@@ -146,7 +147,7 @@ sub log($$;$)
     if( HANDLE->opened() ) {
       print HANDLE "$n\[$level $$ $hour:$min:$sec] $message\n"; 
     } else {
-      print STDERR "$n\[$level $$ $hour:$min:$sec] $message\n"; 
+      # print STDERR "$n\[$level $$ $hour:$min:$sec] $message\n"; 
     }
 }
 
