@@ -8,7 +8,7 @@ xml.rss(:version=>"2.0"){
       for item in @items
         xml.item do
           xml.title(item.subject)
-          xml.description("<pre>"+item.body+"</pre>")      
+          xml.description("<pre>#{CGI::escapeHTML(item.body)}</pre>")      
           xml.author(item.sender)               
           xml.pubDate(item.created.xmlschema)
           xml.link url_for :only_path => false, :controller => 'messages', :action => "show", :id => item.id
