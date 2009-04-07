@@ -297,12 +297,14 @@ sub applyFilter( $$ )
         } else {
 	  log( 'info', "User <$user> is in the maintainer group for <$sPrj>" );
         }
+      } else {
+	log('info', "Either param sourceproject <$sPrj> or targetproject <$tPrj> does not exist!" );
+	$res = 0;
       }
-
     } else {
       log( 'error', "Unknown special filter type " . $filterRef->{string} );
+      $res = 0;
     }
-
   } elsif( $filterRef->{operator} eq "oneof" ) {
     # the parameter value must be contained in the filter string
     if( $paramHash->{ $filterRef->{param} } ) {
