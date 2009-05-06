@@ -262,7 +262,7 @@ sub applyFilter( $$ )
       #user mast have $project in his watchlist
       my $user = $paramHash->{_userId};
       my $prj = $paramHash->{project};
-      
+
       log( 'info', "Checking for project <$prj> in watchlist of user <$user>" );
       my $watchlistHash = userWatchList( $user );
 
@@ -274,31 +274,28 @@ sub applyFilter( $$ )
       }
 
     } elsif( $filterRef->{string} eq "_myrequests" ) {
-      # user is maintainer of source or target project
+      # user is maintainer of target project
       my $user = $paramHash->{_userId};
-      my $sPrj = $paramHash->{sourceproject};
       my $tPrj = $paramHash->{targetproject};
-
-      if( $sPrj and $tPrj ) {
+      my $tPack = $paramHash->{targetpackage};
+      if( $tPrj ) {
         log( 'info', "Checking if <$user> is interested in request <$paramHash->{id}> ".
-                     "with source project <$sPrj>, target project <$tPrj>");
-        # check source project
-        my $sPrjUsers = usersOfProject( $sPrj );
-        if( ! $sPrjUsers->{$user} ) {
-	  log( 'info', "User <$user> is NOT in the maintainer group for <$sPrj>" );
-          # check target project only if source check failed
-          my $tPrjUsers = usersOfProject( $tPrj );
-          if( ! $tPrjUsers->{$user} ) {
-	    log( 'info', "User <$user> is NOT in the maintainer group for <$tPrj>" );
-            $res = 0;
-          } else {
-	    log( 'info', "User <$user> is in the maintainer group for <$tPrj>" );
-          }
-        } else {
-	  log( 'info', "User <$user> is in the maintainer group for <$sPrj>" );
-        }
+                     "with target project <$tPrj>");
+	# check target project only if source check failed
+	my $tPrjUsers = usersOfProject( $tPrj );
+	if( ! $tPrjUsers->{$user} ) {
+	  my $tPackUsers = usersOfPackage( $tPrj, $tPack );
+	  if( $tPackUsers->{$user} ) {
+	    log( 'info', "User <$user> is maintainer for <$tPrj>/<$tPack> through package" );
+	  } else {
+	    log( 'info', "User <$user> is NOT maintainer for <$tPrj>/<$tPack>" );
+	    $res = 0;
+	  }
+	} else {
+	  log( 'info', "User <$user> is maintainer for <$tPrj> through project" );
+	}
       } else {
-	log('info', "Either param sourceproject <$sPrj> or targetproject <$tPrj> does not exist!" );
+	log('info', "targetproject <$tPrj> does not exist!" );
 	$res = 0;
       }
     } else {

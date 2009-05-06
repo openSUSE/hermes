@@ -38,11 +38,10 @@ use vars qw( %LOG %DB );
 #--[ Default DB Configuration ]---------------------------------------------------
 
 $DB{ 'default' } = { 'type'	=>  'mysql',
-		     'host'	=>  'localhost',
 		     'port'	=>  3306,
 		     'name'	=>  'hermes',
 		     'user'	=>  'root',
-		     'pass'	=>  undef };
+		     'pass'	=>  '' };
 
 $DB{ 'test' } = { 'type'     =>  'mysql',
                      'host'     =>  'localhost',
@@ -59,7 +58,7 @@ $DB{ 'test' } = { 'type'     =>  'mysql',
 my @cfgs = ( "/etc/hermes.conf", "./hermes.conf", "conf/hermes.conf" );
 
 foreach my $cfg ( @cfgs ) {
-  print STDERR "Try to read config from $cfg... ";
+  # print STDERR "Try to read config from $cfg... ";
   if( -r $cfg ) {
     my $return = do $cfg;
     unless( $return ) {
@@ -71,13 +70,13 @@ foreach my $cfg ( @cfgs ) {
 	warn( "Cannot find $cfg" );
       }
     } else {
-      print STDERR "success!\n";
+      # print STDERR "success!\n";
       last;
     }
   } else {
-    print STDERR "failed.";
+    # print STDERR "failed.";
   }
-  print STDERR "\n";
+  # print STDERR "\n";
 }
 
 #---------------------------------------------------------------------------
