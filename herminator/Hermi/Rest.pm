@@ -100,6 +100,7 @@ sub cgiapp_prerun
     my $sth = dbh()->prepare( $sql );
     $sth->execute( $loggedInUser );
     my ($admin) = $sth->fetchrow_array();
+    $admin = 0 unless ( $admin );
     log( 'info', "Admin flag for user <$loggedInUser>: $admin" );
     $isAdmin{ $loggedInUser } = $admin > 0;
     $user = $loggedInUser;
@@ -165,8 +166,9 @@ sub sayHello
   $detailTmpl->param( LatestMessages => $msgList );
   $detailTmpl->param( countMessages => countMessages() );
   $detailTmpl->param( RawNotifications => $notiList );
-
+  # print STDERR $detailTmpl->output;
   $htmlTmpl->param( Content => $detailTmpl->output );
+
   return $htmlTmpl->output;
 }
 
