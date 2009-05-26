@@ -30,10 +30,11 @@ use Data::Dumper;
 use Hermes::Log;
 use Hermes::DB;
 use Hermes::Message;
+use Hermes::Proxy;
 
 use Time::HiRes qw( gettimeofday tv_interval );
 
-use vars qw ( $opt_h $opt_s $opt_l $opt_w $opt_o $opt_t );
+use vars qw ( $opt_h $opt_s $opt_l $opt_w $opt_o $opt_t $opt_p );
 
 
 sub usage()
@@ -50,6 +51,9 @@ sub usage()
   -o:  create only l messages and stop after that
   -h:  help text
   -s:  silent, no output is generated.
+  -p url:   proxy: send raw data of each notification to another Hermes
+            instance identified by url. 
+	    Example: hermesgenerator.pl -p http://testhermes.suse.de/herminator
   -l limit: limit processing to limit notifications
   -w delay: sleeping time in seconds, default 10
   -t database name as of the Config.pm file
@@ -62,7 +66,7 @@ END
 # ---------------------------------------------------------------------------
 
 # Process the commandline arguments.
-getopts('ohl:w:t:');
+getopts('ohl:w:t:p:');
 
 usage() if ($opt_h );
 
@@ -115,6 +119,9 @@ while( 1 ) {
 	    $pCount++;
 	}
 	print " with $pCount Arguments:" unless( $silent );
+
+	# send to another herminator if configured
+	sendToHermes( $opt_p, $type, \%params ) if( $opt_p );
 	
 	# generateNotification returns the count of generated notifications
 	my $subsIdsRef = generateNotification( $type,  \%params );
