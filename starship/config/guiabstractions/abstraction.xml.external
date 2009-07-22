@@ -16,7 +16,7 @@
 
       <filterabstract id="my_requests">
          <summary>My Requests</summary>
-         <description>All requests where you are listed in either the source or the target project.</description>
+         <description>All requests where you are listed in the target project.</description>
          <filter parameter="_special" operator="special" value="_myrequests" />
       </filterabstract>
 
