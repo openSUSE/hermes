@@ -61,12 +61,12 @@
   which belong to selected message type. The filter operation works on the 
   content of the parameter.</li>
 <li><b>Operator:</b> The operator sets the type of the filter. There are some 
-types of filters so far:
+types of filters so far:</li>
   <ul>
    <li><b>oneof:</b>The oneof filter checks if the parameter value equals one
      of the list entries in value. The list of values is built by splitting the
-     filter value at the commas.</b></li>
-   <lI><b>containsitem:</b> The containsitem filter checks if the list of
+     filter value at the commas.</li>
+   <li><b>containsitem:</b> The containsitem filter checks if the list of
      filter values contains the value of the selected parameter. Again, the
      list is computed by splitting on commas.</li>
    <li><b>regexp:</b>The regexp-filter checks if the selected parameter value 
@@ -77,11 +77,12 @@ types of filters so far:
              of the users packages</li>
          <li>_myprojects: The filter matches if this notification is about one
              of the users projects</li>
-         <li>_myrequests: The filter matches if this notification is about one
-            of the users requests.</li>
+         <li>_myrequests: The filter matches if this notification concerns one
+            of the users projects or packages.</li>
      </ul>
-  </ul>
-<li><b>Value:</b> The filter value with different meaning depending on the
+   </li>
+   </ul>
+   <li><b>Value:</b> The filter value with different meaning depending on the
   operator</li>
 </ol>
 
