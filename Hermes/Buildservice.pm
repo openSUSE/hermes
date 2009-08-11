@@ -40,122 +40,9 @@ use Data::Dumper;
 use vars qw(@ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( expandFromMsgType expandNotification );
+@EXPORT	    = qw( expandNotification usersOfPackage);
 
 our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedWatchlist);
-
-#
-# expand the message, that means
-# generate the @to, @cc and @bcc list
-# set text and subject
-#
-# The returned hash must contain the following tags:
-# subject   - the message subject
-# body      - the message body
-# type      - the message type, as coming into the method
-# delay     - the default delay, might be overridden by user setting later
-# to        - array ref to a list of to receivers
-# cc        - array ref to a list of cc receivers
-# bcc       - array ref to a list of bcc receivers.
-# from      - sender string
-# replyTo   - reply to string
-#
-sub expandFromMsgType( $$ )
-{
-  my ($type, $paramHash) = @_;
-
-  my $re;
-  $re->{type}    = $type;
-  $re->{delay}   = 0; # replace by system default
-  $re->{subject} = "Subject for message type <$type>";
-
-  $re->{cc}      = [];
-  $re->{bcc} = undef;
-
-  $re->{replyTo} = undef;
-  $re->{from} = $paramHash->{from} || "hermes\@opensuse.org";
-
-  my $text;
-  my $filename = templateFileName( $type );
-  log( 'info', "template filename: <$filename>" );
-
-  if( -r "$filename" ) {
-    my $tmpl = HTML::Template->new(filename => "$filename",
-				   die_on_bad_params => 0,
-				   cache => 1 );
-    # Fill the template
-    $tmpl->param( $paramHash );
-    $text = $tmpl->output;
-
-    if( $text =~ /^\s*\@subject: ?(.+)$/im ) {
-      $re->{subject} = $1;
-      log( 'info', "Extracted subject <$re->{subject}> from template!" );
-      $text =~ s/^\s*\@subject:.*$//im;
-    }
-    # log('info', "Template body: <$text>" );
-
-  } else {
-    log( 'warning', "Can not find <$filename>, using default" );
-    $text = "Hermes received the notification <$type>\n\n";
-    if( keys %$paramHash ) {
-      $text .= "These parameters were added to the notification:\n";
-      foreach my $key( keys %$paramHash ) {
-	$text .= "   $key = " . $paramHash->{$key} . "\n";
-      }
-    }
-  }
-
-  $re->{body} = $text;
-
-  # query the receivers
-  my $sql = "SELECT subs.id, subs.person_id, p.stringid FROM ";
-  $sql .= "subscriptions subs, msg_types mt, persons p WHERE ";
-  $sql .= "subs.msg_type_id = mt.id AND mt.msgtype=? AND subs.person_id=p.id AND enabled=1";
-
-  my $query = dbh()->prepare( $sql );
-  $query->execute( $type );
-
-  invalidateCache();
-
-  while( my ($subscriptId, $personId, $personString) = $query->fetchrow_array()) {
-    # do that only if not private or if the project param is there 
-    # and the personId is user in the project.
-    my @filters = getFilters( $subscriptId );
-    $paramHash->{_userId} = $personString;
-
-    # loop over all filters. Since these filter are implicit AND connected, all
-    # filters have to apply.
-    my $filterOk = 1;
-    foreach my $filterRef ( @filters ) {
-      $filterOk = applyFilter( $paramHash, $filterRef );
-      if( ! $filterOk ) {
-	log( 'info', "$filterRef->{filterlog} failed!" );
-	last;
-      }
-      log( 'info', $filterRef->{filterlog} . " adds user to to-line: " . $personId );
-    }
-    if( $filterOk ) {
-      push @{$re->{to}}, $personId;
-    }
-  }
-
-  # Take the hermes user into bcc 
-  my $hermesid = $hermesUserInfoRef ? $hermesUserInfoRef->{id} : undef;
-  if( $hermesUserInfoRef && $hermesUserInfoRef->{id} ) {
-    $re->{bcc} = [ $hermesUserInfoRef->{id} ];
-  }
-
-  my $receiverCnt = 0;
-  foreach my $header( ('to', 'cc', 'bcc') ) {
-    if( $re->{$header} ) {
-      my $cnt = @{$re->{$header}};
-      $receiverCnt += $cnt;
-      log( 'info', "These $header-receiver were found: " . join( ", ", @{$re->{$header}} ) ) if( $cnt );
-    }
-  }
-  $re->{receiverCnt} = $receiverCnt;
-  return $re;
-}
 
 #
 # generates a list of subscriptions which want to receive the incoming 
@@ -404,7 +291,20 @@ sub usersOfPackage( $$ )
 
   if($project and $package) {
     my $meta = callOBSAPI( 'pkgMetaRef', ( $project,$package ) );
-    $userHashRef = extractUserFromMeta( $meta );
+    # since the api changed its behaviour silently to not longer 
+    # deliver the users inherited from the project with the package
+    # here both prj and pack need to be queried.
+    my $packUserHashRef = extractUserFromMeta( $meta );
+    my $prjUserHashRef = usersOfProject( $project );
+
+    # Unite the content of both hashes
+    foreach my $k ( keys %$prjUserHashRef ) {
+      if( ! $packUserHashRef->{$k} ) {
+        $packUserHashRef->{$k} = $prjUserHashRef->{$k};
+      }
+    }
+    $userHashRef = $packUserHashRef;
+    
     $cachedPackage->{"$project/$package"} = $userHashRef;
     log( 'info', "These users are in package <$project/$package>: " . join( ', ', keys %{$userHashRef} ) );
   } else {
