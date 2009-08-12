@@ -168,18 +168,13 @@ sub applyFilter( $$ )
       if( $tPrj ) {
         log( 'info', "Checking if <$user> is interested in request <$paramHash->{id}> ".
                      "with target project <$tPrj>");
-	# check target project only if source check failed
-	my $tPrjUsers = usersOfProject( $tPrj );
-	if( ! $tPrjUsers->{$user} ) {
-	  my $tPackUsers = usersOfPackage( $tPrj, $tPack );
-	  if( $tPackUsers->{$user} ) {
-	    log( 'info', "User <$user> is maintainer for <$tPrj>/<$tPack> through package" );
-	  } else {
-	    log( 'info', "User <$user> is NOT maintainer for <$tPrj>/<$tPack>" );
-	    $res = 0;
-	  }
+	# userOfPackage returns both the project- and pack users.
+	my $tPackUsers = usersOfPackage( $tPrj, $tPack );
+	if( $tPackUsers->{$user} ) {
+	  log( 'info', "User <$user> is maintainer for <$tPrj>/<$tPack>" );
 	} else {
-	  log( 'info', "User <$user> is maintainer for <$tPrj> through project" );
+	  log( 'info', "User <$user> is NOT maintainer for <$tPrj>/<$tPack>" );
+	    $res = 0;
 	}
       } else {
 	log('info', "targetproject <$tPrj> does not exist!" );
@@ -279,7 +274,7 @@ sub usersOfProject( $ )
   return $userHashRef;
 }
 
-sub usersOfPackage( $$ )
+sub usersOfPackage( $;$ )
 {
   my ($project, $package) = @_;
   if( defined $cachedPackage->{"$project/$package"} ) {
@@ -289,27 +284,26 @@ sub usersOfPackage( $$ )
 
   my $userHashRef;
 
-  if($project and $package) {
-    my $meta = callOBSAPI( 'pkgMetaRef', ( $project,$package ) );
+  # All users of the project
+  my $userHashRef = usersOfProject( $project );
+  
+  if( $package ) {
     # since the api changed its behaviour silently to not longer 
     # deliver the users inherited from the project with the package
     # here both prj and pack need to be queried.
+    my $meta = callOBSAPI( 'pkgMetaRef', ( $project,$package ) );
     my $packUserHashRef = extractUserFromMeta( $meta );
-    my $prjUserHashRef = usersOfProject( $project );
-
+  
     # Unite the content of both hashes
-    foreach my $k ( keys %$prjUserHashRef ) {
-      if( ! $packUserHashRef->{$k} ) {
-        $packUserHashRef->{$k} = $prjUserHashRef->{$k};
+    foreach my $k ( keys %$packUserHashRef ) {
+      if( ! $userHashRef->{$k} ) {
+        $userHashRef->{$k} = $packUserHashRef->{$k};
       }
     }
-    $userHashRef = $packUserHashRef;
-    
-    $cachedPackage->{"$project/$package"} = $userHashRef;
-    log( 'info', "These users are in package <$project/$package>: " . join( ', ', keys %{$userHashRef} ) );
-  } else {
-    log( 'warning', "Problem: usersOfPackage was called with project <$project>, package <$package>" );
   }
+
+  $cachedPackage->{"$project/$package"} = $userHashRef;
+  log( 'info', "These users are in package <$project/$package>: " . join( ', ', keys %{$userHashRef} ) );
 
   return $userHashRef;
 }
