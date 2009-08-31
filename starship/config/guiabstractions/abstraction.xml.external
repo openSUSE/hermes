@@ -26,6 +26,12 @@
          <filter parameter="to" operator="containsitem" value="${username}" />
       </filterabstract>
 
+      <filterabstract id="request_author_is_me">
+         <summary>I am Request Author</summary>
+         <description>All requests you are the author of.</description>
+         <filter parameter="author" operator="oneof" value="${username}" />
+      </filterabstract>
+
   </filterabstractions>
 
   <subscriptionabstracts>
@@ -58,9 +64,16 @@
         <msg_type name="OBS_SRCSRV_REQUEST_STATECHANGE"/>
         <checkable filterabstract="my_requests"/>
       </subscription>
+
+      <subscription id="obs_request_author">
+        <summary>OBS Request Author</summary>
+        <description>Receive a notification for changes of requests which are originated by me.</description>
+        <msg_type name="OBS_SRCSRV_REQUEST_STATECHANGE"/>
+        <checkable filterabstract="request_author_is_me"/>
+      </subscription>
+
     </group>
-    
-    
+
     <group id="build_results">
       <name>openSUSE Build Service: package building results</name>
       

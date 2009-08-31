@@ -33,28 +33,32 @@ if (ENV['RAILS_ENV'])
           filter.parameter_id = db_parameter.id
           filter_abstraction.filters << filter
         end
-        
-        filterabstractions[node.find("@id").first.value] = filter_abstraction
+        filterabstractions[filter_abstraction.id] = filter_abstraction
       end
-      
+
+      groupcounter = 0
+
       xml.find("//group").each do | node | 
         group_id = node.find("@id").first.value
         abstractiongroups[group_id] = node.find("name").first.text
         abstractions[group_id] = Hash.new
         
+        subscounter = 0
+
         node.find("subscription").each do | subscription_node | 
           abstraction = SubscriptionAbstract.new()
           abstraction.summary = subscription_node.find("summary").first.text
           abstraction.description = subscription_node.find("description").first.text
           abstraction.msg_type = subscription_node.find("msg_type/@name").first.value
-          
+          abstraction.sort_key = subscounter += 1
+
           if ((msg_type = MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'")).nil?)
             msg_type = MsgType.new
             msg_type.msgtype = abstraction.msg_type
             msg_type.added = Time.now
             puts "Created msg_type #{abstraction.msg_type} because it's used in an abstraction."
           end
-          
+          msg_type.save
           abstraction.id = subscription_node.find("@id").first.value
           abstraction.filterabstracts = Hash.new
           

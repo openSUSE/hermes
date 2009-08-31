@@ -13,7 +13,7 @@
 
   <tr><td colspan="5"><h3><%= @abstraction_groups[group_id] %> </h3></td></tr>
   
-  <% for abstraction in @abstractions[group_id].values %>
+  <% for abstraction in @abstractions[group_id].values.sort { |a1,a2| a1.sort_key <=> a2.sort_key } %>
   
   <tr style="border-width: 1px; border-style: solid; border-color: #e0e0e0; "><td valign='top' width="30%">
   <b><%= abstraction.summary %></b> <br/>
