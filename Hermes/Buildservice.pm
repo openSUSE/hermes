@@ -145,6 +145,21 @@ sub applyFilter( $$ )
 	log( 'info', "User <$user> is in the maintainer group for <$pkgStr>" );
       }
 
+    } elsif( $filterRef->{string} eq "_mypackagesstrict" ) {
+      # user must be involved in the package.
+      my $user = $paramHash->{_userId};
+      my $pkg = $paramHash->{package};
+      my $prj = $paramHash->{project};
+      my $pkgStr = $pkg || 'unknown';
+
+      log( 'info', "Checking strict for user <$user> involved in pkg <$pkgStr>" );
+      my $userHashRef = strictUsersOfPackage( $prj, $pkg );
+      if( ! $userHashRef->{$user} ) {
+	log( 'info', "User <$user> is NOT in the strict maintainer group for <$pkgStr>" );
+	$res = 0;
+      } else {
+	log( 'info', "User <$user> is in the strict maintainer group for <$pkgStr>" );
+      }
     } elsif( $filterRef->{string} eq "_mywatchlist" ) {
       #user mast have $project in his watchlist
       my $user = $paramHash->{_userId};
@@ -306,6 +321,29 @@ sub usersOfPackage( $;$ )
   log( 'info', "These users are in package <$project/$package>: " . join( ', ', keys %{$userHashRef} ) );
 
   return $userHashRef;
+}
+
+# Return the users which are really listed in the package meta
+# data. No consideration of inherited users from the project.
+#
+# No caching here because the cache contains inherited as well
+# (yet, patches welcome)
+sub strictUsersOfPackage( $$ )
+{
+ my ($project, $package) = @_;
+  
+  my $userHashRef;
+
+  if( $package && $package ) {
+    # since the api changed its behaviour silently to not longer 
+    # deliver the users inherited from the project with the package
+    # here both prj and pack need to be queried.
+    my $meta = callOBSAPI( 'pkgMetaRef', ( $project,$package ) );
+    $userHashRef = extractUserFromMeta( $meta );
+  } else {
+    log( 'info', "Problem: No sufficient input for strict package users" );
+  }
+  return $userHashRef;  
 }
 
 sub userWatchList( $$ )
