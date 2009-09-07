@@ -6,9 +6,9 @@
 
 <% if (@abstraction_groups.length > 0) %>
 
-<table class="defaultTable">
 
 <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
+<table class="defaultTable">
 <% for group_id in @abstraction_groups.keys %>
 
   <tr><td colspan="4"><h3><%= @abstraction_groups[group_id] %> </h3></td></tr>
