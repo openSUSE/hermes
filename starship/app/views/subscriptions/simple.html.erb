@@ -15,16 +15,19 @@
   
   <% for abstraction in @abstractions[group_id].values.sort { |a1,a2| a1.sort_key <=> a2.sort_key } %>
   
-  <tr style="border-width: 1px; border-style: solid; border-color: #e0e0e0; "><td valign='top' width="30%">
-  <b><%= abstraction.summary %></b> <br/>
-  <i><%= abstraction.description %></i> 
-  </td>
-  <td>
-  
-  <% for filter_abstract in abstraction.filterabstracts.values %>
+   <% abstraction.filterabstracts.values.each_with_index do |filter_abstract, i|  %>
   
     <!-- form part for abstract id: <%= abstraction.id %> filter_abstract id: <%= filter_abstract.id %> -->
-  
+ 
+    <% if i == 0 %>
+      <tr style="border: 1px solid #e0e0e0; <% if abstraction.filterabstracts.size > 1 %>border-bottom: 0px; <% end %>"><td valign='top' width="30%">
+        <b><%= abstraction.summary %></b> <br/>
+        <i><%= abstraction.description %></i> 
+        </td>      
+    <% else %>
+      <tr style="border: 1px solid #e0e0e0; border-top: 0px; "><td> </td>
+    <% end %>
+
     <td valign='top' width="20">
     <% subscription = @person.subscribed_to_abstraction( group_id, abstraction.id, filter_abstract.id ) %>
     <%= check_box_tag "#{abstraction.id}||#{filter_abstract.id}", "1", subscription %>
@@ -45,12 +48,11 @@
     <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delivery", options_for_select(@avail_deliveries, deliveryid) %>
     </p><p>
     <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delay", options_for_select(@avail_delays, delayid) %>
-    </p></div></td>
-  <% end %>
+    </p></div></td></tr>
   
   <% end %>
-  
-  </td></tr>
+
+  <% end %>
  
   <% end %>
   <tr><td colspan="4"><%= submit_tag "Save settings" %></td></tr>
