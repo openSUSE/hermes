@@ -1,6 +1,17 @@
-@subject: Build Success: <TMPL_VAR NAME="package"> in <TMPL_VAR NAME="project"> 
+@subject: Build success of <TMPL_VAR NAME="project">/<TMPL_VAR NAME="package"> for <TMPL_VAR NAME="repository">/<TMPL_VAR NAME="arch">
+Package <TMPL_VAR NAME="package"> (version <TMPL_VAR NAME="versrel">.<TMPL_VAR NAME="bcnt">) of 
+project <TMPL_VAR NAME="project"> built successfully for <TMPL_VAR NAME="repository"> / <TMPL_VAR NAME="arch">. 
 
-Package <TMPL_VAR NAME="package"> (release <TMPL_VAR NAME="release">) of 
-project <TMPL_VAR NAME="project"> built successfully for <TMPL_VAR NAME="arch">.
 
+Review the build log:
+   osc remotebuildlog <TMPL_VAR NAME="project"> <TMPL_VAR NAME="package"> <TMPL_VAR NAME="repository"> <TMPL_VAR NAME="arch"> | less
 
+Check out the package for editing:
+   osc checkout <TMPL_VAR NAME="project"> <TMPL_VAR NAME="package">
+
+Download repository: 
+   http://download.opensuse.org/repositories/<TMPL_VAR NAME="project">/<TMPL_VAR NAME="repository">/
+
+-- 
+Hermes messaging (http://hermes.opensuse.org)
+openSUSE Build Service (https://build.opensuse.org/)

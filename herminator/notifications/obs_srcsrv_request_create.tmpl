@@ -1,26 +1,28 @@
-@subject: New <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> for <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
-
-<TMPL_VAR NAME="type">-request from: <TMPL_VAR NAME="who">
+@subject: [obs <TMPL_VAR NAME="type">-request <TMPL_VAR NAME="id">] <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">: created by <TMPL_VAR NAME="who">
 <TMPL_IF NAME="sourceproject">
    <TMPL_VAR NAME="sourceproject">/<TMPL_VAR NAME="sourcepackage"> -> <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
 
    https://build.opensuse.org/package/show?package=<TMPL_VAR NAME="sourcepackage">&project=<TMPL_VAR NAME="sourceproject">
    https://build.opensuse.org/package/show?package=<TMPL_VAR NAME="targetpackage">&project=<TMPL_VAR NAME="targetproject">
+<TMPL_IF NAME="description">
+   Description: <TMPL_VAR NAME="description"></TMPL_IF>
 <TMPL_IF NAME="sourcerevision">
    Source revision md5: <TMPL_VAR NAME="sourcerevision">
 </TMPL_IF>
 To REVIEW against the previous version:
-   osc submitreq show --diff <TMPL_VAR NAME="id">
+   osc request show --diff <TMPL_VAR NAME="id">
 
 To ACCEPT the request:
-   osc submitreq accept <TMPL_VAR NAME="id"> --message="reviewed ok."
+   osc request accept <TMPL_VAR NAME="id"> --message="reviewed ok."
    
 To DECLINE the request:
-   osc submitreq decline <TMPL_VAR NAME="id"> --message="declined for reason xyz (see ... for background / policy / ...)."
+   osc request decline <TMPL_VAR NAME="id"> --message="declined for reason xyz (see ... for background / policy / ...)."
 
-To RETRACT the request:
-   osc submitreq delete <TMPL_VAR NAME="id"> --message="retracted because ..., sorry / thx / see better version ..."
+To REVOKE the request:
+   osc request revoke <TMPL_VAR NAME="id"> --message="retracted because ..., sorry / thx / see better version ..."
+</TMPL_IF>
+-- 
+Hermes messaging (http://hermes.opensuse.org)
+openSUSE Build Service (https://build.opensuse.org/)
+Collaboration: http://en.opensuse.org/Build_Service/Collaboration
 
-</TMPL_IF>Confused?  Contact the community:
-   https://build.opensuse.org/
-   http://en.opensuse.org/Build_Service/Collaboration
