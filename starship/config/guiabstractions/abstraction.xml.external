@@ -15,21 +15,21 @@
       </filterabstract>
 
       <filterabstract id="my_requests">
-         <summary>My Requests</summary>
+         <summary>My incoming Requests</summary>
          <description>All requests where you are listed in the target project.</description>
          <filter parameter="_special" operator="special" value="_myrequests" />
+      </filterabstract>
+
+      <filterabstract id="request_author_is_me">
+         <summary>My created Requests</summary>
+         <description>All requests you are the author of.</description>
+         <filter parameter="author" operator="oneof" value="${username}" />
       </filterabstract>
 
       <filterabstract id="my_features">
          <summary>My Features</summary>
          <description>All features where you are listed as "interested" or in any other role.</description>
          <filter parameter="to" operator="containsitem" value="${username}" />
-      </filterabstract>
-
-      <filterabstract id="request_author_is_me">
-         <summary>I am Request Author</summary>
-         <description>All requests you are the author of.</description>
-         <filter parameter="author" operator="oneof" value="${username}" />
       </filterabstract>
 
   </filterabstractions>
@@ -63,12 +63,6 @@
         <description>Receive a notification when a request state is changed.</description>
         <msg_type name="OBS_SRCSRV_REQUEST_STATECHANGE"/>
         <checkable filterabstract="my_requests"/>
-      </subscription>
-
-      <subscription id="obs_request_author">
-        <summary>OBS Request Author</summary>
-        <description>Receive a notification for changes of requests which are originated by me.</description>
-        <msg_type name="OBS_SRCSRV_REQUEST_STATECHANGE"/>
         <checkable filterabstract="request_author_is_me"/>
       </subscription>
 
