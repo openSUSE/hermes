@@ -10,7 +10,6 @@
 <tr>
 <th>ID</th>
 <th>Subscription name</th>
-<th>Message Count</th>
 <th>Formats</th>
 </tr>
 
@@ -18,7 +17,6 @@
 <tr>
 <td><%= feed.id %></td> 
 <td><%= feed.subscription_desc %></td> 
-<td><%= feed.starship_messages.count %></td>
 <td>
 <% if (feed.starship_messages.count > 0) %>
   <%= link_to 'web', {:action => "show", :controller => "feeds", :id => feed.id} %>
