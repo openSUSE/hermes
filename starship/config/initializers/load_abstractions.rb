@@ -36,8 +36,6 @@ if (ENV['RAILS_ENV'])
         filterabstractions[filter_abstraction.id] = filter_abstraction
       end
 
-      groupcounter = 0
-
       xml.find("//group").each do | node | 
         group_id = node.find("@id").first.value
         abstractiongroups[group_id] = node.find("name").first.text

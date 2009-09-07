@@ -4,13 +4,19 @@
   <filterabstractions>
       <filterabstract id="my_packs">
          <summary>My Packages</summary>
-         <description>All packages where you are listed as maintainer</description>
+         <description>All packages where you are listed as maintainer either in the package or the project.</description>
          <filter parameter="_special" operator="special" value="_mypackages"/>
+      </filterabstract>
+
+      <filterabstract id="my_packs_strict">
+         <summary>My Packages</summary>
+         <description>All packages where you are listed as maintainer in the package.</description>
+         <filter parameter="_special" operator="special" value="_mypackagesstrict"/>
       </filterabstract>
 
       <filterabstract id="my_projects">
          <summary>My Projects</summary>
-         <description>All projects where you are listed as maintainer</description>
+         <description>All projects where you are listed as maintainer.</description>
          <filter parameter="_special" operator="special" value="_myprojects"/>
       </filterabstract>
 
@@ -41,7 +47,7 @@
     
       <subscription id="openfate_change">
         <summary>Feature change</summary>
-        <description>A feature on features.opensuse.org is changed.</description>
+        <description>A feature on features.opensuse.org is created or changed.</description>
         <msg_type name="FATE:FEATURE_CHANGED"/>
         <checkable filterabstract="my_features"/>
       </subscription>
@@ -75,8 +81,8 @@
         <summary>Build Failure</summary>
         <description>Receive a notification every time a package fails to build.</description>
         <msg_type name="obs_build_fail"/>
-        <checkable filterabstract="my_packs"/>
-        <!-- <checkable filterabstract="my_projects"/> -->
+        <checkable filterabstract="my_packs_strict"/>
+        <checkable filterabstract="my_projects"/>
       </subscription>
 
       <subscription id="build_ok">
