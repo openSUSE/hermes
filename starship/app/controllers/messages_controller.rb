@@ -1,5 +1,7 @@
 class MessagesController < ApplicationController
 
+  skip_before_filter :authenticate, :only => ["show"]
+
   # Shows all messages from all feeds the current user is subscribed to
   def index
     @messages = StarshipMessage.paginate( :page => params[:page], :per_page => 50, 
@@ -25,13 +27,6 @@ class MessagesController < ApplicationController
       format.html # show.html.erb
       format.xml  { render :xml => @message }
     end
-  end
-
-
-  # GET /messages/1/update
-  def redirect_to_msg(info=nil,id=nil)
-    flash[:notice] = info
-    redirect_to :action => 'show', :id => id
   end
 
 end
