@@ -11,7 +11,7 @@
 <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
 <% for group_id in @abstraction_groups.keys %>
 
-  <tr><td colspan="5"><h3><%= @abstraction_groups[group_id] %> </h3></td></tr>
+  <tr><td colspan="4"><h3><%= @abstraction_groups[group_id] %> </h3></td></tr>
   
   <% for abstraction in @abstractions[group_id].values.sort { |a1,a2| a1.sort_key <=> a2.sort_key } %>
   
@@ -21,12 +21,11 @@
   </td>
   <td>
   
-  <table class="defaultTable">
   <% for filter_abstract in abstraction.filterabstracts.values %>
   
     <!-- form part for abstract id: <%= abstraction.id %> filter_abstract id: <%= filter_abstract.id %> -->
   
-    <tr><td valign='top' width="20">
+    <td valign='top' width="20">
     <% subscription = @person.subscribed_to_abstraction( group_id, abstraction.id, filter_abstract.id ) %>
     <%= check_box_tag "#{abstraction.id}||#{filter_abstract.id}", "1", subscription %>
     </td>
@@ -47,16 +46,14 @@
     </p><p>
     <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delay", options_for_select(@avail_delays, delayid) %>
     </p></div></td>
-    </tr>
   <% end %>
-  </table>
   
   <% end %>
   
   </td></tr>
  
   <% end %>
-  <tr><td colspan="5"><%= submit_tag "Save settings" %></td></tr>
+  <tr><td colspan="4"><%= submit_tag "Save settings" %></td></tr>
   <% end %>
 
   </table>
