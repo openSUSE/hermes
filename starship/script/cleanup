@@ -9,6 +9,8 @@
 # 2. remove every row from notification that has no corresponding
 #    notification_id in generated_notifications
 #
+# TODO: remove old messages from starship_messages
+#
 
 require 'optparse'
 require 'ostruct'

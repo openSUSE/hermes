@@ -4,7 +4,7 @@ class Subscription < ActiveRecord::Base
   belongs_to :delay
   belongs_to :delivery
 
-  has_many :starship_messages
+  has_many :starship_messages, :dependent => :destroy
   has_many :filters, :class_name => "SubscriptionFilter", :dependent => :destroy
   has_many :generated_notifications
 
