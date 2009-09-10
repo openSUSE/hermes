@@ -11,7 +11,8 @@ class AccountController < ApplicationController
       redirect_to(auth_url)
     else
       if request.post?
-        if session[:user] == Person.authenticate(params[:user][:login], params[:user][:password])
+        session[:user] = Person.authenticate(params[:user][:login], params[:user][:password])
+        if session[:user]
           flash[:message]  = "Login successful"
           redirect_to_index
         else
