@@ -93,7 +93,7 @@ sub cgiapp_prerun
     $loggedInUser = $1;
   }
 
-  log('info', "User Name: " . $loggedInUser ? $loggedInUser : "anonymous" );
+  log('info', "User Name: " . ($loggedInUser ? $loggedInUser : "anonymous") );
 
   if( $loggedInUser ) {
     my $sql = "SELECT admin FROM persons WHERE stringid=?";
