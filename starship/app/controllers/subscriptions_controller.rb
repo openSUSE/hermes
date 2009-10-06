@@ -113,16 +113,9 @@ class SubscriptionsController < ApplicationController
   end
   
   
-  def redirect_to_index(msg = nil)
-    flash[:notice] = msg
-    redirect_to :action => :index
-  end
-  
-  
   def destroy
     if request.delete?
       curr_subscr = session[:user].subscriptions.find(:first, :conditions => {:id => params[:id]})
-  
       if curr_subscr
         curr_subscr.destroy
         redirect_to_index "Subscription for #{curr_subscr.msg_type.msgtype} deleted"
@@ -134,7 +127,7 @@ class SubscriptionsController < ApplicationController
   
   
   def edit
-    @subscr = Subscription.find(params[:id])
+    @subscr = session[:user].subscriptions.find(params[:id])
     @filters = @subscr.filters
     @availDelay = Delay.find(:all)
     @availDeliveries = Delivery.find(:all)
@@ -144,7 +137,7 @@ class SubscriptionsController < ApplicationController
   
   def update
     if request.put?
-      @subscr = Subscription.find(params[:id])
+      @subscr = session[:user].subscriptions.find(params[:id])
       if @subscr.update_attributes params[:subscr]
         @subscr.filters.each { |filt| 
           filt.destroy
@@ -170,8 +163,7 @@ class SubscriptionsController < ApplicationController
   
   def disable
     @curr_sub_index = params[:id]
-    @curr_sub = Subscription.find(params[:subs])
-    @status
+    @curr_sub = session[:user].subscriptions.find(params[:subs])
     if @curr_sub.enabled
       @curr_sub.enabled = false
       @status = "Disabled"
@@ -180,6 +172,14 @@ class SubscriptionsController < ApplicationController
       @status = "Enabled"
     end
     @curr_sub.save
+  end
+
+
+  private
+
+  def redirect_to_index(msg = nil)
+    flash[:notice] = msg
+    redirect_to :action => :index
   end
   
 end

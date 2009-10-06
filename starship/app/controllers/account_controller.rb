@@ -47,7 +47,7 @@ class AccountController < ApplicationController
           flash[:warning] = "Signup unsuccessful"
         end
       end
-   end
+    end
   end
 
   def change_password

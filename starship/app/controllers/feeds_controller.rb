@@ -11,7 +11,7 @@ class FeedsController < ApplicationController
     end
     
     @items = user.starship_messages.paginate( :page => params[:page], :per_page => 100,
-                                        :order => "id DESC" ) 
+      :order => "id DESC" )
     @title = "All feed messages for user " + params[:person]
     render_feed()
   end
@@ -43,28 +43,28 @@ class FeedsController < ApplicationController
       redirect_to :action => :index
       return
       
-     # TODO: remove those ids from the id list that are private if the requester != owner
-     #elsif (@subscription.private && @subscription.person != session[:user])
+      # TODO: remove those ids from the id list that are private if the requester != owner
+      #elsif (@subscription.private && @subscription.person != session[:user])
       #flash[:error] = "Feed with id: #{params[:id]} is marked as private by it's owner"
       #redirect_to :action => :index
     end
     
     @items = StarshipMessage.paginate( :page => params[:page], :per_page => 100,
-                                    :order => "id DESC", 
-                                    :conditions => ["subscription_id IN (?)", params[:id]])     
+      :order => "id DESC",
+      :conditions => ["subscription_id IN (?)", params[:id]])
     @title = @subscriptions.first.subscription_desc
     @feed_id = params[:id]
-     render_feed()
+    render_feed()
   end
 
 
   private
 
   def render_feed
-     respond_to do |format|
-       format.html  { render :template => 'feeds/show' }
-       format.rdf  { render :template => 'feeds/show', :layout => false }
-       #format.atom  { render :layout => false }
+    respond_to do |format|
+      format.html  { render :template => 'feeds/show' }
+      format.rdf  { render :template => 'feeds/show', :layout => false }
+      #format.atom  { render :layout => false }
     end
   end
 
