@@ -157,7 +157,7 @@ class SubscriptionsController < ApplicationController
   
   def get_type_params
     param_list = MsgType.find(params[:msg_type]).parameters
-    render :partial => 'filter_param', :locals => {:param_list => param_list}
+    render :partial => 'filter_param', :locals => {:param_list => param_list, :selected => nil}
   end
 
   
