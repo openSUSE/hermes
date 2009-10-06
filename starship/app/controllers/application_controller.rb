@@ -10,7 +10,6 @@ class ApplicationController < ActionController::Base
   $OPERATORS = %w{ oneof containsitem regexp special }
   
   def authenticate
-
     if ICHAIN_MODE.to_s == 'on' || ICHAIN_MODE.to_s == 'simulate'
       login_via_ichain
     else
@@ -19,7 +18,7 @@ class ApplicationController < ActionController::Base
   end
 
   def basic_auth
-    unless session[:user]
+    unless session[:userid]
       # We use our own authentication
       if request.env.has_key? 'X-HTTP_AUTHORIZATION'
         # try to get it where mod_rewrite might have put it
@@ -41,13 +40,13 @@ class ApplicationController < ActionController::Base
         if login and passwd
           @loggedin_user = Person.authenticate login, pass
           if @loggedin_user 
-            session[:user] = @loggedin_user
+            session[:userid] = @loggedin_user.id
           end
         end
       end
     end
 
-    unless session[:user]
+    unless session[:userid]
       # if we still do not have a user in the session it's time to redirect.
       session[:return_to] = request.request_uri
       redirect_to :controller => 'account', :action => 'login'
@@ -81,7 +80,7 @@ class ApplicationController < ActionController::Base
       @loggedin_user.email = user['email']
       @loggedin_user.name = user['realname']
       @loggedin_user.save
-      session[:user] = @loggedin_user
+      session[:userid] = @loggedin_user.id
     else
       session[:return_to] = request.request_uri
       redirect_to :controller => 'account', :action => 'login'
@@ -91,16 +90,6 @@ class ApplicationController < ActionController::Base
 
   def redirect_to_index
     redirect_to :controller => :subscriptions
-  end
-
-
-  def current_user
-    session[:user]
-  end
-
-
-  def logged_in?
-    current_user.is_a? Person
   end
   
   

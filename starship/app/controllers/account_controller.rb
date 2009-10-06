@@ -11,8 +11,9 @@ class AccountController < ApplicationController
       redirect_to(auth_url)
     else
       if request.post?
-        session[:user] = Person.authenticate(params[:user][:login], params[:user][:password])
-        if session[:user]
+        user = Person.authenticate(params[:user][:login], params[:user][:password])
+        if user
+          session[:userid] = user.id
           flash[:message]  = "Login successful"
           redirect_to_index
         else
@@ -40,7 +41,8 @@ class AccountController < ApplicationController
       @user = Person.new(@params[:user])
       if request.post?  
         if @user.save
-          session[:user] = Person.authenticate(@user.login, @user.password)
+          user = Person.authenticate(@user.login, @user.password)
+          session[:userid] = user.id
           flash[:message] = "Signup successful"
           redirect_to_index 
         else
@@ -51,9 +53,9 @@ class AccountController < ApplicationController
   end
 
   def change_password
-    @user=session[:user]
+    @user = Person.find session[:userid]
     if request.post?
-      @user.update_attributes(:password=>params[:user][:password], :password_confirmation => params[:user][:password_confirmation])
+      @user.update_attributes(:password => params[:user][:password], :password_confirmation => params[:user][:password_confirmation])
       if @user.save
         flash[:notice]="Password Changed"
       end

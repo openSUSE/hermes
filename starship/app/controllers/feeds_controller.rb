@@ -28,7 +28,8 @@ class FeedsController < ApplicationController
   
   # list the configured feeds of a single user
   def personal
-    @feed_subscriptions = session[:user].subscriptions.find( 
+    user = Person.find session[:userid]
+    @feed_subscriptions = user.subscriptions.find( 
       :all, :conditions => [ "deliveries.name = 'RSS'"], 
       :include => [:msg_type, :delay, :delivery])
   end
@@ -44,7 +45,7 @@ class FeedsController < ApplicationController
       return
       
       # TODO: remove those ids from the id list that are private if the requester != owner
-      #elsif (@subscription.private && @subscription.person != session[:user])
+      #elsif (@subscription.private && @subscription.person.id != session[:userid])
       #flash[:error] = "Feed with id: #{params[:id]} is marked as private by it's owner"
       #redirect_to :action => :index
     end

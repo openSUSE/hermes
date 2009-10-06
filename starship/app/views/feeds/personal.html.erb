@@ -1,4 +1,4 @@
-<% @hermestitle = "Available web feeds for #{session[:user].stringid} (#{session[:user].email})" %>
+<% @hermestitle = "Available web feeds for #{@loggedin_user.stringid} (#{@loggedin_user.email})" %>
 
 
 <% if @feed_subscriptions.length > 0 %>
@@ -36,10 +36,10 @@ subscriptions with delivery type "<i>Web / RSS Newsfeed</i>".
 <br/><p>
 <b>Special feeds:</b></p>
 <p>
-- All your feeds merged in one: /feeds/<%= session[:user].stringid %> 
-{ <%= link_to '.rdf', {:action => "person", :controller => "feeds", :person => session[:user].stringid, :format => 'rdf'} %>
+- All your feeds merged in one: /feeds/<%= @loggedin_user.stringid %>
+{ <%= link_to '.rdf', {:action => "person", :controller => "feeds", :person => @loggedin_user.stringid, :format => 'rdf'} %>
 |
-<%= link_to '.html', {:action => "person", :controller => "feeds", :person => session[:user].stringid, :format => 'html'} %> }
+<%= link_to '.html', {:action => "person", :controller => "feeds", :person => @loggedin_user.stringid, :format => 'html'} %> }
 <br/>
 - Multiple feeds merged to one: /feeds/&lt;id&gt;,&lt;id&gt;,&lt;id&gt; {.rdf|.html}
 <br/>
