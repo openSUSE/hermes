@@ -1,1 +1,3 @@
-<%= select_tag("param_id", options_from_collection_for_select(param_list,'id','param_desc',selected), :class => 'param_select', :title => "Parameter") %>
+<%= select_tag("param_id", 
+  options_from_collection_for_select(param_list,'id','param_desc'),
+  :class => 'param_select', :title => "Parameter") %>
