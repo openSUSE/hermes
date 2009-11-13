@@ -3,7 +3,7 @@ class AddSpecialParameterValue < ActiveRecord::Migration
     Parameter.create :name => '_special'
 
     #change the parameter for all existing filters with operator = special
-    filter = SubscriptionFilter.find (:all, :conditions => { :operator => 'special'})
+    filter = SubscriptionFilter.find(:all, :conditions => { :operator => 'special'})
 
     filter.each { |f|
       f.parameter = Parameter.find(:first, :conditions => {:name => '_special'})
@@ -16,7 +16,7 @@ class AddSpecialParameterValue < ActiveRecord::Migration
     param = Parameter.find(:first, :conditions => { :name => '_special' } )
     param.destroy
 
-    filter = SubscriptionFilter.find (:all, :conditions =>{ :operator => 'special'})
+    filter = SubscriptionFilter.find(:all, :conditions =>{ :operator => 'special'})
 
     filter.each { |f|
       f.parameter = Parameter.find(:first) 
