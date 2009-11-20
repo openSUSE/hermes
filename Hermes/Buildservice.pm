@@ -24,6 +24,7 @@ package Hermes::Buildservice;
 
 use strict;
 use Exporter;
+use Carp;
 
 use HTML::Template;
 use LWP::UserAgent;
@@ -42,7 +43,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK );
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( expandNotification usersOfPackage);
 
-our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedWatchlist);
+our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedStrictPackage, $cachedWatchlist);
 
 #
 # generates a list of subscriptions which want to receive the incoming 
@@ -62,7 +63,7 @@ sub expandNotification( $$ )
   my $query = dbh()->prepare( $sql );
   $query->execute( $msgType );
   my @subsIds;
-  invalidateCache();
+  #no need to invalidate as long as we do not run for days invalidateCache();
 
   while( my ($subscriptId, $personId, $personString) = $query->fetchrow_array()) {
     $paramRef->{_userId} = $personString;
@@ -118,15 +119,15 @@ sub applyFilter( $$ )
       # user must be involved in the project.
       my $user = $paramHash->{_userId};
       my $prj = $paramHash->{project};
-      my $prjStr = $prj || 'unknown';
+      return 0 unless $prj;
 
-      log( 'info', "Checking for user <$user> involved in prj <$prjStr>" );
+      log( 'info', "Checking for user <$user> involved in prj <$prj>" );
       my $userHashRef = usersOfProject( $prj );
       if( ! $userHashRef->{$user} ) {
-	log( 'info', "User <$user> is NOT in the maintainer group for <$prjStr>" );
+	log( 'info', "User <$user> is NOT in the maintainer group for <$prj>" );
 	$res = 0;
       } else {
-	log( 'info', "User <$user> is in the maintainer group for <$prjStr>" );
+	log( 'info', "User <$user> is in the maintainer group for <$prj>" );
       }
 
     } elsif( $filterRef->{string} eq "_mypackages" ) {
@@ -134,15 +135,16 @@ sub applyFilter( $$ )
       my $user = $paramHash->{_userId};
       my $pkg = $paramHash->{package};
       my $prj = $paramHash->{project};
-      my $pkgStr = $pkg || 'unknown';
+      return 0 unless $prj;
+      return 0 unless $pkg;
 
-      log( 'info', "Checking for user <$user> involved in pkg <$pkgStr>" );
+      log( 'info', "Checking for user <$user> involved in pkg <$pkg>" );
       my $userHashRef = usersOfPackage( $prj, $pkg );
       if( ! $userHashRef->{$user} ) {
-	log( 'info', "User <$user> is NOT in the maintainer group for <$pkgStr>" );
+	log( 'info', "User <$user> is NOT in the maintainer group for <$pkg>" );
 	$res = 0;
       } else {
-	log( 'info', "User <$user> is in the maintainer group for <$pkgStr>" );
+	log( 'info', "User <$user> is in the maintainer group for <$pkg>" );
       }
 
     } elsif( $filterRef->{string} eq "_mypackagesstrict" ) {
@@ -268,6 +270,8 @@ sub applyFilter( $$ )
 sub usersOfProject( $ )
 {
   my ($project) = @_;
+  confess 'no Project defined!' unless $project;
+
   if( defined $cachedProject->{$project} ) {
     log( 'info', "Using userdata for $project from cache" );
     return $cachedProject->{$project}; 
@@ -292,6 +296,8 @@ sub usersOfProject( $ )
 sub usersOfPackage( $;$ )
 {
   my ($project, $package) = @_;
+  confess 'no Project defined!' unless $project;
+  confess 'no Package defined!' unless $package;
   if( defined $cachedPackage->{"$project/$package"} ) {
     log( 'info', "Using userdata for package $project/$package from cache" );
     return $cachedPackage->{"$project/$package"}; 
@@ -306,8 +312,7 @@ sub usersOfPackage( $;$ )
     # since the api changed its behaviour silently to not longer 
     # deliver the users inherited from the project with the package
     # here both prj and pack need to be queried.
-    my $meta = callOBSAPI( 'pkgMetaRef', ( $project,$package ) );
-    my $packUserHashRef = extractUserFromMeta( $meta );
+    my $packUserHashRef = strictUsersOfPackage($project,$package);
   
     # Unite the content of both hashes
     foreach my $k ( keys %$packUserHashRef ) {
@@ -334,12 +339,19 @@ sub strictUsersOfPackage( $$ )
   
   my $userHashRef;
 
-  if( $package && $package ) {
+  if( $project && $package ) {
+    
+    if( defined $cachedStrictPackage->{"$project/$package"} ) {
+        log( 'info', "Using strict userdata for package $project/$package from cache" );
+        return $cachedStrictPackage->{"$project/$package"};
+     }
+
     # since the api changed its behaviour silently to not longer 
     # deliver the users inherited from the project with the package
     # here both prj and pack need to be queried.
     my $meta = callOBSAPI( 'pkgMetaRef', ( $project,$package ) );
     $userHashRef = extractUserFromMeta( $meta );
+    $cachedStrictPackage->{"$project/$package"} = $userHashRef;
   } else {
     log( 'info', "Problem: No sufficient input for strict package users" );
   }

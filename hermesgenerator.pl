@@ -159,12 +159,13 @@ while( 1 ) {
     log 'info', "Generated $cnt notifications in $elapsed sec.\n";
     print "Generated $cnt notifications in $elapsed sec.\n" unless( $silent );
     
+    log( 'info', ">>> Generator sleeping for $delay seconds" );
+    sleep( $delay );
+
     if( $opt_o ) {
 	log('info', "################################### generator exits" );
 	exit;
     }
-    log( 'info', ">>> Generator sleeping for $delay seconds" );
-    sleep( $delay );
 }
 
 
