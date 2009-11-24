@@ -9,7 +9,7 @@
 
   <tr>
     <td><strong>Delivery: </strong></td>
-    <td><%= collection_select('subscr','delivery_id', @availDeliveries, 'id','name') %></td>
+    <td><%=  collection_select('subscr','delivery_id', @availDeliveries, 'id','description') %> </td>
   </tr>
 
   <tr>

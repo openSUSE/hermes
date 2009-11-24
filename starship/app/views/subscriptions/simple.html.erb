@@ -45,7 +45,7 @@
          delayid = nil
     end %>
     <p>
-    <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delivery", options_for_select(@avail_deliveries, deliveryid) %>
+    <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delivery", options_for_select(@avail_deliveries.map {|d| [d.description, d.id]}, deliveryid) %>
     </p><p>
     <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delay", options_for_select(@avail_delays, delayid) %>
     </p></div></td></tr>

@@ -7,7 +7,8 @@ class SubscriptionsController < ApplicationController
     @abstraction_groups = ABSTRACTIONGROUPS
     @abstractions = SUBSCRIPTIONABSTRACTIONS
     @subscribedMsgs = @person.subscriptions.find(:all)
-    @avail_deliveries = Delivery.find(:all, :order => 'id').map {|d| [d.description, d.id]}
+
+    @avail_deliveries = valid_deliveries;
     @avail_delays = Delay.find(:all, :order => 'id').map {|d| [d.description, d.id]}
   end
   
@@ -20,7 +21,7 @@ class SubscriptionsController < ApplicationController
     #@latestMsgs = @person.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
   
     @avail_types = MsgType.find(:all)
-    @avail_deliveries = Delivery.find(:all)
+    @avail_deliveries = valid_deliveries
     @avail_delays = Delay.find(:all)
   
     # Tooltip for the filters of a subscription, to view in the expert overview
@@ -134,7 +135,8 @@ class SubscriptionsController < ApplicationController
     @subscr = user.subscriptions.find(params[:id])
     @filters = @subscr.filters
     @availDelay = Delay.find(:all)
-    @availDeliveries = Delivery.find(:all)
+    @availDeliveries = valid_deliveries
+    
     @avail_params = @subscr.msg_type.parameters
   end
   
@@ -182,6 +184,16 @@ class SubscriptionsController < ApplicationController
 
 
   private
+
+  def valid_deliveries
+    person = Person.find session[:userid]
+    if person && person.admin
+      deliver = Delivery.find(:all, :order => 'id')
+    else
+      deliver = Delivery.find(:all, :conditions => ["public = 1"], :order => 'id')
+    end
+    return deliver
+  end
 
   def redirect_to_index(msg = nil)
     flash[:notice] = msg

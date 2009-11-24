@@ -36,8 +36,8 @@ function update_filter_params(html) {
     <td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id', 'type_desc') %></td>
     <%= observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'msg_type='+value", :success => 'update_filter_params(request.responseText)') %>
     <td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
-    <td><%= collection_select('subscr','delivery_id', @avail_deliveries, 'id','name') %></td>
-
+    <td><%= collection_select('subscr', 'delivery_id', @avail_deliveries, 'id', 'description') %>
+    
     <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
                           page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => [], :selected_param => nil, :selected_oper => nil, :value => nil } ) 
                           page << "get_valid_params();"

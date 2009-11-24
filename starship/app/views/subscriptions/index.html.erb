@@ -23,7 +23,7 @@
     <td id="edit_link_<%=i%>">
 		<%= link_to subs.msg_type.type_desc, edit_subscription_path(subs) %></td>
     <td><%= subs.delay.name %></td>
-    <td><%= subs.delivery ? subs.delivery.name : '' %></td>
+    <td><%= subs.delivery ? subs.delivery.description : '' %></td>
     <% if subs.filters.count > 0 %>
       <td><a href="#" onmouseover="Tip('<%=@filter_tooltips[subs.id]%>')" onmouseout="UnTip()"><%= subs.filters.count %></a></td>
     <% else %>
