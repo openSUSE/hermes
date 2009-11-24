@@ -32,6 +32,7 @@ use Hermes::Log;
 use Hermes::Util;
 use Hermes::Delivery::Mail;
 use Hermes::Delivery::RSS;
+use Hermes::Delivery::Http;
 # use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;
@@ -193,7 +194,7 @@ sub sendMessageDigest($;)
       next;
     }
 
-      log('info', "Rendered Body: $renderedRef->{body}" );
+    log('info', "Rendered Body: $renderedRef->{body}" );
 
     # get the <digest></digest> limited text out of the body.
     $summedBody .= "== $genNotiCreated =>\n";
@@ -262,15 +263,23 @@ sub deliverMessage( $$ )
 
     # FIXME: Better detection of the delivery type
     if( $deliveryString =~ /mail/i ) {
-      sendMail( $msgRef );
-      $res = 1;
+      $res = sendMail( $msgRef );
     } elsif( $deliveryString =~ /jabber personal/i ) {
       # sendJabber( $msgRef );
       log( 'debug', "Unable to send Jabber at the moment!" );
       $res = 1;
     } elsif( $deliveryString =~ /RSS/i ) {
-      sendRSS( $msgRef );
-      $res = 1;
+      my $r = sendRSS( $msgRef );
+      $res = 1 if( $r && $r > 0 );
+    } elsif( $deliveryString =~/HTTP/i ) {
+      my $attribRef = deliveryAttribs( $delivery );
+      my $url = $attribRef->{url};
+      if( $url ) {
+	$res = sendHTTP( $msgRef, $url );
+      } else {
+	log( 'error', "No URL defined for delivery-ID <$delivery>" );
+	$res = 0;
+      }
     } else {
       log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
     }
@@ -321,7 +330,7 @@ sub renderMessage( $$$$$$ )
   my $text;
   my $subject;
 
-  my $tmpl = getTemplate( $type );
+  my $tmpl = getTemplate( $type, $delayId, $deliveryId );
   if( $tmpl ) {
     # Fill the template
     $tmpl->param( $paramHash );
@@ -376,13 +385,13 @@ sub getTemplate( $;$$ )
   my ($type, $delayId, $deliveryId ) = @_;
 
   my $text;
-  my $filename = templateFileName( $type );
+  my $filename = templateFileName( $type, $deliveryId );
 
   if( $filename && -r "$filename" ) {
     log( 'info', "template filename: <$filename>" );
-    my $tmpl = HTML::Template->new(filename => "$filename",
-				   die_on_bad_params => 0,
-				   cache => 1 );
+    my $tmpl = HTML::Template->new( filename => "$filename",
+				    die_on_bad_params => 0,
+				    cache => 1 );
 
     return $tmpl;
   } else {

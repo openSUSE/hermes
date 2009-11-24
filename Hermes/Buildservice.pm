@@ -303,8 +303,6 @@ sub usersOfPackage( $;$ )
     return $cachedPackage->{"$project/$package"}; 
   }
 
-  my $userHashRef;
-
   # All users of the project
   my $userHashRef = usersOfProject( $project );
   

@@ -104,6 +104,7 @@ sub sendMail( $ )
 
 
   # Send the message.
+  my $res = 1;
   if ($msg->{_debug} ) {
     log('info', "Saving debug mail for noti Id " . $msg->{_notiId} );
     saveDebugMail( $msg->{_notiId}, $toLine, $mime_msg );
@@ -111,10 +112,10 @@ sub sendMail( $ )
     # print STDERR $mime_msg->as_string;
     # print STDERR "\n[ Hermes Mail Module Debug: End of MIME-encoded message ]\n";
   } else {
-    $mime_msg->send();
+    $res = 0 unless $mime_msg->send();
   }
 
-  1;
+  return $res;
 }
 
 

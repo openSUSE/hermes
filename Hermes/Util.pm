@@ -24,6 +24,8 @@ package Hermes::Util;
 use strict;
 use Exporter;
 
+use File::Spec;
+
 use Hermes::Config;
 use Hermes::Log;
 use Hermes::DB;
@@ -36,7 +38,8 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 @EXPORT	    = qw( notificationTemplateDetails notificationDetails templateFileName 
 		  parameterId delayStringToValue 
 		  SendNow SendMinutely SendHourly SendDaily SendWeekly SendMonthly
-	          deliveryStringToId deliveryIdToString typeIdToString);
+	          deliveryStringToId deliveryIdToString deliveryAttribs 
+		  typeIdToString uniteArray );
 
 
 
@@ -171,11 +174,25 @@ sub notificationDetails($;$)
   return $infoRef;
 }
 
-sub templateFileName( $ )
+sub templateFileName( $;$ )
 {
-  my ($tmpl) = @_;
+  my ($tmpl, $deliveryId) = @_;
+  
+  my $deliveryString;
+  if( $deliveryId ) {
+    $deliveryString = lc deliveryIdToString( $deliveryId );
+  }
+
   if( $tmpl ) {
-    return $Hermes::Config::HerminatorDir . "/notifications/" . lc $tmpl . ".tmpl";
+    my $tmplFile = lc $tmpl . ".tmpl";
+    my @p = ($Hermes::Config::HerminatorDir, "notifications");
+    my $path = File::Spec->catfile( @p, $tmplFile );
+    if( $deliveryString ) {
+      $path = File::Spec->catfile( (@p, $deliveryString), $tmplFile );
+      log('info', "Returning specialised delivery-Template <$path>" );
+      return $path if( -r $path );
+    }
+    return  $path;
   } else {
     return undef;
   }
@@ -280,6 +297,24 @@ sub deliveryStringToId( $ )
   return $id;
 }
 
+# return a hash ref containing key<->value based attributes for a 
+# specific delivery identified through its id.
+sub deliveryAttribs( $ )
+{
+  my ($deliveryId) = @_;
+
+  return {} unless defined $deliveryId;
+
+  my $sql = "SELECT attribute, value FROM delivery_attributes WHERE delivery_id=?";
+  my $sth = dbh()->prepare( $sql );
+  $sth->execute( $deliveryId );
+  my %attribs;
+  while( my($attrib, $value) = $sth->fetchrow_array() ) {
+    $attribs{$attrib} = $value;
+  }
+  return \%attribs;
+}
+
 sub typeIdToString( $ )
 {
   my ($typeId) = @_;
@@ -294,6 +329,5 @@ sub typeIdToString( $ )
   }
   return $re;
 }
-
 
 1;
