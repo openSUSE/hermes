@@ -29,7 +29,7 @@ use Getopt::Std;
 use Hermes::MessageSender;
 use Hermes::DB;
 use Hermes::Util;
-use Hermes::Delivery::Jabber;
+# use Hermes::Delivery::Jabber;
 
 use Time::HiRes qw( gettimeofday tv_interval );
 use Hermes::Log;
@@ -110,7 +110,7 @@ while( 1 ) {
     $elapsed = tv_interval ($t0);
     log 'info', "Sent due messages: $cnt in $elapsed sec.\n";
     print "Sent immediate due messages: $cnt in $elapsed sec.\n";
-    
+
     exit if( $opt_o );
 
     # send minute digests if $sec >= 0 AND $sec < $workerdelay

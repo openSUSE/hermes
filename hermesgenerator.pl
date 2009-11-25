@@ -85,7 +85,7 @@ my $delay = $opt_w || 10; # ten seconds default delay
 log( 'info', "#################################### generator rocks the show" );
 
 my $sql = "SELECT n.*, msgt.msgtype FROM notifications n, msg_types msgt WHERE ";
-$sql   .= "n.generated IS NULL AND n.msg_type_id=msgt.id order by n.received limit $limit";
+$sql   .= "n.generated=0 AND n.msg_type_id=msgt.id order by n.received limit $limit";
 log( 'info', "SQL: $sql " );
 my $notiSth = dbh()->prepare( $sql );
 
@@ -158,7 +158,7 @@ while( 1 ) {
     my $elapsed = tv_interval ($t0);
     log 'info', "Generated $cnt notifications in $elapsed sec.\n";
     print "Generated $cnt notifications in $elapsed sec.\n" unless( $silent );
-    
+
     log( 'info', ">>> Generator sleeping for $delay seconds" );
     sleep( $delay );
 
