@@ -42,6 +42,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( expandNotification usersOfPackage);
+@EXPORT_OK  = qw( extractUserFromMeta );
 
 our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedStrictPackage, $cachedWatchlist);
 
@@ -454,7 +455,7 @@ sub extractUserFromMeta( $ )
     my @xml = split(/\n/, $meta );
     my @people = grep ( /<person .+?\/>/, @xml );
     foreach my $pl (@people) {
-      if( $pl =~ /userid=\"(.+?)\"/ ) {
+      if( $pl =~ /role=\"maintainer/ && $pl =~ /userid=\"(.+?)\"/ ) {
 	$retuser{$1} = 1 if( $1 );
       }
     }
