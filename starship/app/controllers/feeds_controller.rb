@@ -38,7 +38,7 @@ class FeedsController < ApplicationController
   # shows a feed either as RSS or web list. 
   # params[:id] is a comma seperated id list
   def show
-    @subscriptions = Subscription.find(:all, :conditions => ["id IN (?)", params[:id]])
+    @subscriptions = Subscription.find(:all, :conditions => ["id IN (#{params[:id]})"])
     if (@subscriptions.empty?)
       flash[:error] = "Feed with id: #{params[:id]} not found"
       redirect_to :action => :index
@@ -52,8 +52,8 @@ class FeedsController < ApplicationController
     
     @items = StarshipMessage.paginate( :page => params[:page], :per_page => 100,
       :order => "id DESC",
-      :conditions => ["subscription_id IN (?)", params[:id]])
-    @title = @subscriptions.first.subscription_desc
+      :conditions => ["subscription_id IN (#{params[:id]})"] )
+    @title = @subscriptions.collect {|s| s.subscription_desc }.join(", ")
     @feed_id = params[:id]
     render_feed()
   end
