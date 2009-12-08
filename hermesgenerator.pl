@@ -34,7 +34,7 @@ use Hermes::Proxy;
 
 use Time::HiRes qw( gettimeofday tv_interval );
 
-use vars qw ( $opt_h $opt_s $opt_l $opt_w $opt_o $opt_t $opt_p );
+use vars qw ( $opt_h $opt_s $opt_l $opt_w $opt_o $opt_t $opt_p $gotTermSignal);
 
 
 sub usage()
@@ -47,6 +47,7 @@ sub usage()
 
   This script runs forever, make sure it is started as weak user in an 
   environment that makes sure that this script is running.
+  To stop it smoothly send it a TERM signal.
 
   -o:  create only l messages and stop after that
   -h:  help text
@@ -61,6 +62,11 @@ sub usage()
 END
 ;
   exit;
+}
+
+sub gotSignalTerm
+{
+  $gotTermSignal = 1;
 }
 
 # ---------------------------------------------------------------------------
@@ -81,6 +87,9 @@ my $limit = 100;
 $limit = 0+$opt_l if( $opt_l && $opt_l =~ /^\d+$/ );
 
 my $delay = $opt_w || 10; # ten seconds default delay
+
+$gotTermSignal = 0;
+$SIG{TERM} = \&gotSignalTerm;
 
 log( 'info', "#################################### generator rocks the show" );
 
@@ -158,7 +167,12 @@ while( 1 ) {
     my $elapsed = tv_interval ($t0);
     log 'info', "Generated $cnt notifications in $elapsed sec.\n";
     print "Generated $cnt notifications in $elapsed sec.\n" unless( $silent );
-
+    
+    if( $gotTermSignal ) {
+      log 'info', "Got the term signal, I go outta here...";
+      print "## Got the term signal, I go outta here...\n";
+      exit 0;
+    }
     log( 'info', ">>> Generator sleeping for $delay seconds" );
     sleep( $delay );
 

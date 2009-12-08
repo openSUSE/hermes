@@ -33,8 +33,13 @@ use Hermes::Util;
 
 use Time::HiRes qw( gettimeofday tv_interval );
 use Hermes::Log;
-use vars qw ( $opt_h $opt_s $opt_d $opt_w $opt_t $opt_o $opt_m );
+use vars qw ( $opt_h $opt_s $opt_d $opt_w $opt_t $opt_o $opt_m $gotTermSignal );
 
+
+sub gotSignalTerm
+{
+  $gotTermSignal = 1;
+}
 
 sub usage()
 {
@@ -42,7 +47,9 @@ sub usage()
 
   hermesworker.pl
 
-  Script to send out all kinds of hermes messages.
+  Script to send out all kinds of hermes messages. It has to run
+  regularly started with the -o option or it runs forever in a loop.
+  To stop it smoothly just send a TERM signal.
 
   -o:  send only immediate messages once and stop after that
   -m:  send only minute digests and stop after that
@@ -63,6 +70,9 @@ usage() if ($opt_h );
 
 connectDB( $opt_t );
 
+$gotTermSignal = 0;
+$SIG{TERM} = \&gotSignalTerm;
+
 my $silent = 0;
 $silent = 1 if( $opt_s );
 
@@ -80,6 +90,7 @@ if( $Hermes::Config::WorkerInitJabber ) {
 # Sending time for daily digests, defaults to midnight
 my $dailyHour = $Hermes::Config::DailySendHour || 0;
 my $dailyMin  = $Hermes::Config::DailySendHourMinute || 0;
+my $weekDay   = $Hermes::Config::SendWeekDay || 0;
 
 my $workerdelay = $opt_w || 10;
 
@@ -130,9 +141,8 @@ while( 1 ) {
 	    my $notificationIdsRef = sendMessageDigest( SendHourly() );
 	    $cnt = @{$notificationIdsRef};
 	    $elapsed = tv_interval($t0);
-	    log 'info', "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.";
-	    print "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.\n";
-
+	    log 'info', "Sent Hourly digest at <$min/$sec>: $cnt in $elapsed sec.";
+	    print "Sent Hourly digest at <$min/$sec>: $cnt in $elapsed sec.\n";
 	}
 
 	if( $hour == $dailyHour && $min == $dailyMin ) {
@@ -142,9 +152,23 @@ while( 1 ) {
 	    $elapsed = tv_interval($t0);
 	    log 'info', "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
 	    print "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n";
+
+	    if( $weekDay == $wday ) { # it's sunday and we send the weekly digest
+	      $t0 = [gettimeofday];
+	      $notificationIdsRef = sendMessageDigest( SendWeekly() );
+	      $cnt = @{$notificationIdsRef};
+	      $elapsed = tv_interval($t0);
+	      log 'info', "Send Weekly Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
+	      print "Send Weekly Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n";
+	    }
 	}
     }
 
+    if( $gotTermSignal ) {
+      log 'info', "Got the term signal, I go outta here...";
+      print "## Got the term signal, I go outta here...\n";
+      exit 0;
+    }
     print "* Now sleeping for $workerdelay seconds\n";
     log( 'info', "Sleeping for $workerdelay seconds" );
     sleep( $workerdelay );
