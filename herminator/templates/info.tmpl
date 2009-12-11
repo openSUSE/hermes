@@ -21,10 +21,9 @@ none.
 <h2>The latest Messages added:</h2>
 <div id="box">
 <table>
-<tr><th>Id</th><th>Subject</th><th>Msg Type</th><th>created at</th></tr>
+<tr><th>Id</th><th>Msg Type</th><th>created at</th></tr>
 <TMPL_LOOP NAME="LatestMessages">
   <tr><td><TMPL_VAR NAME=id></td>
-      <td><TMPL_VAR NAME=subject></td>
       <td><a href="index.cgi?rm=type&type=<TMPL_VAR NAME=msgtype>"><TMPL_VAR NAME=msgtype></a></td>
       <td><TMPL_VAR NAME=created></td>
 </tr>
