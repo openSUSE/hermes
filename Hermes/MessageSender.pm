@@ -273,7 +273,8 @@ sub deliverMessage( $$ )
       $res = 1 if( $r && $r > 0 );
     } elsif( $deliveryString =~/HTTP/i ) {
       my $attribRef = deliveryAttribs( $delivery );
-      my $url = $attribRef->{url};
+      my $url;
+      $url = $attribRef->{url} if( exists( $attribRef->{url} ) );
       if( $url ) {
 	$res = sendHTTP( $msgRef, $url );
       } else {

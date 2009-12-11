@@ -22,6 +22,7 @@ $DefaultSender = 'hermes';
 # Worker: the hour and minute when the daily messages should go out
 $DailySendHour = 9;
 $DailySendHourMinute = 12;
+$SendWeekDay = 0;  # Send weekly digests on sunday
 
 # The base path of the herminator on the local machine. Used to find
 # the notification message templates
