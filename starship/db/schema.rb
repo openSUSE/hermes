@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090907134403) do
+ActiveRecord::Schema.define(:version => 20091125104613) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",        :limit => 64
@@ -20,11 +20,18 @@ ActiveRecord::Schema.define(:version => 20090907134403) do
   add_index "delays", ["name"], :name => "name"
 
   create_table "deliveries", :force => true do |t|
-    t.string "name",        :limit => 64, :default => "", :null => false
-    t.string "description"
+    t.string  "name",        :limit => 64, :default => "",   :null => false
+    t.string  "description"
+    t.boolean "public",                    :default => true
   end
 
   add_index "deliveries", ["name"], :name => "name"
+
+  create_table "delivery_attributes", :force => true do |t|
+    t.integer "delivery_id", :null => false
+    t.string  "attribute"
+    t.string  "value"
+  end
 
   create_table "generated_notifications", :force => true do |t|
     t.integer  "notification_id", :null => false
@@ -33,6 +40,7 @@ ActiveRecord::Schema.define(:version => 20090907134403) do
     t.datetime "sent"
   end
 
+  add_index "generated_notifications", ["notification_id"], :name => "index_generated_notifications_on_notification_id"
   add_index "generated_notifications", ["sent"], :name => "index_generated_notifications_on_sent"
 
   create_table "msg_states", :force => true do |t|
