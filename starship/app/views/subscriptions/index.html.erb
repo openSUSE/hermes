@@ -1,11 +1,7 @@
 <%= javascript_include_tag "wz_tooltip.js" %>
 
-
-
 <h2>Subscription configuration (expert mode)</h2>
 
-<table>
-<tr><td valign=top>
 <table class="defaultTable">
 <tr>
 <th>Description</th>
@@ -19,9 +15,9 @@
 
 <% @subscribedMsgs.each_with_index  { |subs,i| %>
   <tr id="filter_<%=i%>" >
-    <td><%= subs.description || '' %></td>
+    <td><%= subs.description || '<i>No descrption</i>' %></td>
     <td id="edit_link_<%=i%>">
-		<%= link_to subs.msg_type.type_desc, edit_subscription_path(subs) %></td>
+		<%= subs.msg_type.type_desc %></td>
     <td><%= subs.delay.name %></td>
     <td><%= subs.delivery ? subs.delivery.description : '' %></td>
     <% if subs.filters.count > 0 %>
@@ -30,14 +26,13 @@
         <td><%= subs.filters.count %></td>
     <% end %>
     <td><%= link_to_remote subs.enabled ? "Enabled" : "Disabled", { :url => { :action => 'disable', :id => i, :subs => subs }}, { :id => "disable_link_#{i}" }  %></td>
-    <td><%= link_to image_tag("delete.png"), subscription_path(subs), :method => :delete %></td>
+    <td>
+    [<%= link_to "edit", edit_subscription_path(subs) %>]
+    <%= link_to image_tag("delete.png"), subscription_path(subs), :method => :delete, :confirm => "Delete Subscription for #{subs.msg_type.type_desc}?" %></td>
   </tr>
   <% } %>
 </table>
-(click on the message type to change your settings for it.)
 
-
-</table>
 
 <%= link_to_function "New Subscription", "$('new_subscr').toggle()" %>
 

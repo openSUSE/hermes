@@ -1,11 +1,10 @@
 <% javascript_include_tag :defaults %>
 
-<p>Please select below for which events you want to receive notifications.</p>
-
 <% simple_subscriptions = 0 %>
 
 <% if (@abstraction_groups.length > 0) %>
 
+<p>Please select below for which events you want to receive notifications.</p>
 
 <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
 <table class="defaultTable">
