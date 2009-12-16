@@ -1,21 +1,18 @@
-<% @hermestitle = "Public web feeds" %>
+<% @hermestitle = "Feeds" %>
 
 
 <% if @feed_subscriptions.length > 0 %>
 
-<p>This is a list of available feeds for the most popular topics.
-</p>
+<p><b>Hermes feeds:</b></p>
 
 <table class="defaultTable">
 <tr>
-<th>ID</th>
-<th>Subscription name</th>
+<th>Feed</th>
 <th>Formats</th>
 </tr>
 
 <% @feed_subscriptions.each  { |feed| %>
 <tr>
-<td><%= feed.id %></td> 
 <td><%= feed.subscription_desc %></td> 
 <td>
 <% if (feed.starship_messages.count > 0) %>
@@ -39,18 +36,36 @@
 
 <% else %>
 
-<div id="notification_box" class="notice">
-<div id="left_col">
-<div id="notification_icon">
-<span>Notice</span>
-</div>
-</div>
-<div id="right_col">
-<p>
-There are currently no public feeds configured. :-( 
-</p>
-</div>
-</div>
+<br/><p><i>There are currently no public hermes feeds configured. :-( </i></p>
 
 
 <% end %>
+
+
+<br/><p>
+<b>Other openSUSE related feeds:</b></p>
+
+<table class="defaultTable">
+<tr>
+<th>Feed</th>
+<th>Formats</th>
+</tr>
+
+<tr><td>openSUSE News</td>
+<td><%= link_to image_tag("feeds.png"), 'http://news.opensuse.org/feed/' %></td></tr>
+
+<tr><td>Weekly News</td>
+<td><%= link_to image_tag("feeds.png"), 'http://news.opensuse.org/category/weekly-news/feed/' %></td></tr>
+
+<tr><td>opensuse-buildservice Mailinglist</td>
+<td><%= link_to image_tag("feeds.png"), 'http://lists.opensuse.org/opensuse-buildservice/mailinglist.rss' %></td></tr>
+
+<tr><td>Recent wiki changes</td>
+<td><%= link_to image_tag("feeds.png"), 'http://en.opensuse.org/index.php?title=Special:RecentChanges&feed=rss' %></td></tr>
+
+<tr><td>Planet SUSE Blogs</td>
+<td><%= link_to image_tag("feeds.png"), 'http://planet.opensu.se/rss20.xml' %></td></tr>
+
+</table>
+
+
