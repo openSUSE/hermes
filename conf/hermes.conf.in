@@ -38,6 +38,11 @@ $StarshipBaseUrl = "http://localhost:3000/";
 # switched off for debugging if jabber is not used.
 $WorkerInitJabber = 0;
 
+# Twitter - enable it by setting $DeliverTwitter to non zero and
+# provide valid twitter credentials as attributes to the delivery
+# in the database
+$DeliverTwitter = 1;
+
 #
 # OBS API Connection, with credentials
 $OBSAPIBase = "http://api.opensuse.org";

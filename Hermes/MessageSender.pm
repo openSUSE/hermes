@@ -33,6 +33,7 @@ use Hermes::Util;
 use Hermes::Delivery::Mail;
 use Hermes::Delivery::RSS;
 use Hermes::Delivery::Http;
+use Hermes::Delivery::Twitter;
 # use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;
@@ -281,6 +282,11 @@ sub deliverMessage( $$ )
 	log( 'error', "No URL defined for delivery-ID <$delivery>" );
 	$res = 0;
       }
+    } elsif( $Hermes::Config::DeliverTwitter && $deliveryString =~/Twitter/i ) {
+      my $attribRef = deliveryAttribs( $delivery );
+      my $user = $attribRef->{TwitterUser} if( exists( $attribRef->{TwitterUser} ) );
+      my $pwd  = $attribRef->{TwitterPasswd} if( exists( $attribRef->{TwitterPwd} ) );
+      $res = tweet( $user, $pwd, $msgRef->{body} );
     } else {
       log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
     }
