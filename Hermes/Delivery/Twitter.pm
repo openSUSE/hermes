@@ -43,7 +43,11 @@ sub tweet( $$$ )
 {
   my ($user, $pwd, $text) = @_;
 
-  return unless( $user && $pwd && $Hermes::Config::DeliverTwitter );
+
+  unless( $user && $pwd && $Hermes::Config::DeliverTwitter ) {
+    log( 'info', "Hermes-User: $pwd" );
+    log( 'info', "Hermes DeliverTwitter-Switch: " . $Hermes::Config::DeliverTwitter || "not set!" );
+  }
   my $twit = Net::Twitter->new( { username => $user,
 				  password => $pwd } );
 
@@ -53,15 +57,17 @@ sub tweet( $$$ )
   }
 
   if( $twit->verify_credentials() ) {
-    # log('info', "Twitter login ok" );
+    log('info', "Twitter login ok" );
   } else {
     log( 'info', "Twitter login failed" );
+    $twit->end_session();
     return 0;
   }
   # Set twitter status.
   my $tweet = $twit->update( $text );
   if( !$tweet ){
     log( 'info', "Tweet failed: " . $twit->get_error() );
+    $twit->end_session();
     return 0;
   }
 

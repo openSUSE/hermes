@@ -285,7 +285,7 @@ sub deliverMessage( $$ )
     } elsif( $Hermes::Config::DeliverTwitter && $deliveryString =~/Twitter/i ) {
       my $attribRef = deliveryAttribs( $delivery );
       my $user = $attribRef->{TwitterUser} if( exists( $attribRef->{TwitterUser} ) );
-      my $pwd  = $attribRef->{TwitterPasswd} if( exists( $attribRef->{TwitterPwd} ) );
+      my $pwd  = $attribRef->{TwitterPasswd} if( exists( $attribRef->{TwitterPasswd} ) );
       $res = tweet( $user, $pwd, $msgRef->{body} );
     } else {
       log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );

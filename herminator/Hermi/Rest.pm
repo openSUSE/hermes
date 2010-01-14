@@ -49,7 +49,8 @@ sub setup {
 		   'notify' => 'postNotification',
 		   'hello'  => 'sayHello',
 		   'doc'    => 'showDoc',
-		   'type'   => 'editType'
+		   'type'   => 'editType',
+		   'httptest' => 'httpTest'
 		  );
   $self->mode_param( 'rm' );
 
@@ -256,6 +257,16 @@ sub postMessage {
   return "$id";
 }
 
+sub httpTest()
+{
+  my $self = shift;
+
+  # Get CGI query object
+  my $q = $self->query();
+  my $type = $q->param( 'type' );
+
+}
+
 sub editType()
 {
   my $self = shift;
@@ -355,7 +366,6 @@ sub editType()
   $htmlTmpl->param( Content => $tmpl->output );
 
   return $htmlTmpl->output;
-
 }
 
 #
