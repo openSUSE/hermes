@@ -49,7 +49,7 @@ sub usage()
   environment that makes sure that this script is running.
   To stop it smoothly send it a TERM signal.
 
-  -o:  create only l messages and stop after that
+  -o:  process messages only one times and stop after that
   -h:  help text
   -s:  silent, no output is generated.
   -p url:   proxy: send raw data of each notification to another Hermes
@@ -173,13 +173,14 @@ while( 1 ) {
       print "## Got the term signal, I go outta here...\n";
       exit 0;
     }
-    log( 'info', ">>> Generator sleeping for $delay seconds" );
-    sleep( $delay );
-
+    
     if( $opt_o ) {
 	log('info', "################################### generator exits" );
 	exit;
     }
+
+    log( 'info', ">>> Generator sleeping for $delay seconds" );
+    sleep( $delay );
 }
 
 
