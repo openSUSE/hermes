@@ -50,7 +50,8 @@ sub setup {
 		   'hello'  => 'sayHello',
 		   'doc'    => 'showDoc',
 		   'type'   => 'editType',
-		   'httptest' => 'httpTest'
+		   'httptest' => 'httpTest',
+		   'posthttptest' => 'httpTestInput'
 		  );
   $self->mode_param( 'rm' );
 
@@ -75,8 +76,10 @@ sub cgiapp_prerun
     $self->prerun_mode( 'notify' );
   } elsif( $mode eq "ajaxupdate" ) {
     $self->prerun_mode( 'ajaxupdate' );
+  } elsif( $mode eq "posthttptest" ) {
+    $self->prerun_mode( 'posthttptest' );
   }
-  log('debug', "Current Runmode: " . $self->get_current_runmode() );
+  log('info', "Current Runmode: " . $self->get_current_runmode() );
 
   # Check for the users admin flag
   $user = "anonymous";
@@ -257,14 +260,73 @@ sub postMessage {
   return "$id";
 }
 
+sub httpTestInput()
+{
+  my $self = shift;
+  
+  # Set debug in the config file to enable
+  unless( $Hermes::Config::Debug ) {
+    log( 'info', "httpTest disabled, enable Debug switch in Hermes config!" );
+    return;
+  }
+  
+  my $q = $self->query();
+  my $type = $q->param('type') || "unknown type";
+  log( 'info', "Incoming httptesttype: $type" );
+  
+  my $timeStr = localtime;
+
+  my @httpTestQueue;
+  if( -r "/tmp/httpTestQueue.txt" && open FILE, "</tmp/httpTestQueue.txt" ) {
+    @httpTestQueue = <FILE>;
+    close FILE;
+  }
+  my $cnt = unshift( @httpTestQueue, "$type\t$timeStr\n" );
+  pop @httpTestQueue if( $cnt > 100 );
+
+  if( open FILE, ">/tmp/httpTestQueue.txt" ) {
+    print FILE @httpTestQueue;
+    close FILE;
+  } else {
+    log( 'info', "Could not write log file: $!") ;
+  }
+}
+
 sub httpTest()
 {
   my $self = shift;
 
   # Get CGI query object
   my $q = $self->query();
-  my $type = $q->param( 'type' );
+  my $tmpl = $self->load_tmpl( 'httptest.tmpl',
+			       die_on_bad_params => 0,
+			       cache => 1 );
+  $tmpl->param( urlbase => "subbotin.suse.de/hermes" );
+  
+  initFrame( "Hermes HTTP Delivery Test Page" );
 
+  if( $Hermes::Config::Debug ) {
+    my @httpTestQueue;
+    if( -r "/tmp/httpTestQueue.txt" && open FILE, "</tmp/httpTestQueue.txt" ) {
+      @httpTestQueue = <FILE>;
+      close FILE;
+    }
+    my $cnt = @httpTestQueue;
+    log( 'info', "http Test Queue: $cnt" );
+
+    my @hashList;
+    foreach my $testLine ( @httpTestQueue ) {
+      my ($type, $timeStr) = split( /\t/, $testLine );
+      push @hashList, { type => $type, time => $timeStr };
+    }
+    $tmpl->param( TestQueueLoop => \@hashList );
+  } else {
+    log( 'info', "No debugging because debug switch off" );
+    $tmpl->param( ErrorMsg => "Please enable debug to start the debug output" );
+  }
+  $htmlTmpl->param( Content => $tmpl->output );
+
+  return $htmlTmpl->output;
 }
 
 sub editType()
@@ -391,6 +453,7 @@ sub parameterInplaceEdit( $$$;$ )
   return $re;
 }
 
+# this sub returns a test rendering of a freshly edited template
 sub testRender( $$;$ )
 {
   my ($noti, $tmplFile, $previewTmpl ) = @_;
