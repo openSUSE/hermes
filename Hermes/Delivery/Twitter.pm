@@ -47,7 +47,7 @@ sub tweet( $$$ )
   my $t0 = [gettimeofday];
 
   unless( $user && $pwd && $Hermes::Config::DeliverTwitter ) {
-    log( 'info', "Hermes-User: $pwd" );
+    log( 'info', "Hermes-User: $user" );
     log( 'info', "Hermes DeliverTwitter-Switch: " . $Hermes::Config::DeliverTwitter || "not set!" );
   }
   my $twit = Net::Twitter->new( { username => $user,
