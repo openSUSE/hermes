@@ -44,14 +44,15 @@ sub setup {
   my $self = shift;
   $self->start_mode('hello');
   $self->run_modes(
-		   'ajaxupdate' => 'ajaxUpdate',
-		   'post'   => 'postMessage',
-		   'notify' => 'postNotification',
-		   'hello'  => 'sayHello',
-		   'doc'    => 'showDoc',
-		   'type'   => 'editType',
-		   'httptest' => 'httpTest',
-		   'posthttptest' => 'httpTestInput'
+		   'ajaxupdate'   => 'ajaxUpdate',
+		   'post'         => 'postMessage',
+		   'notify'       => 'postNotification',
+		   'hello'        => 'sayHello',
+		   'doc'          => 'showDoc',
+		   'type'         => 'editType',
+		   'httptest'     => 'httpTest',
+		   'posthttptest' => 'httpTestInput',
+		   'subscribe'    => 'subscribePerson'
 		  );
   $self->mode_param( 'rm' );
 
@@ -78,6 +79,8 @@ sub cgiapp_prerun
     $self->prerun_mode( 'ajaxupdate' );
   } elsif( $mode eq "posthttptest" ) {
     $self->prerun_mode( 'posthttptest' );
+  } elsif( $mode eq "subscribe" ) {
+    $self->prerun_mode( 'subscribe' );
   }
   log('info', "Current Runmode: " . $self->get_current_runmode() );
 
@@ -258,6 +261,17 @@ sub postMessage {
   my $id = newMessage( $subject, $body, $type, $delay, @to, @cc, @bcc, $from );
 
   return "$id";
+}
+
+sub subscribePerson()
+{
+  my $self = shift;
+  
+  my $q = $self->query();
+  my $type = $q->param('person');
+  
+  log( 'info', "subscribePerson: Not yet implemented!" );
+  
 }
 
 sub httpTestInput()

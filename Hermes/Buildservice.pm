@@ -36,13 +36,16 @@ use Hermes::Log;
 use Hermes::Person;
 use Hermes::Util;
 
+use constant MAINTAINER_FLAG => 1;
+use constant BUGOWNER_FLAG   => 2;
+
 use Data::Dumper;
 
 use vars qw(@ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( expandNotification usersOfPackage);
-@EXPORT_OK  = qw( extractUserFromMeta );
+@EXPORT	    = qw( expandNotification );
+@EXPORT_OK  = qw( extractUserFromMeta usersOfPackage usersOfProject applyFilter);
 
 our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedStrictPackage, $cachedWatchlist);
 
@@ -122,15 +125,9 @@ sub applyFilter( $$ )
       my $prj = $paramHash->{project};
       return 0 unless $prj;
 
-      log( 'info', "Checking for user <$user> involved in prj <$prj>" );
+      log( 'info', "Checking user <$user> involved in prj <$prj>" );
       my $userHashRef = usersOfProject( $prj );
-      if( ! $userHashRef->{$user} ) {
-	log( 'info', "User <$user> is NOT in the maintainer group for <$prj>" );
-	$res = 0;
-      } else {
-	log( 'info', "User <$user> is in the maintainer group for <$prj>" );
-      }
-
+      $res = 0 unless( userHasFunction( $userHashRef, $user, MAINTAINER_FLAG ) );
     } elsif( $filterRef->{string} eq "_mypackages" ) {
       # user must be involved in the package.
       my $user = $paramHash->{_userId};
@@ -139,15 +136,20 @@ sub applyFilter( $$ )
       return 0 unless $prj;
       return 0 unless $pkg;
 
-      log( 'info', "Checking for user <$user> involved in pkg <$pkg>" );
+      log( 'info', "Checking user <$user> involved in pkg <$prj::$pkg>" );
       my $userHashRef = usersOfPackage( $prj, $pkg );
-      if( ! $userHashRef->{$user} ) {
-	log( 'info', "User <$user> is NOT in the maintainer group for <$pkg>" );
-	$res = 0;
-      } else {
-	log( 'info', "User <$user> is in the maintainer group for <$pkg>" );
-      }
+      $res = 0 unless( userHasFunction( $userHashRef, $user, MAINTAINER_FLAG ) );
+    } elsif( $filterRef->{string} eq "_packagebugowner" ) {
+      # user must be involved in the package.
+      my $user = $paramHash->{_userId};
+      my $pkg = $paramHash->{package};
+      my $prj = $paramHash->{project};
+      return 0 unless $prj;
+      return 0 unless $pkg;
 
+      log( 'info', "Checking user <$user> is bugowner of <$prj::$pkg>" );
+      my $userHashRef = usersOfPackage( $prj, $pkg );
+      $res = 0 unless( userHasFunction( $userHashRef, $user, BUGOWNER_FLAG ) );
     } elsif( $filterRef->{string} eq "_mypackagesstrict" ) {
       # user must be involved in the package.
       my $user = $paramHash->{_userId};
@@ -157,12 +159,7 @@ sub applyFilter( $$ )
 
       log( 'info', "Checking strict for user <$user> involved in pkg <$pkgStr>" );
       my $userHashRef = strictUsersOfPackage( $prj, $pkg );
-      if( ! $userHashRef->{$user} ) {
-	log( 'info', "User <$user> is NOT in the strict maintainer group for <$pkgStr>" );
-	$res = 0;
-      } else {
-	log( 'info', "User <$user> is in the strict maintainer group for <$pkgStr>" );
-      }
+      $res = 0 unless( userHasFunction( $userHashRef, $user, MAINTAINER_FLAG ) );
     } elsif( $filterRef->{string} eq "_mywatchlist" ) {
       #user mast have $project in his watchlist
       my $user = $paramHash->{_userId};
@@ -188,12 +185,7 @@ sub applyFilter( $$ )
                      "with target project <$tPrj>");
 	# userOfPackage returns both the project- and pack users.
 	my $tPackUsers = usersOfPackage( $tPrj, $tPack );
-	if( $tPackUsers->{$user} ) {
-	  log( 'info', "User <$user> is maintainer for <$tPrj>/<$tPack>" );
-	} else {
-	  log( 'info', "User <$user> is NOT maintainer for <$tPrj>/<$tPack>" );
-	    $res = 0;
-	}
+	$res = 0 unless( userHasFunction( $tPackUsers, $user, MAINTAINER_FLAG ) );
       } else {
 	log('info', "targetproject <$tPrj> does not exist!" );
 	$res = 0;
@@ -268,6 +260,24 @@ sub applyFilter( $$ )
   return $res;
 }
 
+sub userHasFunction( $$$ )
+{
+  my ($userHashRef, $user, $flag ) = @_;
+  my $res = 0;
+  
+  if( $userHashRef->{$user} ) {
+    if( ($userHashRef->{$user} & $flag) == $flag ) {
+      log( 'info', "User <$user> exists <$flag> in the required function: $userHashRef->{$user}" );
+      $res = 1;
+    } else {
+      log( 'info', "User exists, but NOT in the required function" );
+    }
+  } else {
+    log( 'info', "User not existing in user hash." );
+  }
+  return $res;
+}
+
 sub usersOfProject( $ )
 {
   my ($project) = @_;
@@ -284,7 +294,9 @@ sub usersOfProject( $ )
     my $meta = callOBSAPI( 'prjMetaRef', ($project) );
     $userHashRef = extractUserFromMeta( $meta );
     $cachedProject->{$project} = $userHashRef;
-    log( 'info', "These users are in project <$project>: " . join( ', ', keys %{$userHashRef} ) );
+    foreach my $user ( keys %{$userHashRef} ) {
+      log('info', "This user is in project <$project>: $user, function $userHashRef->{$user}" );
+    }
   } else {
     # unfortunately no project param, but privacy is requested.
     # -> problem
@@ -354,7 +366,7 @@ sub strictUsersOfPackage( $$ )
   } else {
     log( 'info', "Problem: No sufficient input for strict package users" );
   }
-  return $userHashRef;  
+  return $userHashRef;
 }
 
 sub userWatchList( $$ )
@@ -450,13 +462,20 @@ sub extractUserFromMeta( $ )
 {
   my ($meta) = @_;
   my %retuser;
-
+ 
   if( $meta ) {
     my @xml = split(/\n/, $meta );
     my @people = grep ( /<person .+?\/>/, @xml );
     foreach my $pl (@people) {
-      if( $pl =~ /role=\"maintainer/ && $pl =~ /userid=\"(.+?)\"/ ) {
-	$retuser{$1} = 1 if( $1 );
+      if( $pl =~ /role=\"(maintainer|bugowner)/i ) {
+	my $role = $1;
+	if( $pl =~ /userid=\"(.+?)\"/ ) {
+	  my $flag = 0;
+	  $flag = MAINTAINER_FLAG if( $role eq "maintainer" );
+	  $flag = BUGOWNER_FLAG if( $role eq "bugowner" );
+	  my $oldFlag = $retuser{$1} || 0;
+	  $retuser{$1} = $oldFlag + $flag;
+	}
       }
     }
   }
