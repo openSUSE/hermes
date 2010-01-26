@@ -4,11 +4,27 @@
 # note that this must be a valid perl source code file because it get
 # eval'ed. Check the syntax of this file with 'perl -cw Config.pm'. 
 #
+#--[ Logging Configuration ]---------------------------------------------------
+
+%LOG = (
+	'params'    => {'name'	=> 'Hermes',
+		        'filename'	=> '/var/log/hermes.log',
+		        'min_level'	=> 'info' }
+);
+
+#--[ Default DB Configuration ]---------------------------------------------------
+
+$DB{ 'default' } = { 'type'	=>  'mysql',
+		     'port'	=>  3306,
+		     'name'	=>  'hermes',
+		     'user'	=>  'root',
+		     'pass'	=>  '' };
 
 # DEBUG - set to 1 to enable debug. No mail is sent in debug mode.
 $Debug = 1;
 
 # the default delivery type, check with database content
+# This is currently not used, but will be important soon.
 $DefaultDelivery = 2;
 
 # Notification Default Delay: Which delay for Notifications by default?
@@ -25,14 +41,9 @@ $DailySendHourMinute = 12;
 $SendWeekDay = 0;  # Send weekly digests on sunday
 
 # The base path of the herminator on the local machine. Used to find
-# the notification message templates
+# the notification message templates which are maintained through the
+# herminator web app
 $HerminatorDir = "/home/kf/suse/infrastructure/hermes/herminator/";
-
-# Local path to store the rss feeds.
-$RdfBasePath = $HerminatorDir . "feeds";
-
-# Starship base url, used to build a link for the RSS items.
-$StarshipBaseUrl = "http://localhost:3000/";
 
 # Enable jabber initialisation in hermesworker. This setting should be
 # switched off for debugging if jabber is not used.
@@ -44,7 +55,7 @@ $WorkerInitJabber = 0;
 $DeliverTwitter = 1;
 
 #
-# OBS API Connection, with credentials
+# OBS API Connection
 $OBSAPIBase = "http://api.opensuse.org";
 
 #
