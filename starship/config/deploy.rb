@@ -48,6 +48,9 @@ namespace :config do
     run "ln -s #{shared_path}/production.rb #{release_path}#{git_subdir}/config/environments/"
     run "rm -f #{release_path}#{git_subdir}/config/database.yml"
     run "ln -s #{shared_path}/database.yml #{release_path}#{git_subdir}/config/database.yml"
+    run "rm -f #{release_path}#{git_subdir}/config/starship.yml"
+    run "ln -s #{shared_path}/database.yml #{release_path}#{git_subdir}/config/starship.yml"
+    run "ln -s #{release_path}#{git_subdir}/config/guiabstractions/abstraction.xml.external #{release_path}#{git_subdir}/config/guiabstractions/abstraction.xml"
   end
 
   desc "Set permissions"
