@@ -49,13 +49,13 @@ namespace :config do
     run "rm -f #{release_path}#{git_subdir}/config/database.yml"
     run "ln -s #{shared_path}/database.yml #{release_path}#{git_subdir}/config/database.yml"
     run "rm -f #{release_path}#{git_subdir}/config/starship.yml"
-    run "ln -s #{shared_path}/database.yml #{release_path}#{git_subdir}/config/starship.yml"
+    run "ln -s #{shared_path}/starship.yml #{release_path}#{git_subdir}/config/starship.yml"
     run "ln -s #{release_path}#{git_subdir}/config/guiabstractions/abstraction.xml.external #{release_path}#{git_subdir}/config/guiabstractions/abstraction.xml"
   end
 
   desc "Set permissions"
   task :permissions do
-    run "chown -R lighttpd #{current_path}/db #{current_path}/tmp"
+    run "chown -R lighttpd #{current_path}/db #{current_path}/tmp #{current_path}/log"
   end
 end
 
