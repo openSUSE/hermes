@@ -5,7 +5,7 @@ set :application, "starship"
 # git settings
 set :scm, :git
 set :repository,  "git://gitorious.org/opensuse/hermes.git"
-set :branch, "0.5"
+set :branch, "0.6"
 set :deploy_via, :remote_cache
 set :git_enable_submodules, 1
 set :git_subdir, '/starship'
