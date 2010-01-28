@@ -51,13 +51,17 @@ sub tweet( $$$ )
     log( 'info', "Hermes DeliverTwitter-Switch: " . $Hermes::Config::DeliverTwitter || "not set!" );
   }
   my $twit = Net::Twitter->new( { username => $user,
-				  password => $pwd,
-				  useragent => 'Hermes Twitter Agent' } );
+				  password => $pwd } );
+				  # useragent => 'Hermes Twitter Agent' } );
   my $elapsed = tv_interval ($t0);
   log 'info', "Time to create Twitter-Object: $elapsed sec.\n";
   
   if( ! $twit ) {
     log( 'info', "Hermes Twitter-Error: $!" );
+    return 0;
+  }
+  if( ! $twit->verify_credentials() ) {
+    log( 'info', "Tweet failed: verify credentials failed: " . $twit->get_error() );
     return 0;
   }
 
