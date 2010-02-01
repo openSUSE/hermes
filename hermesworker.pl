@@ -65,10 +65,12 @@ END
 
 # Process the commandline arguments.
 getopts('omw:dhst:');
+setLogFileName('hermesworker');
 
 usage() if ($opt_h );
 
 connectDB( $opt_t );
+
 
 $gotTermSignal = 0;
 $SIG{TERM} = \&gotSignalTerm;

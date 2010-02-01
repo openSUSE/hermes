@@ -8,8 +8,11 @@
 
 %LOG = (
 	'params'    => {'name'	=> 'Hermes',
-		        'filename'	=> '/var/log/hermes.log',
-		        'min_level'	=> 'info' }
+	# either set the logname explicitely
+	'filename'  => '/var/log/hermes.log',
+	# OR specify the log path and set the log file name in code:
+	'logpath'   => '/var/log/hermes',
+	'min_level' => 'info' }
 );
 
 #--[ Default DB Configuration ]---------------------------------------------------

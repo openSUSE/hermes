@@ -565,4 +565,6 @@ sub templateTypeList()
   return ($res, $firstType) ;
 }
 
+setLogFileName('herminator');
+
 1;

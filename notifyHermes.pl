@@ -76,7 +76,7 @@ getopts( 'ro:h' );
 my ($type) = @ARGV;
 
 help() if( $opt_h );
-
+setLogFileName('notifyHermes');
 my %params;
 
 if( $opt_o ) {

@@ -77,7 +77,7 @@ getopts('ohl:w:t:p:');
 usage() if ($opt_h );
 
 print "Connecting to database $opt_t\n" if defined $opt_t;
-
+setLogFileName('hermesgenerator');
 connectDB( $opt_t );
 
 my $silent = 0;
