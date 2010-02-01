@@ -174,13 +174,13 @@ while( 1 ) {
       exit 0;
     }
     
+    sleep( $delay );
     if( $opt_o ) {
 	log('info', "################################### generator exits" );
 	exit;
     }
 
     log( 'info', ">>> Generator sleeping for $delay seconds" );
-    sleep( $delay );
 }
 
 
