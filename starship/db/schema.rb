@@ -41,6 +41,7 @@ ActiveRecord::Schema.define(:version => 20091221125522) do
   end
 
   add_index "generated_notifications", ["notification_id"], :name => "index_generated_notifications_on_notification_id"
+  add_index "generated_notifications", ["sent"], :name => "index_generated_notifications_on_sent"
 
   create_table "msg_states", :force => true do |t|
     t.string "state",       :limit => 64
@@ -102,7 +103,7 @@ ActiveRecord::Schema.define(:version => 20091221125522) do
   create_table "starship_messages", :force => true do |t|
     t.integer  "notification_id",                :null => false
     t.string   "sender"
-    t.integer  "person_id"
+    t.integer  "person_id",       :default => 1, :null => false
     t.string   "subject"
     t.string   "replyto"
     t.text     "body"

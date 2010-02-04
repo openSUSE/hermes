@@ -25,36 +25,11 @@
 package Hermes::Config;
 
 use strict;
-use vars qw( %LOG %DB );
-
-#--[ Logging Configuration ]---------------------------------------------------
-
-%LOG = (
-	'params'    => {'name'	=> 'Hermes',
-		    'filename'	=> '/tmp/inttools.log',
-		    'min_level'	=> 'info' }
-);
-
-#--[ Default DB Configuration ]---------------------------------------------------
-
-$DB{ 'default' } = { 'type'	=>  'mysql',
-		     'port'	=>  3306,
-		     'name'	=>  'hermes',
-		     'user'	=>  'root',
-		     'pass'	=>  '' };
-
-$DB{ 'test' } = { 'type'     =>  'mysql',
-                     'host'     =>  'localhost',
-                     'port'     =>  3306,
-                     'name'     =>  'hermes_test',
-                     'user'     =>  'root',
-                     'pass'     =>  undef };
+# use vars qw( %LOG %DB );
 
 #--[ Local Configuration ]--------------------------------------------------
 # Read local configuration file, if this exists. This is meant to be used to
 # override configuration values with specific values.
-
-
 my @cfgs = ( "/etc/hermes.conf", "./hermes.conf", "conf/hermes.conf" );
 
 foreach my $cfg ( @cfgs ) {

@@ -206,7 +206,7 @@ sub applyFilter( $$ )
       my $str = $filterRef->{string};
 
       my @possibleValues = split( /\s*,\s*/, $str );
-      my $success = grep( /$searchStr/, @possibleValues );
+      my $success = grep( /\b$searchStr\b/, @possibleValues );
       log( 'info', "Filtering oneof <$searchStr> in [" . join( "|", @possibleValues ) . "]: " . $success );
 
       if( $success ) {
@@ -227,7 +227,7 @@ sub applyFilter( $$ )
       my @list = split( /\s*[|,]\s*/, $listStr );
       my $sstr = quotemeta( $filterRef->{string} );
       # log('debug', "containsItem search-String: $sstr" );
-      my $cnt = grep ( /$sstr/, @list );
+      my $cnt = grep ( /\b$sstr\b/, @list );
       # log('debug', "containsitem-Filter: Search in list: " . join( ' - ', @list ) . " #hits=$cnt" );
       if( $cnt > 0 ) {
 	$res = 1;

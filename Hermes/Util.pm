@@ -177,7 +177,7 @@ sub notificationDetails($;$)
 sub templateFileName( $;$ )
 {
   my ($tmpl, $deliveryId) = @_;
-  
+
   my $deliveryString;
   if( $deliveryId ) {
     $deliveryString = lc deliveryIdToString( $deliveryId );
@@ -186,12 +186,18 @@ sub templateFileName( $;$ )
   if( $tmpl ) {
     my $tmplFile = lc $tmpl . ".tmpl";
     my @p = ($Hermes::Config::HerminatorDir, "notifications");
-    my $path = File::Spec->catfile( @p, $tmplFile );
+    
     if( $deliveryString ) {
-      $path = File::Spec->catfile( (@p, $deliveryString), $tmplFile );
-      log('info', "Returning specialised delivery-Template <$path>" );
-      return $path if( -r $path );
+      my $path = File::Spec->catfile( (@p, $deliveryString), $tmplFile );
+      if( -r $path ) {
+	log('info', "Returning specialised delivery-Template <$path>" );
+	return $path;
+      } else {
+        log( 'info', "No specialised template file found for $deliveryString" );
+      }
     }
+    my $path = File::Spec->catfile( @p, $tmplFile );
+    log('info', "Template path is <$path>" );
     return  $path;
   } else {
     return undef;
