@@ -6,11 +6,11 @@ State of <TMPL_VAR NAME="type">-request #<TMPL_VAR NAME="id"> was changed by <TM
   <TMPL_VAR NAME="oldstate"> -> <TMPL_VAR NAME="state">
 
 Comment:
-
   <TMPL_VAR NAME="comment">
 
-<TMPL_IF NAME="sourceproject">
-Source 
+https://build.opensuse.org/request/diff/<TMPL_VAR NAME="id">
+
+<TMPL_IF NAME="sourceproject">Source 
   project:  <TMPL_VAR NAME="sourceproject">
   package:  <TMPL_VAR NAME="sourcepackage">
 <TMPL_IF NAME="sourcerevision">  revision: <TMPL_VAR NAME="sourcerevision"></TMPL_IF>
@@ -19,3 +19,7 @@ Target:
   project: <TMPL_VAR NAME="targetproject">
   package: <TMPL_VAR NAME="targetpackage">
 </TMPL_IF>
+
+-- 
+Hermes messaging (http://hermes.opensuse.org)
+openSUSE Build Service (https://build.opensuse.org/)
