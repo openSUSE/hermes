@@ -1,6 +1,6 @@
 class MessagesController < ApplicationController
 
-  skip_before_filter :authenticate, :only => ["show"]
+  skip_before_filter :require_auth, :only => ["show"]
 
   # Shows all messages from all feeds the current user is subscribed to
   def index

@@ -1,7 +1,7 @@
 require 'ichain_auth'
 
 class AccountController < ApplicationController
-  skip_before_filter :authenticate, :set_return_to 
+  skip_before_filter :require_auth, :set_return_to
 
   def login
     if ICHAIN_MODE.to_s == 'on' || ICHAIN_MODE.to_s == 'simulate'
