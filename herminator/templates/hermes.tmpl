@@ -10,21 +10,24 @@
 </head>
 
 <body>
-
-<ul id="Navigation">
+<form>
+<div id="navcontainer">
+<ul>
   <li><a href="index.cgi">Overview</a></li>
   <li><a href="index.cgi?rm=doc">Documentation</a></li>
-  <li><a href="index.cgi?rm=type">Notification Types</a></li>
   <li>
-    <p><TMPL_VAR NAME="ExtraContent"></p>
+  <select onChange="location.href=this.options[this.selectedIndex].value">
+   <TMPL_VAR NAME="NotiTypeLinks">
+  </select>
   </li>
+  <li>&nbsp; &nbsp; &nbsp;</lI>
+  <li>Hello <TMPL_VAR NAME="user">
+  <TMPL_IF NAME="isAdmin"> (Administrator)</TMPL_IF></li>
 </ul>
-
+</div>
+</form>
 
 <div id="Inhalt">
-  <p id="top">Hello <TMPL_VAR NAME="user">
-  <TMPL_IF NAME="isAdmin"> (Administrator)</TMPL_IF>
-  </p>
   <h1><TMPL_VAR NAME=Header></h1>
   <TMPL_VAR NAME=Content>
 </div>

@@ -44,6 +44,7 @@ sub setup {
   my $self = shift;
   $self->start_mode('hello');
   $self->run_modes(
+
 		   'ajaxupdate'   => 'ajaxUpdate',
 		   'post'         => 'postMessage',
 		   'notify'       => 'postNotification',
@@ -58,7 +59,7 @@ sub setup {
   $self->mode_param( 'rm' );
 
   $htmlTmpl = $self->load_tmpl( 'hermes.tmpl',
-				die_on_bad_params => 1,
+				die_on_bad_params => 0,
 				cache => 1 );
 }
 
@@ -153,6 +154,10 @@ sub initFrame( $ )
   $htmlTmpl->param( Header => $header );
   $htmlTmpl->param( isAdmin => $isAdmin{ $user } || 0 );
   $htmlTmpl->param( User => $user );
+
+  my ($list, $firstType) = templateTypeList();
+  $htmlTmpl->param( NotiTypeLinks => $list );
+
 }
 
 sub sayHello
@@ -163,7 +168,7 @@ sub sayHello
   my $q = $self->query();
   initFrame( "Welcome to Hermes" );
 
-  my $detailTmpl = $self->load_tmpl( 'info.tmpl', die_on_bad_params => 1, cache => 0 );
+  my $detailTmpl = $self->load_tmpl( 'info.tmpl', die_on_bad_params => 0, cache => 0 );
 
   my $msgList = latestNMessages(10);
   my $notiList = latestNRawNotifications( 25 );
@@ -282,9 +287,6 @@ sub subscriptions()
   my $q = $self->query();
   my $type = $q->param('person');
   my @msg_types = $q->param('types');
-  
-  
-  
 }
 
 sub httpTestInput()
@@ -367,10 +369,7 @@ sub editType()
   my $tmpl = $self->load_tmpl( 'edittype.tmpl',
 			       die_on_bad_params => 0,
 			       cache => 1 );
-
-  my ($list, $firstType) = templateTypeList();
-  $htmlTmpl->param( ExtraContent => $list );
-
+  my ($list, $firstType) = templateTypeList( $type );
   $type = $firstType unless( $type );
 
   my $status;
@@ -452,6 +451,9 @@ sub editType()
   }
   $tmpl->param( status => $status );
   initFrame( "Hermes Notification Type <i>$type</i>" );
+
+  $htmlTmpl->param( NotiTypeLinks => $list );
+
   $htmlTmpl->param( Content => $tmpl->output );
 
   return $htmlTmpl->output;
@@ -554,27 +556,30 @@ sub ajaxUpdate
   return "$value";
 }
 
-sub templateTypeList()
+sub templateTypeList(;$)
 {
+  my ($selected) = @_;
+
   my @types;
   my $sql = "SELECT msgtype FROM msg_types ORDER by msgtype";
   my $typesRef = dbh()->selectcol_arrayref( $sql );
 
-  my $res = "<p>Message Types:</p><ul>\n";
-
+  my $res = ""; #  = "<p>Message Types:</p><ul>\n";
+  unless( $selected ) {
+    $res = "<option selected value=\"index.cgi\"> -- Pick a Notification Type --</option>";
+  }
   my $firstType = @$typesRef[0];
+
   foreach my $t ( @$typesRef ) {
     my $dipType = $t;
 
-    if( length( $dipType ) > 22 ) {
-      $dipType = "..." . substr( $dipType, -22 );
-    }
-    my $oneEntry;
-    $oneEntry = "<li title=\"$t\"><a href=\"index.cgi?rm=type&type=$t\">$dipType</a></li>";
+    my $oneEntry = "<option";
+    
+    $oneEntry .= " selected" if( $selected && $selected eq $dipType );
+    $oneEntry .= " value=\"index.cgi?rm=type&type=$t\">$dipType</option>";
+
     $res .= $oneEntry;
   }
-  $res .= "</ul>\n";
-
   return ($res, $firstType) ;
 }
 
