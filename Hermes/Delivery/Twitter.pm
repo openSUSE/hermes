@@ -24,7 +24,8 @@ package Hermes::Delivery::Twitter;
 use strict;
 use Exporter;
 use Net::Twitter;
-use Dumpvalue;
+use Data::Dumper;
+use Time::HiRes qw( gettimeofday tv_interval );
 
 use vars qw(@ISA @EXPORT);
 
@@ -43,26 +44,23 @@ sub tweet( $$$ )
 {
   my ($user, $pwd, $text) = @_;
 
+  my $t0 = [gettimeofday];
 
   unless( $user && $pwd && $Hermes::Config::DeliverTwitter ) {
     log( 'info', "Hermes-User: $user" );
     log( 'info', "Hermes DeliverTwitter-Switch: " . $Hermes::Config::DeliverTwitter || "not set!" );
   }
   my $twit = Net::Twitter->new( { username => $user,
-				  password => $pwd } );
-
+				  password => $pwd,
+				  useragent => 'Hermes Twitter Agent' } );
+  my $elapsed = tv_interval ($t0);
+  log 'info', "Time to create Twitter-Object: $elapsed sec.\n";
+  
   if( ! $twit ) {
     log( 'info', "Hermes Twitter-Error: $!" );
     return 0;
   }
 
-  if( $twit->verify_credentials() ) {
-    log('info', "Twitter login ok" );
-  } else {
-    log( 'info', "Twitter login failed" );
-    $twit->end_session();
-    return 0;
-  }
   # Set twitter status.
   my $tweet = $twit->update( $text );
   if( !$tweet ){
@@ -70,13 +68,17 @@ sub tweet( $$$ )
     $twit->end_session();
     return 0;
   }
+  $elapsed = tv_interval ($t0);
+  log 'info', "Time to update: $elapsed sec.\n";
 
-  log( 'info', "Tweet-ID: ", $tweet->{id} );
-  my $dumper = new Dumpvalue;;
-  my $dump = $dumper->stringify(\\$tweet);
-  log( 'info', "Tweet-Dump: " . $dump );
+  log( 'info', "Tweet-ID: ". $tweet->{id} );
+
+  # log('info', Dumper( $tweet ) );
+
   # Logout
   $twit->end_session();
+  $elapsed = tv_interval ($t0);
+  log 'info', "Time to end the session: $elapsed sec.\n";
 
   1;
 }

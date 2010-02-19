@@ -31,6 +31,7 @@ function update_filter_params(html) {
     <td><b>Message Type: </b></td>
     <td><b>Digest mode: </b></td>
     <td><b>Delivery mode: </b></td>
+    <td> </td>
     </tr>
     <tr>
     <td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id', 'type_desc') %></td>
@@ -43,6 +44,7 @@ function update_filter_params(html) {
                           page << "get_valid_params();"
                         end %></td>
     </tr>
+    <tr><td colspan="4"><b>Description:</b> <%= f.text_field :description, :size => 40 %></td></tr>
   </table>
   <hr/>
   

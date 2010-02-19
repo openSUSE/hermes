@@ -22,6 +22,9 @@ Dependencies:
    Net::Jabber              perl-Net-Jabber
    MIME::Lite               perl-MIME-Lite
    XML::RSS                 -no openSUSE package yet-
+   Net::Twitter             perl-Net-Twitter
+   JSON::DWIW               perl-JSON-DWIW
+   JSON::Any                perl-JSON-Any
 
 The Hermes Server Herminator
 ============================
