@@ -1,5 +1,5 @@
 class FeedsController < ApplicationController
-  skip_before_filter :authenticate, :only => ["show", "index", "person"]
+  skip_before_filter :require_auth, :only => ["show", "index", "person"]
 
   
   # person feed for one user which is a merger of all his feed subscriptions 

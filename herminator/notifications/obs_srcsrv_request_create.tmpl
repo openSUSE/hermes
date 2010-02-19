@@ -2,13 +2,10 @@
 <TMPL_IF NAME="sourceproject">
    <TMPL_VAR NAME="sourceproject">/<TMPL_VAR NAME="sourcepackage"> -> <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
 
-   https://build.opensuse.org/package/show?package=<TMPL_VAR NAME="sourcepackage">&project=<TMPL_VAR NAME="sourceproject">
-   https://build.opensuse.org/package/show?package=<TMPL_VAR NAME="targetpackage">&project=<TMPL_VAR NAME="targetproject">
+   https://build.opensuse.org/request/diff/<TMPL_VAR NAME="id">
 <TMPL_IF NAME="description">
    Description: <TMPL_VAR NAME="description"></TMPL_IF>
-<TMPL_IF NAME="sourcerevision">
-   Source revision md5: <TMPL_VAR NAME="sourcerevision">
-</TMPL_IF>
+
 To REVIEW against the previous version:
    osc request show --diff <TMPL_VAR NAME="id">
 

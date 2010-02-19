@@ -48,7 +48,8 @@ class SubscriptionsController < ApplicationController
         # set the parameter_id of the _special filter
         params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
         logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
-        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => SubscriptionFilter.replaced_filterstring(params["filter_value_#{counter}"], user.stringid) )
+        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],
+          :filterstring => SubscriptionFilter.replaced_filterstring(params["filter_value_#{counter}"], user.stringid) )
       }
       if sub.save
         redirect_to_index()

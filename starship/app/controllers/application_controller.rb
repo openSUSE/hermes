@@ -5,10 +5,17 @@ require 'ichain_auth'
 
 class ApplicationController < ActionController::Base
   helper :all # include all helpers, all the time
-  before_filter :set_return_to, :authenticate
+  before_filter :set_return_to, :authenticate, :require_auth
 
   $OPERATORS = %w{ oneof containsitem regexp special }
-  
+
+  def require_auth
+    unless session[:userid]
+      session[:return_to] = request.request_uri
+      redirect_to :controller => 'account', :action => 'login'
+    end
+  end
+
   def authenticate
     if ICHAIN_MODE.to_s == 'on' || ICHAIN_MODE.to_s == 'simulate'
       login_via_ichain
@@ -45,19 +52,10 @@ class ApplicationController < ActionController::Base
         end
       end
     end
-
-    unless session[:userid]
-      # if we still do not have a user in the session it's time to redirect.
-      session[:return_to] = request.request_uri
-      redirect_to :controller => 'account', :action => 'login'
-      return
-    end
   end
 
 
-
   def login_via_ichain
-
     user = Hash.new
     # :ICHAIN_MODE is set in config/environments/development.rb
     if ICHAIN_MODE.to_s == 'simulate'
@@ -66,7 +64,6 @@ class ApplicationController < ActionController::Base
       user['firstname'] = "Hans Peter"
       user['lastname'] = "Dynamit"
       user['real_name'] = "Hans Peter Dynamit"
-
       logger.debug("iChain debug mode, using static user #{user['username']} (#{user['email']})")
     else
       user = IChainAuth.authorize(request.env)
@@ -81,10 +78,6 @@ class ApplicationController < ActionController::Base
       @loggedin_user.name = user['realname']
       @loggedin_user.save
       session[:userid] = @loggedin_user.id
-    else
-      session[:return_to] = request.request_uri
-      redirect_to :controller => 'account', :action => 'login'
-      return
     end
   end
 
