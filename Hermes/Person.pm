@@ -34,7 +34,7 @@ use Data::Dumper;
 use vars qw( @ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( personInfo createSubscription createPerson );
+@EXPORT	    = qw( personInfo createSubscription createPerson subscriptions);
 
 #
 # This sub returns a hash ref that contains some information about
@@ -112,6 +112,24 @@ sub createSubscription( $$$;$ )
     log( 'info', "Not enough information here!" );
   }
   return $id;
+}
+
+sub subscriptions( $ )
+{
+  my ( $person ) = @_;
+  my $subsinfoRef;
+
+  my $userInfo = personInfo( $person ); # Get the hermes user info
+  if( $userInfo->{id} ) {
+    my $sql = "select mt.msgtype, s.delay_id, s.delivery_id from subscriptions s,";
+    $sql .= "msg_types mt where s.person_id=? AND s.enabled = 1 AND s.msg_type_id = mt.id";
+    my $sth = dbh()->prepare( $sql );
+    $sth->execute( $userInfo->{id} );
+
+    $subsinfoRef = $sth->fetchall_arrayref({});
+    print Dumper $subsinfoRef;
+  }
+  return $subsinfoRef;
 }
 
 sub createPerson( $$$ )
