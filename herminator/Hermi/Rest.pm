@@ -52,7 +52,8 @@ sub setup {
 		   'type'         => 'editType',
 		   'httptest'     => 'httpTest',
 		   'posthttptest' => 'httpTestInput',
-		   'subscribe'    => 'subscribePerson'
+		   'subscribe'    => 'subscribePerson',
+		   'subscriptions'=> 'subscriptions'
 		  );
   $self->mode_param( 'rm' );
 
@@ -271,6 +272,18 @@ sub subscribePerson()
   my $type = $q->param('person');
   
   log( 'info', "subscribePerson: Not yet implemented!" );
+  
+}
+
+sub subscriptions()
+{
+  my $self = shift;
+  
+  my $q = $self->query();
+  my $type = $q->param('person');
+  my @msg_types = $q->param('types');
+  
+  
   
 }
 
