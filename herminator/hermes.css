@@ -2,61 +2,48 @@ body {
   color: black; background-color: white;
   font-size: 100.01%;
   font-family: Helvetica,Arial,sans-serif;
-  margin: 0; padding: 1em;
-  background-image: url(images/hermes_toplogo.png);
+  margin: 0; 
+  padding: 3px;
+}
+
+#navcontainer
+{
+  background-image: url(images/hermes_toplogo2.png);
   background-repeat: no-repeat;
+  margin:0;
+  padding:0;
+  height: 86px;
 }
 
-ul#Navigation {
-  font-size: 0.91em;
-  float: left; width: 14em;
-  margin: 0; 
-  padding: 0;
-  padding-top:90px;
-  border: 1px dashed #8c0000;
-}
+#navcontainer ul
+{
+  padding: 52px 0px 12px 170px;
+  border-bottom: 1px dotted;
 
 
-ul#Navigation li {
-  list-style: none;
-  margin: 0; padding: 0.5em;
+list-style-type: none;
 }
 
-ul#Navigation ul {
-  font-size: 0.8em;
-  margin: 0; 
-  padding: 0 0 0 5px;
+#navcontainer ul li { display: inline; }
+
+#navcontainer ul li a
+{
+text-decoration: none;
+padding: .2em 1em;
+color: #fff;
+background-color: #036;
 }
 
-ul#Navigation li li {
-  list-style: none;
-  margin: 0; padding: 1px;
+#navcontainer ul li a:hover
+{
+color: #fff;
+background-color: #369;
 }
 
-ul#Navigation a {
-  display: block;
-  padding: 0.2em;
-  font-weight: bold;
-}
-
-ul#Navigation a:link {
-  color: black; background-color: #eee;
-}
-
-ul#Navigation a:visited {
-  color: #666; background-color: #eee;
-}
-
-ul#Navigation a:hover {
-  color: black; background-color: white;
-}
-
-ul#Navigation a:active {
-  color: white; background-color: gray;
-}
 
 div#Inhalt {
-  margin-left: 14em;
+  margin-left: 1em;
+  margin-top: 2em;
   padding: 0em 0em 0em 0em;
   /* border: 1px dashed silver; */
   min-width: 16em; /* Mindestbreite (der Ueberschrift) verhindert Anzeigefehler in modernen Browsern */
