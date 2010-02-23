@@ -20,7 +20,7 @@ class SubscriptionsController < ApplicationController
     @subscribedMsgs = @person.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
     #@latestMsgs = @person.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
   
-    @avail_types = MsgType.find(:all)
+    @avail_types = MsgType.find(:all, :order => 'description, msgtype DESC')
     @avail_deliveries = valid_deliveries
     @avail_delays = Delay.find(:all)
   
