@@ -44,7 +44,17 @@ background-color: #369;
 div#Inhalt {
   margin-left: 1em;
   margin-top: 2em;
+  margin-bottom: 1em;
   padding: 0em 0em 0em 0em;
+  /* border: 1px dashed silver; */
+  min-width: 16em; /* Mindestbreite (der Ueberschrift) verhindert Anzeigefehler in modernen Browsern */
+  border-bottom: 1px dotted;
+}
+
+div#Footer {
+  margin-left: 1em;
+  margin-top: 1em;
+  padding: 0em 0em 0em 1em;
   /* border: 1px dashed silver; */
   min-width: 16em; /* Mindestbreite (der Ueberschrift) verhindert Anzeigefehler in modernen Browsern */
 }

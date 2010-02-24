@@ -36,7 +36,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( notificationTemplateDetails notificationDetails templateFileName 
-		  parameterId delayStringToValue 
+		  parameterId delayIdToString delayStringToValue 
 		  SendNow SendMinutely SendHourly SendDaily SendWeekly SendMonthly
 	          deliveryStringToId deliveryIdToString deliveryAttribs 
 		  typeIdToString uniteArray );
@@ -222,6 +222,21 @@ sub delayStringToValue( $ )
     return SendMonthly();
   }
   return SendNow(); # Default
+}
+
+sub delayIdToString( $  )
+{
+  my ($id) = @_;
+  return "unknown" unless ( $id );
+  loadDelays() unless( keys %delayHash );
+
+  foreach my $str ( keys %delayHash ) {
+    # Note: the numeric operator == is intentional here, the hash value
+    # is really numeric, its the id in the database.
+    if( $id == $delayHash{$str} ) {
+      return $str;
+    }
+  }
 }
 
 sub loadDelays()

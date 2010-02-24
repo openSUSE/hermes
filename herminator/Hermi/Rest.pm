@@ -32,6 +32,7 @@ use Hermes::Config;
 use Hermes::Log;
 use Hermes::Message;
 use Hermes::Statistics;
+use Hermes::Person;
 use Hermes::Util;
 use Hermes::DB;
 
@@ -44,7 +45,6 @@ sub setup {
   my $self = shift;
   $self->start_mode('hello');
   $self->run_modes(
-
 		   'ajaxupdate'   => 'ajaxUpdate',
 		   'post'         => 'postMessage',
 		   'notify'       => 'postNotification',
@@ -54,7 +54,7 @@ sub setup {
 		   'httptest'     => 'httpTest',
 		   'posthttptest' => 'httpTestInput',
 		   'subscribe'    => 'subscribePerson',
-		   'subscriptions'=> 'subscriptions'
+		   'subscriptions'=> 'userSubscriptions'
 		  );
   $self->mode_param( 'rm' );
 
@@ -272,21 +272,45 @@ sub postMessage {
 sub subscribePerson()
 {
   my $self = shift;
-  
+
   my $q = $self->query();
   my $type = $q->param('person');
-  
+
   log( 'info', "subscribePerson: Not yet implemented!" );
-  
 }
 
-sub subscriptions()
+sub userSubscriptions()
 {
   my $self = shift;
-  
+
   my $q = $self->query();
-  my $type = $q->param('person');
+  my $person = $q->param('person');
   my @msg_types = $q->param('types');
+
+  my @subsList;
+  if( $person ) {
+    my $subsList = subscriptions( $person );
+    foreach my $subsHashRef ( @$subsList ) {
+      my %resHash;
+      $resHash{delivery} = deliveryIdToString( $subsHashRef->{delivery_id} );
+      $resHash{delay}    = delayIdToString( $subsHashRef->{delay_id} );
+      $resHash{msgtype}  = $subsHashRef->{msgtype};
+      push @subsList, \%resHash;
+    }
+  }
+
+  my $subsTmpl = $self->load_tmpl( 'subscriptions.tmpl',
+				   die_on_bad_params => 0,
+				   cache => 1 );
+  initFrame( "Hermes User Subscriptions" );
+  $subsTmpl->param( person => $person || "<no person>" );
+  $subsTmpl->param( subscriptions => \@subsList );
+
+  $htmlTmpl->param( Content => $subsTmpl->output );
+
+  # print STDERR $self->dump();
+
+  return $htmlTmpl->output;
 }
 
 sub httpTestInput()
