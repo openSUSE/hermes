@@ -127,7 +127,6 @@ sub subscriptions( $ )
     $sth->execute( $userInfo->{id} );
 
     $subsinfoRef = $sth->fetchall_arrayref({});
-    print Dumper $subsinfoRef;
   }
   return $subsinfoRef;
 }

@@ -1,0 +1,14 @@
+<h2>HTTP Delivery Test List</h2>
+<p>This is a quite meaningless list of notifications which were
+delivered by Hermes through the http delivery.</p>
+
+<TMPL_IF NAME="ErrorMsg">
+<p><TMPL_VAR NAME="ErrorMsg"></p>
+</TMPL_IF>
+
+<p>
+<TMPL_LOOP NAME="TestQueueLoop">
+<p>Incoming: <b><TMPL_VAR NAME="type"></b> at <TMPL_VAR NAME="time">
+</p>
+</TMPL_LOOP>
+</p>

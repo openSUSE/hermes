@@ -1,0 +1,22 @@
+<form action="index.cgi" method="get">
+  <input type="hidden" name="rm" value="subscriptions">
+  <p>Enter a username:&nbsp;<input name="person" type="text" size="30" maxlength="30">
+  <input type="submit" value=" Send ">
+  </p>
+</form>
+<br/>
+<p>
+  User <TMPL_VAR NAME="person"> is subscribed to the following messages:
+</p>
+
+<table>
+<tr><th>Notification Type</th><th>Delivery Type</th><th>Delay</th></tr>
+<TMPL_LOOP NAME="subscriptions">
+<tr>
+<td><TMPL_VAR NAME="msgtype"></td>
+<td><TMPL_VAR NAME="delivery"></td>
+<td><TMPL_VAR NAME="delay"></td>
+</tr>
+</TMPL_LOOP>
+</table>
+
