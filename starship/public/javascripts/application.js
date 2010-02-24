@@ -4,7 +4,7 @@
 //to save and restore filter values
 var old_operator_hash = new Hash();
 var old_value_hash = new Hash();
-var special_operator_values = new Array('_mypackages', '_mypackagesstrict', '_myprojects','_myrequests');
+var special_operator_values = new Array('_mypackages', '_mypackagesstrict', '_myprojects','_myrequests', '_packagebugowner');
 
   // removes filter and updates filter ids
   // last filter gets hidden to ensure there's always a filter to
