@@ -1,10 +1,10 @@
 @subject: [wiki <TMPL_VAR NAME="change_type">] <TMPL_VAR NAME="page"> updated by <TMPL_VAR NAME="author">
 The page <TMPL_VAR NAME="page"> was updated (<TMPL_VAR NAME="change_type">) by <TMPL_VAR NAME="author"> to revision <TMPL_VAR NAME="revision">.
 
-URL: <TMPL_VAR NAME="url"><TMPL_IF NAME="last_revision">?oldid=<TMPL_VAR NAME="revision"></TMPL_IF><TMPL_VAR NAME="last_revision">
+URL: <TMPL_VAR NAME="url"><TMPL_IF NAME="revision">?oldid=<TMPL_VAR NAME="revision"></TMPL_IF>
 Change type: <TMPL_VAR NAME="change_type">
 <TMPL_IF NAME="description">Comment: <TMPL_VAR NAME="log"></TMPL_IF>
-<TMPL_IF NAME="last_revision">Diff: <TMPL_VAR NAME="url">&diff=<TMPL_VAR NAME="revision">&oldid=<TMPL_VAR NAME="last_revision"></TMPL_IF>
+<TMPL_IF NAME="revision">Diff: <TMPL_VAR NAME="url">&diff=<TMPL_VAR NAME="revision">&oldid=<TMPL_VAR NAME="last_revision"></TMPL_IF>
 
 --
 openSUSE Hermes messaging (http://hermes.opensuse.org)
