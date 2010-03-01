@@ -21,7 +21,7 @@
 #
 package Hermi::Rest;
 
-use Data::Dumper;
+use XML::Simple qw(XMLout);
 
 use strict;
 
@@ -287,26 +287,43 @@ sub userSubscriptions()
   my $person = $q->param('person');
   my @msg_types = $q->param('types');
 
+  my $wantXML = undef;
+  if( $q->param('contenttype') eq "text/xml" ) {
+    $wantXML = 1;
+  }
+
   my @subsList;
   if( $person ) {
     my $subsList = subscriptions( $person );
     foreach my $subsHashRef ( @$subsList ) {
       my %resHash;
-      $resHash{delivery} = deliveryIdToString( $subsHashRef->{delivery_id} );
-      $resHash{delay}    = delayIdToString( $subsHashRef->{delay_id} );
-      $resHash{msgtype}  = $subsHashRef->{msgtype};
+      if( $wantXML ) {
+	$resHash{delivery} = [ deliveryIdToString( $subsHashRef->{delivery_id} ) ];
+	$resHash{delay}    = [ delayIdToString( $subsHashRef->{delay_id} ) ];
+	$resHash{msgtype}  = [ $subsHashRef->{msgtype} ];
+      } else {
+	$resHash{delivery} = deliveryIdToString( $subsHashRef->{delivery_id} );
+	$resHash{delay}    = delayIdToString( $subsHashRef->{delay_id} );
+	$resHash{msgtype}  = $subsHashRef->{msgtype};
+      }
       push @subsList, \%resHash;
     }
   }
 
-  my $subsTmpl = $self->load_tmpl( 'subscriptions.tmpl',
-				   die_on_bad_params => 0,
-				   cache => 1 );
-  initFrame( "Hermes User Subscriptions" );
-  $subsTmpl->param( person => $person || "<no person>" );
-  $subsTmpl->param( subscriptions => \@subsList );
+  if( $wantXML ) {
+    return XMLout( { subs => \@subsList, person => $person }, RootName => "subscriptions", 
+		   XMLDecl => 1 );
+  } else {
+    # html output
+    my $subsTmpl = $self->load_tmpl( 'subscriptions.tmpl',
+				     die_on_bad_params => 0,
+				     cache => 1 );
+    initFrame( "Hermes User Subscriptions" );
+    $subsTmpl->param( person => $person || "<no person>" );
+    $subsTmpl->param( subscriptions => \@subsList );
 
-  $htmlTmpl->param( Content => $subsTmpl->output );
+    $htmlTmpl->param( Content => $subsTmpl->output );
+  } 
 
   # print STDERR $self->dump();
 
