@@ -2,14 +2,13 @@
 #
 # cleanup script for hermes database
 #
-# removes notifications in 2 passes:
+# removes notifications in 3 passes:
 #
 # 1. remove every row from generated_notifications that was sent prior to 
 #    the date set by -d (default 7 days ago)
 # 2. remove every row from notification that has no corresponding
 #    notification_id in generated_notifications
-#
-# TODO: remove old messages from starship_messages
+# 3. remove old starship messages
 #
 
 require 'optparse'
@@ -17,6 +16,7 @@ require 'ostruct'
 
 options = OpenStruct.new
 options.days = 7
+options.starship_days = 30*4
 options.env = "development"
 options.slicelength = 10000
 
@@ -25,6 +25,10 @@ OptionParser.new do |opts|
 
   opts.on("-d", "--days N", "number of days to keep (default: #{options.days})") do |days|
     options.days = days
+  end
+
+  opts.on("-t", "--starshipdays N", "number of days to keep starship messages (default: #{options.starship_days})") do |days|
+    options.starship_days = days
   end
 
   opts.on("-e", "--env ENV", "rails environment to use (default: #{options.env})") do |env|
@@ -57,7 +61,7 @@ gen_not = GeneratedNotification.find :all, :select => :id, :conditions => ["sent
 gen_not.map! {|n| n.id}
 @gncount = 0
 
-puts "Deleting #{gen_not.length} generated notifications in blocks of #{slice_length}..."
+puts "Deleting #{gen_not.length} generated notifications older than #{delete_time} in blocks of #{slice_length}..."
 while( not (slice = gen_not.slice!(0,slice_length)).empty? )
   GeneratedNotification.delete slice
   @gncount += slice.length
@@ -79,11 +83,11 @@ END_SQL
 notifications.map! {|n| n.id}
 @ncount = @npcount = 0
 
-puts "Deleting #{notifications.length} raw notifications in blocks of #{slice_length}..."
+puts "Deleting #{notifications.length} raw notifications older than #{delete_time} in blocks of #{slice_length}..."
 while( not (slice = notifications.slice!(0,slice_length)).empty? )
   Notification.delete slice
   @ncount += slice.length
-  print "  #@ncount raw notifications deleted, #{notifications.length} remaining. Deleting parameters... "
+  print "  #@ncount raw notifications deleted, #{notifications.length} remaining. Deleting notification parameters... "
   STDOUT.flush
   nc = NotificationParameter.delete_all :notification_id => slice
   @npcount += nc
@@ -92,12 +96,30 @@ end
 
 puts "#@ncount raw notifications with #@npcount parameters deleted.\n\n"
 
+####
+# 3. Delete all StarshipMessages that exceed the maximum age
+
+delete_time = Time.now - options.starship_days.to_i*60*60*24
+gen_not = StarshipMessage.find :all, :select => :id, :conditions => ["created < ? ", delete_time]
+gen_not.map! {|n| n.id}
+@gncount = 0
+
+puts "Deleting #{gen_not.length} starship messages older than #{delete_time} in blocks of #{slice_length}..."
+while( not (slice = gen_not.slice!(0,slice_length)).empty? )
+  StarshipMessage.delete slice
+  @gncount += slice.length
+  puts " #@gncount starship messages deleted, #{gen_not.length} remaining."
+end
+
+
 puts "\nOptimizing tables..."
 ActiveRecord::Base.connection.execute "OPTIMIZE TABLE notifications"
 puts "  notifications optimized."
 ActiveRecord::Base.connection.execute "OPTIMIZE TABLE notification_parameters"
 puts "  notification_parameters optimized."
 ActiveRecord::Base.connection.execute "OPTIMIZE TABLE generated_notifications"
-puts "  messages optimized."
+puts "  generated_notifications optimized."
+ActiveRecord::Base.connection.execute "OPTIMIZE TABLE starship_messages"
+puts "  starship_messages optimized."
 puts "done."
 end
