@@ -292,6 +292,7 @@ sub userSubscriptions()
     my $subsList = subscriptions( $person );
     foreach my $subsHashRef ( @$subsList ) {
       my %resHash;
+      $resHash{id}       = $subsHashRef->{id};
       $resHash{delivery} = deliveryIdToString( $subsHashRef->{delivery_id} );
       $resHash{delay}    = delayIdToString( $subsHashRef->{delay_id} );
       $resHash{msgtype}  = $subsHashRef->{msgtype};
