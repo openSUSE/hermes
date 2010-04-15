@@ -121,15 +121,17 @@ sub subscriptions( $ )
 
   my $userInfo = personInfo( $person ); # Get the hermes user info
   if( $userInfo->{id} ) {
-    my $sql = "select mt.msgtype, s.delay_id, s.delivery_id from subscriptions s,";
+    my $sql = "SELECT mt.msgtype, s.delay_id, s.delivery_id FROM subscriptions s,";
     $sql .= "msg_types mt where s.person_id=? AND s.enabled = 1 AND s.msg_type_id = mt.id";
     my $sth = dbh()->prepare( $sql );
     $sth->execute( $userInfo->{id} );
 
     $subsinfoRef = $sth->fetchall_arrayref({});
   }
+  # FIXME: Add filters to this 
   return $subsinfoRef;
 }
+
 
 sub createPerson( $$$ )
 {
