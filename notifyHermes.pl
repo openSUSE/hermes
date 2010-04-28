@@ -27,6 +27,7 @@ use strict;
 use Getopt::Std;
 
 use Hermes::Message;
+use Hermes::Log;
 
 use vars qw ( $opt_o $opt_h $opt_r );
 
@@ -77,6 +78,7 @@ my ($type) = @ARGV;
 
 help() if( $opt_h );
 setLogFileName('notifyHermes');
+
 my %params;
 
 if( $opt_o ) {
