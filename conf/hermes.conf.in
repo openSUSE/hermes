@@ -57,6 +57,10 @@ $WorkerInitJabber = 0;
 # in the database
 $DeliverTwitter = 1;
 
+# Debug Twitter - set to non zero to debug twitter. The twitter sending
+# routine is called but does not do anything but returning a valid id.
+$DebugTwitter = 0;
+
 #
 # OBS API Connection
 $OBSAPIBase = "http://api.opensuse.org";
