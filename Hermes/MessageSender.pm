@@ -186,10 +186,11 @@ sub sendMessageDigest($;)
     } else {
       # all parameters are still fine, we continue to collect gen_notification details
     }
-
+    # query the parameter hash
+    my $paramHash = getGeneratedNotificationParameters( $notiId );
     # render the message and get the digest text out.
     $renderedRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
-				  $delayId, $deliveryId );
+				  $delayId, $deliveryId, $paramHash );
     unless( $renderedRef->{body} ) {
       log( 'error', "Message without body is sad..." );
       next;
@@ -270,8 +271,7 @@ sub deliverMessage( $$ )
       log( 'debug', "Unable to send Jabber at the moment!" );
       $res = 1;
     } elsif( $deliveryString =~ /RSS/i ) {
-      my $r = sendRSS( $msgRef );
-      $res = 1 if( $r && $r > 0 );
+      $res = sendRSS( $msgRef ); # $res contains the id in the starship table
     } elsif( $deliveryString =~/HTTP/i ) {
       my $attribRef = deliveryAttribs( $delivery );
       my $url;
@@ -307,32 +307,30 @@ sub getGeneratedNotificationParameters( $ )
   $sql .= "LEFT JOIN notification_parameters np ON( n.id=np.notification_id) ";
   $sql .= "LEFT JOIN parameters p ON (np.parameter_id=p.id) ";
   $sql .= "JOIN msg_types mt ON(mt.id=n.msg_type_id) WHERE n.id=?";
-  
+
   my $sth = dbh()->prepare( $sql );
   $sth->execute( $notiId );
   my %paramHash;
-  my $sender;
-  my $type;
   while( my( $s, $mt, $paraName, $paraValue) = $sth->fetchrow_array()) {
 
     if( $paraName ) {
       $paramHash{$paraName} = $paraValue || "";
     }
-    $sender = $s unless( $sender );
-    $type = $mt unless( $type );
+    $paramHash{_from} = $s unless $paramHash{_from};
+    $paramHash{_type} = $mt unless $paramHash{_type};
   }
 
-  $sender = $Hermes::Config::DefaultSender unless( $sender );
-  return ($sender, $type, \%paramHash );
+  $paramHash{_from} = $Hermes::Config::DefaultSender unless( $paramHash{_from} );
+  return \%paramHash;
 }
 
-sub renderMessage( $$$$$$ )
+sub renderMessage( $$$$$$$ )
 {
-  my ($msgTypeId, $notiId, $subscriptId, $personId, $delayId, $deliveryId) = @_;
+  my ($msgTypeId, $notiId, $subscriptId, $personId, $delayId, $deliveryId, $paramHash ) = @_;
 
   # for the moment we render all delivery- and delay types same way.
 
-  my ($sender, $type, $paramHash) = getGeneratedNotificationParameters( $notiId );
+  my $type = $paramHash->{_type} || "unknown type";
 
   my $text;
   my $subject;
@@ -369,13 +367,14 @@ sub renderMessage( $$$$$$ )
 
   return { _notiId      => $notiId,
 	   _subscriptId => $subscriptId,
-	   from         => $sender,
+	   _from        => $paramHash->{_from},
+	   from         => $paramHash->{_from}, # for compat reasons.
 	   to           => [$personId],
 	   cc           => [],
 	   bcc          => [],
 	   type         => $type,
            _msgTypeId   => $msgTypeId,
-	   replyto      => $sender,
+	   replyto      => $paramHash->{_from},
 	   subject      => $subject,
 	   body         => $text,
 	   _debug       => $Hermes::Config::Debug };
@@ -418,8 +417,25 @@ sub sendImmediateMessages(;$)
 
   while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId,
 	     $personId, $delayId, $deliveryId ) = $query->fetchrow_array() ) {
-    my $renderedMsgRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
-					$delayId, $deliveryId );
+
+    my $renderedMsgRef;
+    my $paramHash = getGeneratedNotificationParameters( $notiId );
+    my $sender = $paramHash->{_from};
+    my $type = $paramHash->{_type};
+
+    # Check if this message should be kept in starship for reference 
+    my $attribs = deliveryAttribs( $deliveryId );
+    if( $attribs->{keepMsgInStarship} ) {
+      my $starshipDelivery = $attribs->{keepMsgInStarship};
+      $renderedMsgRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
+				       $delayId, $starshipDelivery, $paramHash );
+      my $starship_id = deliverMessage( $starshipDelivery, $renderedMsgRef );
+      log( 'info', "Starship-Message generated: $starship_id" );
+      $paramHash->{_starshipId} = $starship_id;
+    }
+
+    $renderedMsgRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
+				     $delayId, $deliveryId, $paramHash );
 
     if( deliverMessage( $deliveryId, $renderedMsgRef ) ) {
       # Successfully sent!
@@ -427,6 +443,9 @@ sub sendImmediateMessages(;$)
       $cnt ++;
       # log( 'info', "Successfully sent generated notification <$genNotiId>: ". 
       #  	   Dumper( $renderedMsgRef ) );
+    } else {
+      # FIXME: In case the second renderMessage went wrong, the starship-Message
+      # needs to be wiped out.
     }
   }
   return $cnt;

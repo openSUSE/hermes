@@ -46,18 +46,27 @@ sub tweet( $$$ )
 
   my $t0 = [gettimeofday];
 
-  unless( $user && $pwd && $Hermes::Config::DeliverTwitter ) {
-    log( 'info', "Hermes-User: $user" );
-    log( 'info', "Hermes DeliverTwitter-Switch: " . $Hermes::Config::DeliverTwitter || "not set!" );
+  unless( $user && $pwd ) {
+    log( 'info', "Error: No password or user for twitter: Twitter-User: $user" );
+    return 0;
   }
+  if( $Hermes::Config::DebugTwitter ) {
+    log( 'info', "DeliverTwitter-Debug-Switch set, returning id 14 but do not send!" );
+    return 14;
+  }
+
   my $twit = Net::Twitter->new( { username => $user,
-				  password => $pwd,
-				  useragent => 'Hermes Twitter Agent' } );
+				  password => $pwd } );
+				  # useragent => 'Hermes Twitter Agent' } );
   my $elapsed = tv_interval ($t0);
   log 'info', "Time to create Twitter-Object: $elapsed sec.\n";
-  
+
   if( ! $twit ) {
     log( 'info', "Hermes Twitter-Error: $!" );
+    return 0;
+  }
+  if( ! $twit->verify_credentials() ) {
+    log( 'info', "Tweet failed: verify credentials failed: " . $twit->get_error() );
     return 0;
   }
 

@@ -44,20 +44,39 @@ use Exporter;
 use Hermes::Config;
 use IO::Handle;
 
-use vars qw($VERSION @ISA @EXPORT $name $openChecked);
-
-($VERSION) = ' $Revision: 1.3 $ ' =~ /\$Revision:\s+([^\s]+)/;
+use vars qw(@ISA @EXPORT $name $openChecked $logFileName);
 
 @ISA	= qw(Exporter);
-@EXPORT	= qw(log _init);
+@EXPORT	= qw(log setLogFileName);
 
+
+sub setLogFileName($)
+{
+  my($f) = @_;
+  
+  $logFileName = $f;
+  $openChecked = 0;
+  HANDLE->close() if( HANDLE->opened() );
+  _init();
+}
 
 sub _init()
 {
   return if( $openChecked );
 
   my %params = %{$Hermes::Config::LOG{'params'}};
-  my $f = $params{'filename'};
+  my $f;
+  if( exists $params{'filename'} ) {
+    $f = $params{'filename'};
+  } else {
+    $logFileName = 'unspec' unless( defined $logFileName );
+    if( exists $params{'logpath'} ) {
+      $f = $params{'logpath'} . "/" . $logFileName . '.log';
+    } else {
+       print "Can not assemble log file name, please check configuration $logFileName !\n";
+    }
+  }
+
   $name = $params{'name' };
 
   if( $f && open HANDLE, ">>$f" ) {

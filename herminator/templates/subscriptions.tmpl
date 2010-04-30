@@ -10,9 +10,10 @@
 </p>
 
 <table>
-<tr><th>Notification Type</th><th>Delivery Type</th><th>Delay</th></tr>
+<tr><th>Id</th><th>Notification Type</th><th>Delivery Type</th><th>Delay</th></tr>
 <TMPL_LOOP NAME="subscriptions">
 <tr>
+<td><TMPL_VAR NAME="id"></td>
 <td><TMPL_VAR NAME="msgtype"></td>
 <td><TMPL_VAR NAME="delivery"></td>
 <td><TMPL_VAR NAME="delay"></td>

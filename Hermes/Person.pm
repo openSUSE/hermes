@@ -34,11 +34,28 @@ use Data::Dumper;
 use vars qw( @ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( personInfo createSubscription createPerson subscriptions);
+@EXPORT	    = qw( personInfo personInfoByMail createSubscription removeSubscriptions createPerson subscriptions);
+
+
+sub fetchPersonInfo( $ )
+{
+  my ($sth) = @_;
+
+  my $personInfoRef = {};
+  if ( $sth ) {
+    $personInfoRef = $sth->fetchrow_hashref;
+
+    my $feeds = $personInfoRef->{stringid} || "unknown_hero";
+    # $feeds =~ s/[\.@]/_/g;
+    $personInfoRef->{feedPath} = $feeds;
+  }
+  return $personInfoRef;
+}
+>>>>>>> a534d49133cdade6c2445e169fc563b74d1d9c90
 
 #
-# This sub returns a hash ref that contains some information about
-# a person identified through the id
+# The following two subs return a hash ref that contains some 
+# information about a person identified through the id or mail.
 #
 # The following keys are set in the person desc hash:
 # - all columns from the database table persons
@@ -51,21 +68,31 @@ sub personInfo( $ )
   my $personInfoRef;
   my $sql = "SELECT * FROM persons WHERE stringid = ?";
 
-  if( $id && $id =~ /^\s*\d+\s*$/ ) {
+  if ( $id && $id =~ /^\s*\d+\s*$/ ) {
     $sql = "SELECT * FROM persons WHERE id=?";
   }
+
+  if ( $id ) {
+    my $sth = dbh()->prepare( $sql );
+    $sth->execute( $id );
+    return fetchPersonInfo( $sth );
+  }
+  return {};
+}
+
+sub personInfoByMail( $ )
+{
+  my ($id) = @_;
+
+  my $personInfoRef;
+  my $sql = "SELECT * FROM persons WHERE email= ?";
 
   if( $id ) {
     my $sth = dbh()->prepare( $sql );
     $sth->execute( $id );
-
-    $personInfoRef = $sth->fetchrow_hashref;
-
-    my $feeds = $personInfoRef->{stringid} || "unknown_hero";
-    # $feeds =~ s/[\.@]/_/g;
-    $personInfoRef->{feedPath} = $feeds;
+    return fetchPersonInfo( $sth );
   }
-  return $personInfoRef;
+  return {};
 }
 
 sub createSubscription( $$$;$ )
@@ -114,6 +141,25 @@ sub createSubscription( $$$;$ )
   return $id;
 }
 
+sub removeSubscriptions
+{
+  my @subscriptionIds = @_;
+
+  my $sql = "DELETE FROM subscription_filters WHERE subscription_id=?";
+  my $sth_filters = dbh()->prepare( $sql );
+
+  my $sth_subscriptions = dbh()->prepare("DELETE FROM subscriptions WHERE id=?");
+  my $sth_gennotis = dbh()->prepare("DELETE FROM generated_notifications WHERE subscription_id=?");
+
+  my $cnt = 0;
+  foreach my $subsId ( @subscriptionIds ) {
+    $cnt += $sth_filters->execute( $subsId );
+    $cnt += $sth_subscriptions->execute( $subsId );
+    $cnt += $sth_gennotis->execute( $subsId );
+  }
+  return $cnt;
+}
+
 sub subscriptions( $ )
 {
   my ( $person ) = @_;
@@ -121,17 +167,16 @@ sub subscriptions( $ )
 
   my $userInfo = personInfo( $person ); # Get the hermes user info
   if( $userInfo->{id} ) {
-    my $sql = "SELECT mt.msgtype, s.delay_id, s.delivery_id FROM subscriptions s,";
+    my $sql = "select mt.msgtype, s.delay_id, s.delivery_id, s.id from subscriptions s,";
     $sql .= "msg_types mt where s.person_id=? AND s.enabled = 1 AND s.msg_type_id = mt.id";
     my $sth = dbh()->prepare( $sql );
     $sth->execute( $userInfo->{id} );
 
     $subsinfoRef = $sth->fetchall_arrayref({});
   }
-  # FIXME: Add filters to this 
+  # FIXME: handle filters
   return $subsinfoRef;
 }
-
 
 sub createPerson( $$$ )
 {

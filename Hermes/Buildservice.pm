@@ -136,7 +136,7 @@ sub applyFilter( $$ )
       return 0 unless $prj;
       return 0 unless $pkg;
 
-      log( 'info', "Checking user <$user> involved in pkg <$prj::$pkg>" );
+      log( 'info', "Checking user <$user> involved in pkg <$prj ::$pkg>" );
       my $userHashRef = usersOfPackage( $prj, $pkg );
       $res = 0 unless( userHasFunction( $userHashRef, $user, MAINTAINER_FLAG ) );
     } elsif( $filterRef->{string} eq "_packagebugowner" ) {
@@ -147,7 +147,7 @@ sub applyFilter( $$ )
       return 0 unless $prj;
       return 0 unless $pkg;
 
-      log( 'info', "Checking user <$user> is bugowner of <$prj::$pkg>" );
+      log( 'info', "Checking user <$user> is bugowner of <$prj ::$pkg>" );
       my $userHashRef = usersOfPackage( $prj, $pkg );
       $res = 0 unless( userHasFunction( $userHashRef, $user, BUGOWNER_FLAG ) );
     } elsif( $filterRef->{string} eq "_mypackagesstrict" ) {

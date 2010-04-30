@@ -302,6 +302,7 @@ sub userSubscriptions()
 	$resHash{delay}    = [ delayIdToString( $subsHashRef->{delay_id} ) ];
 	$resHash{msgtype}  = [ $subsHashRef->{msgtype} ];
       } else {
+	$resHash{id}       = $subsHashRef->{id};
 	$resHash{delivery} = deliveryIdToString( $subsHashRef->{delivery_id} );
 	$resHash{delay}    = delayIdToString( $subsHashRef->{delay_id} );
 	$resHash{msgtype}  = $subsHashRef->{msgtype};
@@ -623,5 +624,7 @@ sub templateTypeList(;$)
   }
   return ($res, $firstType) ;
 }
+
+setLogFileName('herminator');
 
 1;
