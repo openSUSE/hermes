@@ -18,6 +18,7 @@ module MessagesHelper
   def add_links(html)
     html.gsub!(/((http|ftp|https):\/\/[\S]+[^\s\.,)(\]])/im, '<a href="\1">\1</a>')
     html.gsub!(/bnc#([\d]+)/im, '<a href="http://bugzilla.novell.com/\1">bnc#\1</a>')
+    return html
   end
 
 end
