@@ -1,11 +1,10 @@
-<p>
-  <b>Date:</b>
-  <%=h @message.created.strftime(fmt='%d. %B %Y - %H:%M:%S UTC') %>
-</p>
+
+<% @hermestitle = "Hermes message: #{@message.subject}"
+   @pagetitle = "Hermes message: #{@message.subject}" %>
 
 <p>
-  <b>Message type:</b>
-  <%=h @message.msg_type.type_desc %>
+  <b>Date:</b>
+  <%=h @message.created.strftime('%d. %B %Y - %H:%M:%S UTC') %> <i>(<%= fuzzy_time_string(@message.created.strftime('%d. %B %Y - %H:%M:%S UTC')) %>)</i>
 </p>
 
 <p>
@@ -19,8 +18,7 @@
 </p>
 
 <p>
-  <pre><%=h @message.body %>
-  </pre>
+  <pre><%= add_links(h @message.body) %></pre>
 </p>
 
 <% if @to_save_comment %>
