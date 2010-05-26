@@ -34,7 +34,8 @@ use Data::Dumper;
 use vars qw( @ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( personInfo personInfoByMail createSubscription removeSubscriptions createPerson subscriptions);
+@EXPORT	    = qw( personInfo personInfoByMail createSubscription removeSubscriptions 
+                  emailToPersonID createPerson subscriptions);
 
 
 sub fetchPersonInfo( $ )
@@ -51,16 +52,40 @@ sub fetchPersonInfo( $ )
   }
   return $personInfoRef;
 }
->>>>>>> a534d49133cdade6c2445e169fc563b74d1d9c90
+
 
 #
-# The following two subs return a hash ref that contains some 
+# Note: this sub identifies the persons with their email address - which
+# is to fix as soon as we use a common user base throughout all openSUSE
+# systems, FIXME
+#
+sub emailToPersonID( $ )
+{
+  my ( $email ) = @_;
+
+  my $sth = dbh()->prepare( 'SELECT id FROM persons WHERE email=?' );
+  $sth->execute( $email );
+
+  my ($id) = $sth->fetchrow_array();
+
+  unless( $id ) {
+    my $sth1 = dbh()->prepare( 'INSERT INTO persons (email) VALUES (?)' );
+    $sth1->execute( $email);
+    $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
+  }
+  log( 'info', "Returning id <$id> for email <$email>" );
+  return $id;
+}
+
+
+#
+# The following two subs return a hash ref that contains some
 # information about a person identified through the id or mail.
 #
 # The following keys are set in the person desc hash:
 # - all columns from the database table persons
 # - feedPath: a relative path name which is user specific.
-# 
+#
 sub personInfo( $ )
 {
   my ($id) = @_;

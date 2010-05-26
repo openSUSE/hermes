@@ -98,8 +98,10 @@ sub cgiapp_prerun
     # log('info', "HTTP-Header: " . join(", ", @httpHeader ) );
 
     $loggedInUser = $q->http('X_USERNAME');
-  }elsif( $Hermes::Config::authentication =~ /^ichaintest-(.+)$/) {
+  } elsif( $Hermes::Config::authentication =~ /^ichaintest-(.+)$/) {
     $loggedInUser = $1;
+  } elsif( $Hermes::Config::authentication =~ /^\s*basic-auth\s*$/ ) {
+    $loggedInUser = $ENV{REMOTE_USER};
   }
 
   log('info', "User Name: " . ($loggedInUser ? $loggedInUser : "anonymous") );

@@ -69,8 +69,10 @@ $OBSAPIBase = "http://api.opensuse.org";
 # 
 
 # authentication setting
-# Use the term ichain to use Novell iChain authentication.
+# Use the term 'ichain' to use Novell iChain authentication.
 # Use ichaintest-<name> to simulate iChain in devel environment.
+# Use the term 'basic-auth' to use basic authentication handled by 
+# http server
 $authentication = "ichaintest-termite";
 
 # leave the one at the end.

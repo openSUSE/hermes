@@ -28,6 +28,7 @@ use Hermes::Config;
 use Hermes::DB;
 use Hermes::Log;
 use Hermes::Util;
+use Hermes::Person;
 
 use Cwd;
 
@@ -292,28 +293,6 @@ sub createMsgType( $;$ )
   return $id;
 }
 
-#
-# Note: this sub identifies the persons with their email address - which
-# is to fix as soon as we use a common user base throughout all openSUSE
-# systems, FIXME
-#
-sub emailToPersonID( $ )
-{
-  my ( $email ) = @_;
-
-  my $sth = dbh()->prepare( 'SELECT id FROM persons WHERE email=?' );
-  $sth->execute( $email );
-
-  my ($id) = $sth->fetchrow_array();
-
-  unless( $id ) {
-    my $sth1 = dbh()->prepare( 'INSERT INTO persons (email) VALUES (?)' );
-    $sth1->execute( $email);
-    $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
-  }
-  log( 'info', "Returning id <$id> for email <$email>" );
-  return $id;
-}
 
 #
 1;
