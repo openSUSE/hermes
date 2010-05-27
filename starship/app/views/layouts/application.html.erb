@@ -190,7 +190,7 @@
             Logged in as <a href="https://users.opensuse.org/my/profile"><%= @loggedin_user.stringid %></a>
             <br/>
             <%= link_to 'Logout', :controller => 'account', :action => 'logout' -%> <br/>
-            <% if ICHAIN_MODE.to_s != "on" %>
+            <% if AUTHENTICATION.to_s != "ichain" || AUTHENTICATION != 'ichain_simulate' %>
               <%= link_to 'Change Password', :controller => 'account', :action => 'change_password' -%>
             <% end %>
           <% else %>

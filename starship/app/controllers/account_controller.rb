@@ -4,7 +4,7 @@ class AccountController < ApplicationController
   skip_before_filter :require_auth, :set_return_to
 
   def login
-    if ICHAIN_MODE.to_s == 'on' || ICHAIN_MODE.to_s == 'simulate'
+    if ichain_mode?
       # IChainAuth.login(session[:return_to],request.host)
       auth_url = "https://" + request.host + "/ICSLogin/?\"https://" + request.host + url_for(session[:return_to] || '/') + "\"" 
       logger.debug("Using iChain url #{auth_url}")
@@ -26,7 +26,7 @@ class AccountController < ApplicationController
   def logout
     reset_session
     flash[:message] = 'Logged out'
-    if ICHAIN_MODE.to_s == 'on' || ICHAIN_MODE.to_s == 'simulate'
+    if ichain_mode?
       # IChainAuth.logout( host )
       redirect_to("https://" + request.host + "/cmd/ICSLogout/")
     else 
@@ -35,7 +35,7 @@ class AccountController < ApplicationController
   end
 
   def signup
-    if ICHAIN_MODE.to_s == 'on' || ICHAIN_MODE.to_s == 'simulate'
+    if ichain_mode?
       flash[:warning]  = "No user signup for iChain, visit http://www.novell.com"
     else
       @user = Person.new(@params[:user])

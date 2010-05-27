@@ -64,6 +64,8 @@ class SubscriptionsController < ApplicationController
   def modify_simple_subscriptions
     if request.post?
       flash[:success] = ""
+      flash[:error] = ""
+
       user = Person.find session[:userid]
       
       SUBSCRIPTIONABSTRACTIONS.keys.each do | group_id | 
@@ -108,6 +110,8 @@ class SubscriptionsController < ApplicationController
               else
                 flash[:error] += "Removing subscription for #{abstraction.summary} - #{filterabstract.summary} failed.\n"
               end
+            else
+              flash[:error] += "What a strange thing happened!\n"
             end
           end
         end

@@ -16,9 +16,14 @@ config.action_controller.perform_caching             = false
 # Don't care if the mailer can't send
 config.action_mailer.raise_delivery_errors = false
 
+# Authentication:
+# Starship can either authenticate against Novell iChain or use basic
+# auth, which can be be configured with various sources through the
+# webserver
+# Parameter: AUTHENTICATION
 # set this parameter to either
 # :simulate => means the user is hardcoded to termite
-# :on       => iChain is used.
+# :ichain   => iChain is used.
 # :off      => basic auth
-ICHAIN_MODE = :simulate 
+AUTHENTICATION = :off
 

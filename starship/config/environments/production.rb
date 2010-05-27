@@ -20,9 +20,14 @@ config.log_level = :debug
 # Disable delivery errors, bad email addresses will be ignored
 # config.action_mailer.raise_delivery_errors = false
 
-ICHAIN_MODE = :on
-
-#No longer used. The IChain URL is created with request.host
-#ICHAIN_LOGIN_URL = "https://mercurius.suse.de/ICSLogin/?\"https://mercurius.suse.de"
-#ICHAIN_LOGOUT_URL = "https://mercurius.suse.de/cmd/ICSLogout/"
+# Authentication:
+# Starship can either authenticate against Novell iChain or use basic
+# auth, which can be be configured with various sources through the
+# webserver
+# Parameter: AUTHENTICATION
+# set this parameter to either
+# :simulate => means the user is hardcoded to termite
+# :ichain   => iChain is used.
+# :off      => basic auth
+AUTHENTICATION = :ichain
 
