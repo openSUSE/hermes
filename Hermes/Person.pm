@@ -47,7 +47,9 @@ sub fetchPersonInfo( $ )
     $personInfoRef = $sth->fetchrow_hashref;
 
     my $feeds = $personInfoRef->{stringid} || "unknown_hero";
-    # $feeds =~ s/[\.@]/_/g;
+    if( $personInfoRef->{email} && $personInfoRef->{email} eq 'notset@opensuse.org' ) {
+      $personInfoRef->{email} = undef;
+    }
     $personInfoRef->{feedPath} = $feeds;
   }
   return $personInfoRef;

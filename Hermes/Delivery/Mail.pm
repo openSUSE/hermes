@@ -65,7 +65,7 @@ sub sendMail( $ )
   my @t;
   foreach my $p ( @{$msg->{to} } ) {
     my $pInfoRef = personInfo( $p );
-    push @t, $pInfoRef->{email};
+    push @t, $pInfoRef->{email} if( $pInfoRef->{email} );
   }
 
   my $toLine = join( ', ', @t );
