@@ -37,6 +37,7 @@ use Hermes::Delivery::Twitter;
 # use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;
+use Hermes::Customize;
 
 use HTML::Template;
 
@@ -335,10 +336,11 @@ sub renderMessage( $$$$$$$ )
   my $text;
   my $subject;
 
+  # get an HTML::Template 
   my $tmpl = getTemplate( $type, $delayId, $deliveryId );
   if( $tmpl ) {
-    # Fill the template
-    $tmpl->param( $paramHash );
+    # Fill the template, the expandMessageTemplateParams lives in Customize.pm
+    $tmpl->param( expandMessageTemplateParams( $paramHash, $tmpl ) );
     $text = $tmpl->output;
 
     # extract the subject

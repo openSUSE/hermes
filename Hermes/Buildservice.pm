@@ -44,7 +44,7 @@ use Data::Dumper;
 use vars qw(@ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( expandNotification );
+@EXPORT	    = qw( expandNotification packageDiff );
 @EXPORT_OK  = qw( extractUserFromMeta usersOfPackage usersOfProject applyFilter);
 
 our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedStrictPackage, $cachedWatchlist);
@@ -392,6 +392,14 @@ sub userWatchList( $$ )
   return $watchlistHashRef;
 }
 
+#
+# fetch a package diff from the API
+sub packageDiff( $$;$ )
+{
+  my ( $project, $package, $orev ) = @_;
+  my $diff = callOBSAPI( 'diff', ( $project, $package ) );
+}
+
 sub invalidateCache()
 {
     $cachedPackage = {};
@@ -404,7 +412,7 @@ sub invalidateCache()
 # returns the result as plain text or undef, if an error happened
 # FIXME: report errors back to calling functions
 #
-sub callOBSAPI( $$;$ )
+sub callOBSAPI( $$ )
 {
   my ( $function, @urlparams ) = @_;
   my $urlstr = "";
@@ -419,7 +427,6 @@ sub callOBSAPI( $$;$ )
     $urlstr .= uri_escape( $_ );
   }
 
-
 # return {} unless( $project );
 
   my %results;
@@ -430,20 +437,29 @@ sub callOBSAPI( $$;$ )
   my $ua = LWP::UserAgent->new;
   $ua->agent( "Hermes Buildservice Processor" );
   my $uri = $OBSAPIUrl . "public/";
+  my $method = "get";
 
   if( $function eq 'prjMetaRef' || $function eq 'pkgMetaRef') {
     $uri .= "source/$urlstr/_meta";
   } elsif($function eq 'personMetaRef') {
     $uri .= "person/$urlstr/_watchlist";
 #   $auth = 1;
+  } elsif( $function eq 'diff' ) {
+    $uri .= "source/$urlstr?cmd=diff&unified=1";
+    $method = "post";
   }
 
-  log( 'info', "Asking $uri with GET" );
+  log( 'info', "Asking $uri with $method" );
 
-  my $req = HTTP::Request->new( GET => $uri );
+  my $req;
+  if( $method eq "post" ) {
+    $req = HTTP::Request->new( POST => $uri );
+  } elsif( $method eq "get" ) {
+    $req = HTTP::Request->new( GET => $uri );
+  } else {
+    log( 'info', "Unknown request type <$method>" );
+  }
   $req->header( 'Accept' => 'text/xml' );
-# $req->authorization_basic( $Hermes::Config::OBSAPIUser,
-#     			      $Hermes::Config::OBSAPIPasswd ) if($auth);
 
   my $res = $ua->request( $req );
 

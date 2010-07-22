@@ -159,7 +159,7 @@ sub generateNotification( $$ )
 {
   my ( $msgType, $params ) = @_;
 
-  my $module = 'Hermes::Buildservice'; # FIXME - better plugin handling
+  my $module = 'Hermes::Customize';
 
   push @INC, "..";
   push @INC, ".";
@@ -171,7 +171,7 @@ sub generateNotification( $$ )
     log( 'warning', "$@" );
   } else {
     # Get a list of subscription ids based on msgtype and parameters.
-    $subscriberListRef = expandNotification( $msgType, $params );
+    $subscriberListRef = generateSubscriberListRef( $msgType, $params );
   }
 
   return $subscriberListRef;
