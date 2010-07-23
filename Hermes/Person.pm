@@ -122,10 +122,17 @@ sub personInfoByMail( $ )
   return {};
 }
 
-sub createSubscription( $$$;$ )
+sub createSubscription( $$$;$$ )
 {
-  my ($msgTypeId, $personId, $deliveryId, $delayId) = @_;
-
+  my ($msgTypeId, $personId, $deliveryId, $filterListRef, $delayId) = @_;
+  # the filterRef is a reference to an array with hash references in it.
+  # each hash must contain the keys
+  #         parameter => the parameter (or its id)
+  #         operator  => one of the strings "special", "oneof", "regexp" or "containsitem"
+  #         filterstring => the filter string
+  # Note that filters only get added for new subscriptions. Existing ones are not going
+  # to be updated
+  # 
   my $notiTypeRef = notificationTemplateDetails( $msgTypeId );
 
   # get the person
@@ -142,6 +149,7 @@ sub createSubscription( $$$;$ )
 
   my $id;
 
+  # check if the subscription is already there ...
   my $sql = "SELECT id FROM subscriptions WHERE msg_type_id=? AND person_id=? AND delay_id=? AND delivery_id=?";
   my $selSth = dbh()->prepare( $sql );
   $selSth->execute( $notiTypeRef->{_id}, $personInfoRef->{id}, $delay, $deliveryId );
@@ -153,6 +161,7 @@ sub createSubscription( $$$;$ )
     return $id;
   }
 
+  # and insert if not...
   $sql = "INSERT INTO subscriptions (msg_type_id, person_id, delay_id, delivery_id) VALUES (?, ?, ?, ?)";
   my $sth = dbh()->prepare( $sql );
   # print Dumper $personInfoRef;
@@ -163,8 +172,24 @@ sub createSubscription( $$$;$ )
 
     $id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
   } else {
-    log( 'info', "Not enough information here!" );
+    log( 'info', "Not enough information to add a subscription!" );
   }
+  
+  if( $id && $filterListRef ) {
+    my $sql = "INSERT INTO subscription_filters (subscription_id, parameter_id, operator, filterstring) ";
+    $sql .= "VALUES( $id, ?, ?, ? )";
+    my $sti = dbh()->prepare( $sql );
+
+    foreach my $filterRef ( @$filterListRef ) {
+      if( exists $filterRef->{parameter} && $filterRef->{parameter} &&
+          exists $filterRef->{operator} && $filterRef->{operator} &&
+	  exists $filterRef->{filterstring} && $filterRef->{filterstring} ) {
+	  log( 'info', "Adding filter def. for $id: $filterRef->{parameter}, $filterRef->{operator}, $filterRef->{filterstring}" );
+	  $sti->execute( $filterRef->{parameter}, $filterRef->{operator}, $filterRef->{filterstring} );
+      }
+    }
+  }
+
   return $id;
 }
 
@@ -194,13 +219,22 @@ sub subscriptions( $ )
 
   my $userInfo = personInfo( $person ); # Get the hermes user info
   if( $userInfo->{id} ) {
-    my $sql = "select mt.msgtype, s.delay_id, s.delivery_id, s.id from subscriptions s,";
+    my $sql = "SELECT mt.msgtype, s.delay_id, s.delivery_id, s.id FROM subscriptions s,";
     $sql .= "msg_types mt where s.person_id=? AND s.enabled = 1 AND s.msg_type_id = mt.id";
     my $sth = dbh()->prepare( $sql );
     $sth->execute( $userInfo->{id} );
 
     $subsinfoRef = $sth->fetchall_arrayref({});
   }
+  # load the filterstring
+  my $sql = "SELECT parameter_id, operator, filterstring FROM subscription_filters WHERE subscription_id=?";
+  my $sth = dbh()->prepare( $sql );
+  foreach my $subscription ( @$subsinfoRef ) {
+    my $id = $subscription->{id};
+    $sth->execute( $id );
+    $subscription->{filters} = $sth->fetchall_arrayref({});
+  }
+  
   # FIXME: handle filters
   return $subsinfoRef;
 }

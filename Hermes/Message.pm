@@ -252,22 +252,6 @@ sub storeNotificationParameters($$$ )
   return $cnt;
 }
 
-######################################################################
-# sub userTypeSettings
-# -------------------------------------------------------------------
-# Returns the user setting of the delay according to the given msg type.
-######################################################################
-
-sub userTypeSettings( $$ )
-{
-  my ( $typeId, $personId ) = @_;
-
-  my $sql = "SELECT delay_id, delivery_id FROM subscriptions WHERE msg_type_id=? AND person_id=?";
-  my ($delayID, $deliveryID) = @{dbh()->selectcol_arrayref( $sql, undef, ($typeId, $personId ) )};
-
-  return $delayID, $deliveryID;
-}
-
 #
 # Creates an entry in the msg_types table if it does not yet exist.
 #
@@ -294,6 +278,5 @@ sub createMsgType( $;$ )
 }
 
 
-#
 1;
 
