@@ -26,6 +26,12 @@
          <filter parameter="_special" operator="special" value="_myrequests" />
       </filterabstract>
 
+     <filterabstract id="my_reviews">
+         <summary>My incoming Review Tasks</summary>
+         <description>All reviews of requests where you are involved.</description>
+         <filter parameter="newreviewer" operator="oneof" value="${username}" />
+      </filterabstract>
+
       <filterabstract id="request_author_is_me">
          <summary>My created Requests</summary>
          <description>All requests you are the author of.</description>
@@ -71,6 +77,14 @@
         <checkable filterabstract="my_requests"/>
         <checkable filterabstract="request_author_is_me"/>
       </subscription>
+
+      <subscription id="obs_review_request">
+        <summary>OBS Review Requests</summary>
+        <description>Receive a notification when somebody asks you for a review of a request.</description>
+        <msg_type name="OBS_SRCSRV_REQUEST_REVIEWER_ADDED"/>
+        <checkable filterabstract="my_reviews"/>
+      </subscription>
+
 
     </group>
 
