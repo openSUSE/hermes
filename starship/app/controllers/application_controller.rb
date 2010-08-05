@@ -70,7 +70,7 @@ class ApplicationController < ActionController::Base
   end
 
   def ichain_mode?
-    return AUTHENTICATION.to_s == 'ichain' || AUTHENTICATION.to_s == 'ichain_simulate'
+    return AUTHENTICATION.to_s == 'ichain' || AUTHENTICATION.to_s == 'simulate'
   end
 
   # See ActionController::RequestForgeryProtection for details
