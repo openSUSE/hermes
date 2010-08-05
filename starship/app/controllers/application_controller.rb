@@ -17,6 +17,7 @@ class ApplicationController < ActionController::Base
   end
 
   def authenticate
+    session[:userid] = nil
     if ichain_mode?
       login_via_ichain
     else
