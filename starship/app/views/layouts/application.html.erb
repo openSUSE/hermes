@@ -14,11 +14,12 @@
     <title><%= @pagetitle || @title || 'Hermes - openSUSE Notification Client' %></title>
 
     <%= stylesheet_link_tag "https://static.opensuse.org/themes/bento/css/style", :media => "screen", :title => "All" %>
+    <%= stylesheet_link_tag "hermes" %>
     <%= javascript_include_tag 'https://static.opensuse.org/themes/bento/js/jquery.js' %>
     <%= javascript_include_tag 'https://static.opensuse.org/themes/bento/js/script' %>
     <%= javascript_include_tag "https://ssl.google-analytics.com/ga.js" %>
 
-    <%= javascript_include_tag 'tableruler', "jrails", "application" %>
+    <%= javascript_include_tag "jrails", "application" %>
 
     <%= yield :content_for_head %>
 
@@ -27,7 +28,6 @@
     <%= yield :head_javascript %>
     $(function() {
       googleTracker();
-      tableruler();
       <%= yield :ready_function %>
     });
     /* ]]> */
