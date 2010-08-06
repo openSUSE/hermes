@@ -183,6 +183,7 @@ class SubscriptionsController < ApplicationController
       @status = "Enabled"
     end
     @curr_sub.save
+    render :text => @status
   end
 
 

@@ -1,3 +1,0 @@
-page.visual_effect :highlight, "filter_#{@curr_sub_index}"
-page.replace_html "disable_link_#{@curr_sub_index}", @status
-
