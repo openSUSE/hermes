@@ -110,8 +110,6 @@ class SubscriptionsController < ApplicationController
               else
                 flash[:error] += "Removing subscription for #{abstraction.summary} - #{filterabstract.summary} failed.\n"
               end
-            else
-              flash[:error] += "What a strange thing happened!\n"
             end
           end
         end
@@ -201,7 +199,7 @@ class SubscriptionsController < ApplicationController
   end
 
   def redirect_to_index(msg = nil)
-    flash[:notice] = msg
+    flash[:note] = msg
     redirect_to :action => :index
   end
   
