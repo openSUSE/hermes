@@ -1,40 +1,53 @@
 <%= javascript_include_tag "wz_tooltip.js" %>
+<%= javascript_include_tag "jquery.tablesorter" %>
+
+<% content_for :ready_function do %>
+  $("#subscriptions_table").tablesorter( {
+    widgets: ['zebra'],
+    sortList: [[0,1]]
+  } );
+<% end %>
 
 <h2>Subscription configuration (expert mode)</h2>
 
-<table class="defaultTable">
-<tr>
-<th>Description</th>
-<th>Message Type</th>
-<th>Delay </th>
-<th>Delivery</th>
-<th>Filter</th>
-<th>Status</th>
-<th></th>
-</tr>
+<table id="subscriptions_table">
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Message Type</th>
+      <th>Delay </th>
+      <th>Delivery</th>
+      <th>Filters</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  </thead>
 
-<% @subscribedMsgs.each_with_index  { |subs,i| %>
-  <tr id="filter_<%=i%>" >
-    <td><%= subs.description || '<i>No descrption</i>' %></td>
-    <td id="edit_link_<%=i%>">
-		<%= subs.msg_type.type_desc %></td>
-    <td><%= subs.delay.name %></td>
-    <td><%= subs.delivery ? subs.delivery.description : '' %></td>
-    <% if subs.filters.count > 0 %>
-      <td><a href="#" onmouseover="Tip('<%=@filter_tooltips[subs.id]%>')" onmouseout="UnTip()"><%= subs.filters.count %></a></td>
-    <% else %>
-        <td><%= subs.filters.count %></td>
-    <% end %>
-    <td><%= link_to_remote subs.enabled ? "Enabled" : "Disabled", { :url => { :action => 'disable', :id => i, :subs => subs }}, { :id => "disable_link_#{i}" }  %></td>
-    <td>
-    [<%= link_to "edit", edit_subscription_path(subs) %>]
-    <%= link_to image_tag("delete.png"), subscription_path(subs), :method => :delete, :confirm => "Delete Subscription for #{subs.msg_type.type_desc}?" %></td>
-  </tr>
-  <% } %>
+  <tbody>
+    <% @subscribedMsgs.each_with_index  { |subs,i| %>
+      <tr id="filter_<%=i%>" >
+        <td><%= subs.description || '<i>No descrption</i>' %></td>
+        <td id="edit_link_<%=i%>">
+          <pre><%= subs.msg_type.type_desc %></pre></td>
+        <td><%= subs.delay.name %></td>
+        <td><%= subs.delivery ? subs.delivery.description : '' %></td>
+        <% if subs.filters.count > 0 %>
+          <td><a href="#" onmouseover="Tip('<%=@filter_tooltips[subs.id]%>')" onmouseout="UnTip()"><%= subs.filters.count %></a></td>
+        <% else %>
+          <td><%= subs.filters.count %></td>
+        <% end %>
+        <td><%= link_to_remote subs.enabled ? "Enabled" : "Disabled", { :url => { :action => 'disable', :id => i, :subs => subs }}, { :id => "disable_link_#{i}" }  %></td>
+        <td style="white-space: nowrap; ">
+          [<%= link_to "edit", edit_subscription_path(subs) %>]
+          <%= link_to image_tag("delete.png"), subscription_path(subs), :method => :delete, :confirm => "Delete Subscription for #{subs.msg_type.type_desc}?" %>
+        </td>
+      </tr>
+    <% } %>
+  </tbody>
 </table>
 
 
-<%= link_to_function "New Subscription", "$('new_subscr').toggle()" %>
+<p><%= link_to_function "Add a new subscription", "$('#new_subscr').toggle()" %></p>
 
 <div id='new_subscr' style="display: none;">
   <%= render(:partial => 'new_subscription', :locals => { :delays => @avail_delays, :deliveries => @avail_deliveries, :types => @avail_types } ) %>
