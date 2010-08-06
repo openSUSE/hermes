@@ -14,11 +14,11 @@
 
   <tr>
     <td><strong>Description: </strong></td>
-    <td><%= text_field_tag('subscr[description]', @subscr.description ) %></td>
+    <td><%= text_field_tag('subscr[description]', @subscr.description, :size => 50 ) %></td>
   </tr>
 
   <tr>
-    <td valign=top><strong> <%= link_to_function "Comment", "$('comment_box').toggle()" %></strong></td>
+    <td valign=top><strong> <%= link_to_function "Comment", "$('#comment_box').toggle()" %></strong></td>
 
     <td> <div id="comment_box" style="display: none;"><%= text_area('subscr','comment', :size => "50x5") %></div></td>
   </tr>
@@ -34,7 +34,7 @@
 	    </td>
       <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
                           page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } ) 
-                          page << "recalc_filter_ids();"
+                          
                         end %></td>
 
       </tr>

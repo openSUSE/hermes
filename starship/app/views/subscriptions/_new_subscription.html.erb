@@ -1,67 +1,51 @@
 <script type="text/javascript">
 
-function get_valid_params() {
-  msg_type = $('subscr_msg_type_id').value;
-  forgery_string = '<%=request_forgery_protection_token%>=<%=form_authenticity_token%>';
-  new Ajax.Request('/subscriptions/get_type_params', {
-    parameters: forgery_string+'&msg_type='+msg_type,
-    onSuccess: function(response) {
-      update_filter_params(response.responseText);
+  function get_valid_params() {
+    msg_type = $('#subscr_msg_type_id').val();
+    forgery_string = '<%=request_forgery_protection_token%>=<%=form_authenticity_token%>';
+    $.ajax({ url: '<%= url_for :controller => :subscriptions, :action => :get_type_params, :id => 1 %>',
+      data: {<%=request_forgery_protection_token%>: '<%=form_authenticity_token%>',
+        msg_type: msg_type},
+      success: function(data){
+        update_filter_params(data.responseText);
+      }
+    });
+  }
 
-    }
-  });
-
-}
-
-// updates all parameter select boxes with the passed html
-function update_filter_params(html) {
-  $('filter_table').adjacent('select.param_select').each(function(item) {
-    if(item.name.match("param")) {
-      item.replace(html);
-    }
-  });
-  recalc_filter_ids();
-}
+  // updates all parameter select boxes with the passed html
+  function update_filter_params(html) {
+    $('#param_select').each(function(item) {
+      if(item.name.match("param")) {
+        item.replace(html);
+      }
+    });
+    recalc_filter_ids();
+  }
 
 </script>
+
+<h2>Adding subscription: </h2>
 
 <% form_for :subscr do |f| %>
   <table class="defaultTable">
     <tr>
-    <td><b>Message Type: </b></td>
-    <td><b>Digest mode: </b></td>
-    <td><b>Delivery mode: </b></td>
-    <td> </td>
+      <td><b>Message Type: </b></td>
+      <td><b>Digest mode: </b></td>
+      <td><b>Delivery mode: </b></td>
+      <td> </td>
     </tr>
     <tr>
-    <td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id', 'type_desc') %></td>
-    <%= observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'msg_type='+value", :success => 'update_filter_params(request.responseText)') %>
-    <td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
-    <td><%= collection_select('subscr', 'delivery_id', @avail_deliveries, 'id', 'description') %>
-    
-    <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
-                          page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => [], :selected_param => nil, :selected_oper => nil, :value => nil } ) 
-                          page << "get_valid_params();"
-                        end %></td>
+      <td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id', 'type_desc') %></td>
+      <%= observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'msg_type='+value", :success => 'update_filter_params(request.responseText)') %>
+      <td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
+      <td><%= collection_select('subscr', 'delivery_id', @avail_deliveries, 'id', 'description') %></td>
     </tr>
-    <tr><td colspan="4"><b>Description:</b> <%= f.text_field :description, :size => 40 %></td></tr>
+    <tr><td colspan="4"><b>Description:</b> <%= f.text_field :description, :size => 50 %></td></tr>
   </table>
-  <hr/>
-  
-  <table class="defaultTable">
-    <tr>
-    <td>No filter means, you will get all notifications for the chosen message type.</td>
-    </tr>
-  </table>
-  
-  <table class="defaultTable">
-    <tbody id="filter_table" style="">
-      <tr id='counter'><td><%= hidden_field_tag 'filter_count', 0 %><td></tr>
-      <tr><td colspan=4>Multiple filters mean &lt;filter1&gt; AND &lt;filter2&gt;... </td></tr>
-      <tr><td><%= submit_tag %></td></tr>
-    </tbody>
-  </table>
-  
+
+  <p><%= submit_tag %></p>
+  <p>To add filters to your new subscription, please use the 'edit' link after it was created. </p>
+
 
 <% end %>
 

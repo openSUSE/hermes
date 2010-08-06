@@ -11,7 +11,7 @@ class SubscriptionsController < ApplicationController
     @avail_deliveries = valid_deliveries;
     @avail_delays = Delay.find(:all, :order => 'id').map {|d| [d.description, d.id]}
   end
-  
+
   
   def index
     @person = Person.find session[:userid]
@@ -167,10 +167,18 @@ class SubscriptionsController < ApplicationController
   
   def get_type_params
     param_list = MsgType.find(params[:msg_type]).parameters
+    #param_list = param_list.map{|param| param.name}
+    logger.debug "Available parameters for msg_type #{params[:msg_type]}: #{param_list.inspect}"
     render :partial => 'filter_param', :locals => {:param_list => param_list, :selected => nil}
   end
 
-  
+
+  def add_filter_line
+    param_list = MsgType.find(params[:msg_type]).parameters
+    render :partial => 'filter', :locals => {:parameter_list => param_list, :selected_param => nil, :selected_oper => nil, :value => nil }
+  end
+
+
   def disable
     @curr_sub_index = params[:id]
     user = Person.find session[:userid]

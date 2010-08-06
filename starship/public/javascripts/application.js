@@ -16,9 +16,13 @@ var special_operator_values = new Array('_mypackages', '_mypackagesstrict', '_my
 
   // updates all filter ids to be in the range [0..filter_count()[
   function recalc_filter_ids() {
-    fc = $('filter_count').value = filter_count();
+    $('#filter_count').val(filter_count());
+    fc = filter_count()
     for(var i=0; i<fc; i++) {
-      filter = $('filter_table').childElements()[0];
+
+      filters = $('#filter_table > .filter_line')
+       
+      filter = $('#filter_table').children()[0];
       filter.adjacent('select.param_select')[i].name = 'param_id_'+i;
       filter.adjacent('select.param_select')[i].id = 'param_id_'+i;
       filter.adjacent('select.filter_select')[i].name = 'filter_operator_'+i;
@@ -40,8 +44,7 @@ var special_operator_values = new Array('_mypackages', '_mypackagesstrict', '_my
   }
 
   function filter_count() {
-    return $('filter_table').childElements()[0].adjacent('select.filter_select').length;
-    
+    return $('.filter_line').size();
   }
 
   function stop_observer(element) {
