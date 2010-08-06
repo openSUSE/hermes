@@ -4,10 +4,10 @@
 
 <% if (@abstraction_groups.length > 0) %>
 
-<p>Please select below for which events you want to receive notifications.</p>
+<p><b>Please select below for which events you want to receive notifications.</b></p>
 
 <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
-<table class="defaultTable">
+<table class="noborder">
 <% for group_id in @abstraction_groups.keys %>
 
   <tr><td colspan="4"><h3><%= @abstraction_groups[group_id] %> </h3></td></tr>
@@ -61,7 +61,7 @@
   
 <% else %>
 
-There are no simple subscriptions configured, please use the expert interface. 
+<p>There are no simple subscriptions configured, please use the expert interface. </p>
 
 <% end %>
   
@@ -69,13 +69,13 @@ There are no simple subscriptions configured, please use the expert interface.
 
 <% if ( @subscribedMsgs.size > simple_subscriptions ) %>  
 
-You have <%= pluralize((@subscribedMsgs.size - simple_subscriptions), "additional subscription") %> that can only be changed in the 
-<a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. 
+<p>You have <%= pluralize((@subscribedMsgs.size - simple_subscriptions), "additional subscription") %> that can only be changed in the
+<a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. </p>
 
 <% else %>
 
-You can choose from a list of default notifications here. 
+<p>You can choose from a list of default notifications here.
 To configure more complex notifications, please use the 
-<a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. 
+<a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. </p>
 
 <% end %>
