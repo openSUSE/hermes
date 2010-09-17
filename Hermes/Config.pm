@@ -31,6 +31,7 @@ use strict;
 # Read local configuration file, if this exists. This is meant to be used to
 # override configuration values with specific values.
 my @cfgs = ( "/etc/hermes.conf", "./hermes.conf", "conf/hermes.conf" );
+my $configValid = 0;
 
 foreach my $cfg ( @cfgs ) {
   # print STDERR "Try to read config from $cfg... ";
@@ -46,13 +47,16 @@ foreach my $cfg ( @cfgs ) {
       }
     } else {
       # print STDERR "success!\n";
+      $configValid = 1;
       last;
     }
   } else {
-    # print STDERR "failed.";
+    # do command succeeded
   }
-  # print STDERR "\n";
 }
 
+unless( $configValid ) {
+  print STDERR "ERROR: No valid Hermes configuration file found!\n";
+}
 #---------------------------------------------------------------------------
 1;

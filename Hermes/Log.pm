@@ -64,6 +64,11 @@ sub _init()
 {
   return if( $openChecked );
 
+  unless( $Hermes::Config::LOG{'params'} ) {
+    print STDERR "No valid log configuration found, please create hermes.conf\n\n";
+    return 0;
+  }
+
   my %params = %{$Hermes::Config::LOG{'params'}};
   my $f;
   if( exists $params{'filename'} ) {
@@ -74,6 +79,7 @@ sub _init()
       $f = $params{'logpath'} . "/" . $logFileName . '.log';
     } else {
        print "Can not assemble log file name, please check configuration $logFileName !\n";
+      return 0;
     }
   }
 
@@ -89,6 +95,8 @@ sub _init()
     # print "##########################################################################\n";
   }
   $openChecked = 1;
+  
+  return 1;
 }
 
 
@@ -137,7 +145,12 @@ sub log($$;$)
     }
 
     # Initialize the dispatcher if it hasn't already been done.
-    _init() unless ( HANDLE->opened() );
+    unless ( HANDLE->opened() ) {
+      unless( _init() ) {
+        print STDERR "Unable to initialize logging, return";
+        return;
+      }
+    }
 
     # Get the current function context.
     unless (defined $minimal && $minimal) {
