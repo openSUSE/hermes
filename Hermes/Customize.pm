@@ -56,6 +56,11 @@ use Hermes::Util;
 
 use Hermes::Buildservice;
 
+use vars qw(@ISA @EXPORT);
+
+@ISA	    = qw(Exporter);
+@EXPORT	    = qw( generateSubscriberListRef expandMessageTemplateParams );
+
 
 sub generateSubscriberListRef( $$ )
 {
