@@ -40,14 +40,14 @@ our $connection;
 
 use Dumpvalue;
 
-sub tweet( $$$ )
+sub tweet( $$ )
 {
-  my ($user, $pwd, $text) = @_;
+  my ($attribRef, $text) = @_;
 
   my $t0 = [gettimeofday];
 
-  unless( $user && $pwd ) {
-    log( 'info', "Error: No password or user for twitter: Twitter-User: $user" );
+  unless( $attribRef && $attribRef->{access_token} ) {
+    log( 'info', "Error: No valid attribute basket for Twitter" );
     return 0;
   }
   if( $Hermes::Config::DebugTwitter ) {
@@ -55,29 +55,40 @@ sub tweet( $$$ )
     return 14;
   }
 
-  my $twit = Net::Twitter->new( { username => $user,
-				  password => $pwd } );
-				  # useragent => 'Hermes Twitter Agent' } );
-  my $elapsed = tv_interval ($t0);
-  log 'info', "Time to create Twitter-Object: $elapsed sec.\n";
+  my $access_token        = $attribRef->{access_token};
+  my $access_token_secret = $attribRef->{accesss_token_secret};
+  my $user_id             = $attribRef->{user_id};
+  my $screen_name         = $attribRef->{screen_name};
+  my $consumer_key        = $attribRef->{consumer_key};
+  my $consumer_secret     = $attribRef->{consumer_secret};
 
+  my $twit = Net::Twitter->new(
+    traits => [qw/API::REST OAuth WrapError/],
+    ( consumer_key => $consumer_key, consumer_secret => $consumer_secret,
+      useragent => 'Hermes Twitter Agent' )
+  );
   if( ! $twit ) {
     log( 'info', "Hermes Twitter-Error: $!" );
     return 0;
   }
-  if( ! $twit->verify_credentials() ) {
-    log( 'info', "Tweet failed: verify credentials failed: " . $twit->get_error() );
-    return 0;
-  }
+  $twit->access_token( $access_token );
+  $twit->access_token_secret( $access_token_secret );
 
-  # Set twitter status.
+  # set twitter status.
+  
   my $tweet = $twit->update( $text );
+  
   if( !$tweet ){
-    log( 'info', "Tweet failed: " . $twit->get_error() );
+    my $errMessages = $twit->get_error();
+    my $errmsg = "";
+    while( my ($key, $val) = each( %$errMessages ) ) {
+      $errmsg .= "$key: $val|";
+    }
+    log( 'info', "Tweet failed: " . $errmsg );
     $twit->end_session();
     return 0;
   }
-  $elapsed = tv_interval ($t0);
+  my $elapsed = tv_interval ($t0);
   log 'info', "Time to update: $elapsed sec.\n";
 
   log( 'info', "Tweet-ID: ". $tweet->{id} );

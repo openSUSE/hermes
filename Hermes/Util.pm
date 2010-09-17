@@ -38,8 +38,8 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 @EXPORT	    = qw( notificationTemplateDetails notificationDetails templateFileName 
 		  parameterId delayIdToString delayStringToValue 
 		  SendNow SendMinutely SendHourly SendDaily SendWeekly SendMonthly
-	          deliveryStringToId deliveryIdToString deliveryAttribs 
-		  typeIdToString uniteArray );
+	          deliveryStringToId deliveryIdToString 
+	          deliveryAttribs setDeliveryAttrib typeIdToString uniteArray );
 
 
 
@@ -334,6 +334,37 @@ sub deliveryAttribs( $ )
     $attribs{$attrib} = $value;
   }
   return \%attribs;
+}
+
+# Write a delvery attribute to the database. Existing values for a key will 
+# be overwritten.
+#
+sub setDeliveryAttrib( $$$ )
+{
+  my ($deliveryId, $key, $value) = @_;
+  
+  my $sql = "SELECT value FROM delivery_attributes WHERE delivery_id=? and attribute=?";
+  my $sth = dbh()->prepare( $sql );
+  $sth->execute( $deliveryId, $key );
+  
+  while( my ($existingValue) = $sth->fetchrow_array() ) {
+    if( $existingValue eq $value ) {
+      # same value to set, return without action
+      log( 'info', "Old value equals new value, returning" );
+      return;
+    }  else {
+      log( 'info', "Old value existing, but different from new value" );
+      $sql = "UPDATE delivery_attributes SET value=? WHERE delivery_id=? AND attribute=?";
+      my $upSth = dbh()->prepare( $sql );
+      $upSth->execute( $value, $deliveryId, $key );
+      return;
+    }
+  }
+  
+  # if code comes here, we have to insert the new value.
+  $sql = "INSERT INTO delivery_attributes (delivery_id, attribute, value) VALUES (?, ?, ?)";
+  my $insSth = dbh()->prepare( $sql );
+  $insSth->execute( $deliveryId, $key, $value );
 }
 
 sub typeIdToString( $ )
