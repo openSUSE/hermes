@@ -290,7 +290,7 @@ sub userSubscriptions()
   my @msg_types = $q->param('types');
 
   my $wantXML = undef;
-  if( $q->param('contenttype') eq "text/xml" ) {
+  if( $q->param('contenttype') && $q->param('contenttype') eq "text/xml" ) {
     $wantXML = 1;
   }
 
