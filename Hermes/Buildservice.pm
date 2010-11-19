@@ -201,12 +201,11 @@ sub applyFilter( $$ )
       my $searchStr = $paramHash->{ $filterRef->{param} };
       $searchStr =~ s/^\s*//; # wipe whitespaces
       $searchStr =~ s/\s*$//;
-      $searchStr = quotemeta( $searchStr );
 
       my $str = $filterRef->{string};
 
       my @possibleValues = split( /\s*,\s*/, $str );
-      my $success = grep( /\b$searchStr\b/, @possibleValues );
+      my $success = isInArray( $searchStr, \@possibleValues );
       log( 'info', "Filtering oneof <$searchStr> in [" . join( "|", @possibleValues ) . "]: " . $success );
 
       if( $success ) {
@@ -225,12 +224,9 @@ sub applyFilter( $$ )
     if( $paramHash->{ $filterRef->{param} } ) {
       my $listStr = $paramHash->{ $filterRef->{param} };
       my @list = split( /\s*[|,]\s*/, $listStr );
-      my $sstr = quotemeta( $filterRef->{string} );
-      # log('debug', "containsItem search-String: $sstr" );
-      my $cnt = grep ( /\b$sstr\b/, @list );
-      # log('debug', "containsitem-Filter: Search in list: " . join( ' - ', @list ) . " #hits=$cnt" );
-      if( $cnt > 0 ) {
-	$res = 1;
+      # my $sstr = quotemeta( $filterRef->{string} );
+      if( isInArray( $filterRef->{string}, \@list ) ) {
+        $res = 1;
       }
       log( 'debug', "containsitem-Filter: $filterRef->{string} is part of $listStr?: $res" );
     }

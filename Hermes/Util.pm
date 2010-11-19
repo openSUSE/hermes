@@ -39,7 +39,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 		  parameterId delayIdToString delayStringToValue 
 		  SendNow SendMinutely SendHourly SendDaily SendWeekly SendMonthly
 	          deliveryStringToId deliveryIdToString 
-	          deliveryAttribs setDeliveryAttrib typeIdToString uniteArray );
+	          deliveryAttribs setDeliveryAttrib typeIdToString isInArray );
 
 
 
@@ -380,6 +380,23 @@ sub typeIdToString( $ )
     ($re) = $sth->fetchrow_array;
   }
   return $re;
+}
+
+sub isInArray( $$ )
+{
+  my ($value, $listRef) = @_;
+  
+  if( ref $listRef ne "ARRAY" ) {
+    log( 'info', "ERR: isInArray called with non Array reference" );
+    return 0;
+  }
+  
+  foreach my $arrayElem ( @$listRef ) {
+    if( $value eq $arrayElem ) {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 1;

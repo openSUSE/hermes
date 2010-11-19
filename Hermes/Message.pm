@@ -238,7 +238,7 @@ sub storeNotificationParameters($$$ )
     }
 
     # Check if the parameter is known for 
-    unless( grep( /\b$param_id\b/, @{$msgTypesRef} ) ) {
+    unless( isInArray( $param_id, $msgTypesRef ) ) {
       log( 'info', "Creating msg_types_parameters-Entry for type <$typeId>, param <$param>" );
       $inssth->execute( $param_id );
     }
