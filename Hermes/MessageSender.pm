@@ -140,7 +140,6 @@ sub sendMessageDigest($;)
 
   # Find all messages of the same type and delay that haven't been sent.
   my $sth;
-  my $cnt = 0;
   my $knownType;
   my @markSentIds;
   my @handledIds;
@@ -155,18 +154,20 @@ sub sendMessageDigest($;)
   my $currentDelivery;
   my $currentType;
 
+  my $delayString = delayIdToString( $delay );
   my $renderedRef;
   my $summedBody = "";
   my @genNotiIds;
+  my @toc;
+  my $cnt = 1;
 
   while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId, $personId,
-	     $delayId, $deliveryId )
-	 = $query->fetchrow_array() ) {
+	     $delayId, $deliveryId ) = $query->fetchrow_array() ) {
 
     # set sensible start values if the current- values are undefined.
-    $currentPerson = $personId unless( $currentPerson );
+    $currentPerson   = $personId unless( $currentPerson );
     $currentDelivery = $deliveryId unless( $currentDelivery );
-    $currentType = $msgTypeId unless( $currentType );
+    $currentType     = $msgTypeId unless( $currentType );
 
     log( 'info', "Current Person $personId <=> $currentPerson" );
     log( 'info', "Current Delivery $deliveryId <=> $currentDelivery" );
@@ -178,12 +179,17 @@ sub sendMessageDigest($;)
       # This means that the collected content needs to be sent because
       # the receiver changed or the receiver is the same but the delivery
       # is different or the message type has changed.
-      $renderedRef->{subject} = $subject if( $subject );
+      my $s = $renderedRef->{subject};
+      $renderedRef->{subject} = sprintf( "[digest %s] %d messages", $delayString, $cnt  );
+      $renderedRef->{subject} .= ", eg. $s" if( $s );
+
       if( sendSummedMessage( $renderedRef, $summedBody, $currentDelivery ) ) {
 	markSent( \@genNotiIds );
 	@genNotiIds = ();
       }
       $summedBody = "";
+      @toc = ();
+      $cnt = 1;
     } else {
       # all parameters are still fine, we continue to collect gen_notification details
     }
@@ -192,22 +198,28 @@ sub sendMessageDigest($;)
     # render the message and get the digest text out.
     $renderedRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
 				  $delayId, $deliveryId, $paramHash );
+
     unless( $renderedRef->{body} ) {
       log( 'error', "Message without body is sad..." );
       next;
     }
 
-    log('info', "Rendered Body: $renderedRef->{body}" );
+    my $subject = sprintf("[%2d. %s] ", $cnt, $genNotiCreated );
+    $subject .= ($renderedRef->{subject} || "no subject set");
+
+    push @toc, $subject;
+
+    # log('info', "Rendered Body: $renderedRef->{body}" );
 
     # get the <digest></digest> limited text out of the body.
-    $summedBody .= "== $genNotiCreated =>\n";
+    $summedBody .= ("\n" . $subject . "\n");
     if( $renderedRef->{body} =~ /<digest>(.+?)<\/digest>/gsi ) {
       # append the text part beween the digest tags to the summed body
       $summedBody .= $1;
     } else {
       # no digest sektion, append the whole text without signature
       my $sumBody = $renderedRef->{body};
-      $sumBody =~ s/^-- \n.*$//si;
+      $sumBody =~ s/^-- \R.*$//sm;
       log('info', "Add to summed up body: $sumBody" );
       $summedBody .= $sumBody;
     }
@@ -221,25 +233,34 @@ sub sendMessageDigest($;)
 
   # Send left overs.
   if( $renderedRef ) {
-    $renderedRef->{subject} = $subject if( $subject );
+    my $cnt = @toc;
+    my $s = $renderedRef->{subject};
+    $renderedRef->{subject} = sprintf( "[digest %s] %d msgs", $delayString, $cnt  );
+    $renderedRef->{subject} .= ", eg. $s" if( $s );
+
     log('info', "Sending left overs: " . Dumper $renderedRef );
-    if( sendSummedMessage( $renderedRef, $summedBody, $currentDelivery ) ) {
+    if( sendSummedMessage( $renderedRef, $summedBody, $currentDelivery, \@toc ) ) {
       markSent( \@genNotiIds );
     }
   }
   return \@handledIds;
 }
 
-sub sendSummedMessage( $$$ )
+sub sendSummedMessage( $$$$ )
 {
-  my ($msgRef, $summedBody, $deliveryId ) = @_;
+  my ($msgRef, $summedBody, $deliveryId, $tocRef ) = @_;
+
+  my $tocString = "Digest TOC:\n" . join( "\n", @$tocRef  ) . "\n";
 
   # Replace the body of the message with the collected body.
-  if( $msgRef->{body} =~ /<digest>/ ) {
-    $msgRef->{body} =~ s/<digest>.+?<\/digest>/$summedBody/gsi;
+  my $bodyString = $msgRef->{body};
+
+  if( $bodyString =~ /<digest>/ ) {
+    $bodyString =~ s/<digest>.+?<\/digest>/$summedBody/gsi;
   } else {
-    $msgRef->{body} = $summedBody;
+    $bodyString = $summedBody;
   }
+  $msgRef->{body} = $tocString . $bodyString;
 
   return deliverMessage( $deliveryId, $msgRef );
 }
