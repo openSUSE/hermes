@@ -33,8 +33,7 @@ use Hermes::Util;
 
 use Time::HiRes qw( gettimeofday tv_interval );
 use Hermes::Log;
-use vars qw ( $opt_h $opt_s $opt_d $opt_w $opt_t $opt_o $opt_m $gotTermSignal );
-
+use vars qw ( $opt_h $opt_c $opt_d $opt_t $opt_o $opt_m $gotTermSignal );
 
 sub gotSignalTerm
 {
@@ -56,6 +55,7 @@ sub usage()
   -t:  database name as of the Config.pm file
   -h:  help text
   -d:  switch on debug
+  -c:  give some output on console
 END
 ;
   exit;
@@ -64,19 +64,15 @@ END
 # ---------------------------------------------------------------------------
 
 # Process the commandline arguments.
-getopts('omw:dhst:');
+getopts('omdcht:');
 setLogFileName('hermesworker');
 
 usage() if ($opt_h );
 
 connectDB( $opt_t );
 
-
 $gotTermSignal = 0;
 $SIG{TERM} = \&gotSignalTerm;
-
-my $silent = 0;
-$silent = 1 if( $opt_s );
 
 my $debug = 0;
 if( $opt_d ) {
@@ -99,11 +95,13 @@ my $workerdelay = $opt_w || 10;
 my ($t0, $elapsed);
 my $cnt;
 
+print "hermesworker started\n" if( $opt_c );
+
 if( $opt_m ) {
     my $notificationIdsRef = sendMessageDigest( SendMinutely() );
     $cnt = @{$notificationIdsRef};
 
-    print "Sent $cnt messages (minute digests)\n";
+    print "Sent $cnt messages (minute digests)\n" if( $opt_c );
     foreach my $notiId ( @{$notificationIdsRef} ) {
 	log('info', "Sent notification <$notiId>" );
     }
@@ -122,53 +120,66 @@ while( 1 ) {
     $cnt = sendImmediateMessages();
     $elapsed = tv_interval ($t0);
     log 'info', "Sent due messages: $cnt in $elapsed sec.\n";
-    print "Sent immediate due messages: $cnt in $elapsed sec.\n";
+    print "Sent immediate due messages: $cnt in $elapsed sec.\n" if( $opt_c );
 
     exit if( $opt_o );
 
-    # send minute digests if $sec >= 0 AND $sec < $workerdelay
-    if( $sec >= 0 && $sec < $workerdelay ) {
-	
+    # lets have a check for new stuff every 15 seconds
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    my $interval = 0;
+    $interval = 15-$sec if( $sec >=0 && $sec < 15 );
+    $interval = 30-$sec if( $sec >=15 && $sec < 30 );
+    $interval = 45-$sec if( $sec >=30 && $sec < 45 );
+    $interval = 60-$sec if( $sec >=45 && $sec < 60 );
+
+    log( 'info', "Sleeping for $interval seconds" );
+    print "Now sleeping for $interval seconds, current second is $sec.\n" if( $opt_c );
+
+    sleep( $interval );
+
+    ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+
+    if( 0+$sec >= 0 && 0+$sec < 10) {
 	$t0 = [gettimeofday];
 	my $notificationIdsRef = sendMessageDigest( SendMinutely() );
 	$cnt = @{$notificationIdsRef};
 
 	$elapsed = tv_interval( $t0 );
-	log 'info', "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.";
-	print "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.\n";
+	log 'info', "nt <$min/$sec>: $cnt in $elapsed sec.";
+	print "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.\n" if( $opt_c );
 
-	if( $min == 0 ) {
+	if( 0+$min == 0 ) {
 	    log 'info', "Send Hour digest at <$hour/$min/$sec>\n";
 	    $t0 = [gettimeofday];
 	    my $notificationIdsRef = sendMessageDigest( SendHourly() );
 	    $cnt = @{$notificationIdsRef};
 	    $elapsed = tv_interval($t0);
 	    log 'info', "Sent Hourly digest at <$min/$sec>: $cnt in $elapsed sec.";
-	    print "Sent Hourly digest at <$min/$sec>: $cnt in $elapsed sec.\n";
+	    print "Sent Hourly digest at <$min/$sec>: $cnt in $elapsed sec.\n" if( $opt_c );
 	}
 
-	if( $hour == $dailyHour && $min == $dailyMin ) {
+	if( 0+$hour == $dailyHour && 0+$min == $dailyMin ) {
 	    $t0 = [gettimeofday];
 	    my $notificationIdsRef = sendMessageDigest( SendDaily() );
 	    $cnt = @{$notificationIdsRef};
 	    $elapsed = tv_interval($t0);
 	    log 'info', "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
-	    print "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n";
+	    print "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n" if( $opt_c );
 
-	    if( $weekDay == $wday ) { # it's sunday and we send the weekly digest
+	    if( 0+$weekDay == 0+$wday ) { # it's sunday and we send the weekly digest
 	      $t0 = [gettimeofday];
 	      $notificationIdsRef = sendMessageDigest( SendWeekly() );
 	      $cnt = @{$notificationIdsRef};
 	      $elapsed = tv_interval($t0);
 	      log 'info', "Send Weekly Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
-	      print "Send Weekly Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n";
+	      print "Send Weekly Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n" if( $opt_c );
 	    }
 	}
     }
 
     if( $gotTermSignal ) {
       log 'info', "Got the term signal, I go outta here...";
-      print "## Got the term signal, I go outta here...\n";
+      print "## Got the term signal, I go outta here...\n" if( $opt_c );
       exit 0;
     }
     print "* Now sleeping for $workerdelay seconds\n";

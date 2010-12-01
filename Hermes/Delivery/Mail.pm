@@ -52,6 +52,29 @@ sub sendMail( $ )
   my ($msg) = @_;
 
   my $pSenderRef = personInfo( $msg->{from} );
+  # get the emails out of the person module
+  
+  my $invalidMails = 0;
+  my @t;
+  foreach my $p ( @{$msg->{to} } ) {
+    my $pInfoRef = personInfo( $p );
+    if( $pInfoRef->{email} eq 'notset@opensuse.org' ) {
+      $invalidMails++;
+    } else {
+      push @t, $pInfoRef->{email} if( $pInfoRef->{email} );
+    }
+  }
+  
+  my $toCnt = @t;
+  if( $toCnt == 0 ) { # No valid receivers found
+    if( $invalidMails > 0 ) {
+      # We do not have valid to receivers of the email, but we claim success
+      # to the caller. That makes the notification marked as sent.
+      return 1;
+    }
+    return 0;
+  }
+
 
   my $mime_msg = MIME::Lite->new( From    => ($pSenderRef->{email} || $Hermes::Config::DefaultSender),
 				  Subject => $msg->{subject},
@@ -60,13 +83,6 @@ sub sendMail( $ )
 				);
 
   # FIXME: Parametercheck.
-
-  # get the emails out of the person module
-  my @t;
-  foreach my $p ( @{$msg->{to} } ) {
-    my $pInfoRef = personInfo( $p );
-    push @t, $pInfoRef->{email} if( $pInfoRef->{email} );
-  }
 
   my $toLine = join( ', ', @t );
   log( 'info', "To-line: $toLine" );
