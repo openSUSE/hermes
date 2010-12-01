@@ -90,8 +90,6 @@ my $dailyHour = $Hermes::Config::DailySendHour || 0;
 my $dailyMin  = $Hermes::Config::DailySendHourMinute || 0;
 my $weekDay   = $Hermes::Config::SendWeekDay || 0;
 
-my $workerdelay = $opt_w || 10;
-
 my ($t0, $elapsed);
 my $cnt;
 
@@ -113,8 +111,6 @@ if( $opt_m ) {
 }
 
 while( 1 ) {
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-
     # First, send out the messages that were marked with sendImmediately.
     $t0 = [gettimeofday];
     $cnt = sendImmediateMessages();
@@ -182,9 +178,6 @@ while( 1 ) {
       print "## Got the term signal, I go outta here...\n" if( $opt_c );
       exit 0;
     }
-    print "* Now sleeping for $workerdelay seconds\n";
-    log( 'info', "Sleeping for $workerdelay seconds" );
-    sleep( $workerdelay );
 }
 
 if( $Hermes::Config::WorkerInitJabber ) {

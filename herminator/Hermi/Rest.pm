@@ -141,7 +141,7 @@ sub cgiapp_get_query
 {
   my $self = shift();
 
-  use CGI qw /-oldstyle_urls/;
+  use CGI qw /-oldstyle_urls -utf8/;
 
   return CGI->new();
 }
