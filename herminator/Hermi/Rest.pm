@@ -28,6 +28,8 @@ use strict;
 use base 'CGI::Application';
 # use CGI::Application::Plugin::ActionDispatch;
 
+use JSON;
+
 use Hermes::Config;
 use Hermes::Log;
 use Hermes::Message;
@@ -290,13 +292,19 @@ sub userSubscriptions()
   my @msg_types = $q->param('types');
 
   my $wantXML = undef;
-  if( $q->param('contenttype') && $q->param('contenttype') eq "text/xml" ) {
-    $wantXML = 1;
+  my $wantJSON = undef;
+  
+  if( $q->param( 'contenttype' ) ){
+    if( $q->param('contenttype') eq "text/xml" ) {
+      $wantXML = 1;
+    } elsif( $q->param('contenttype') eq "text/json" ) {
+      $wantJSON = 1;
+    }
   }
 
   my @persList;
   my $persCnt = @persons;
-  if( persCnt ) {
+  if( $persCnt ) {
     foreach my $person ( @persons ) {
       my $subsList = subscriptions( $person );
       my @subsList;
@@ -319,13 +327,15 @@ sub userSubscriptions()
 	}
 	push @subsList, \%resHash;
       }
-      push @persList, { person => $person, subscriptions => \@subsList };
+      push @persList, { name => $person, subs => \@subsList };
     }
   }
 
   if( $wantXML ) {
-    return XMLout( { subs => \@persList, person => $person }, RootName => "subscriptions", 
+    return XMLout( { person => \@persList }, RootName => "subscriptions", 
 		    XMLDecl => 1 );
+  } elsif( $wantJSON ) {
+    return encode_json( \@persList );
   } else {
     # html output
     my $subsTmpl = $self->load_tmpl( 'subscriptions.tmpl',
