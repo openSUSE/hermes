@@ -1,4 +1,14 @@
+table.messageTable {
+}
 
-td {
-    border: none;
+td.msgtable {
+   padding: 5px; 
+}
+tr.msgtable_even {
+    background-color: #ddd;
+    padding: 16px;
+}
+
+tr.msgtable_odd {
+    padding: 16px;
 }

@@ -8,6 +8,12 @@ class MessagesController < ApplicationController
                                        :conditions => ["person_id=?", @loggedin_user.id ], :order => "id DESC" )
   end
 
+  def subscription
+    @messages = StarshipMessage.paginate( :page => params[:page], :per_page => 20,
+                                          :conditions => ["subscription_id=?", params[:id] ], :order => "created DESC" )
+    @subs = Subscription.find( params[:id] )
+  end
+
   # TODO: check if it's a message from a private subscription
   def show
     @message = StarshipMessage.find( :first, :conditions => ["id=?", params[:id]] )
