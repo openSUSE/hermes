@@ -23,17 +23,42 @@
     <td> <div id="comment_box" style="display: none;"><%= text_area('subscr','comment', :size => "50x5") %></div></td>
   </tr>
 
+  <tr>
+    <td><strong>Filters:</strong></td><td><%= radio_button("special" , "filter", "_mypackages") %>&nbsp; Only notify me if I am in the list of users in the package</td>
+  </tr>
+  <tr>
+    <td></td><td><%= radio_button("special" , "filter", "_mypackagesstrict") %>&nbsp; Only notify me if I am in the list of users in the package</td>
+  </tr>
+  <tr>
+    <td></td><td><%= radio_button("special" , "filter", "_myprojects") %>&nbsp; Only notify me if the notification is about one of my projects</td>
+  </tr>
+  <tr>
+    <td></td><td><%= radio_button("special" , "filter", "_myrequests") %>&nbsp; Only notify me if the request targets one of my projects</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>
+    <%= link_to_function("extended filtering...", nil, :id => "more_link") do |page|
+          page[:extended_filtering].visual_effect  :toggle
+          page[:more_link].replace_html "Show me less"
+        end
+    %> </td>
+  </td>
 </table>
-<hr/>
-<h3>Filter configuration for your subscription to message type: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
+<div id="extended_filtering" style="display:none;">
+<h3>Extended Filter for your subscription to notification: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
+<p>No filter means, you will get all notifications for the chosen message type. Multiple filters mean &lt;filter1&gt; AND &lt;filter2&gt;...
+</p>
 <table>
   <tbody id="filter_table" style="">
-      <tr>
-      <td colspan="4">
-      No filter means, you will get all notifications for the chosen message type. Multiple filters mean &lt;filter1&gt; AND &lt;filter2&gt;... 
-	    </td>
-      <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
-                          page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } ) 
+      <tr> 
+        <td>Parameter</td>
+        <td>Operator</td>
+        <td></td>
+        <td>Value(s)</td>
+        <td></td>
+        <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
+             page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } ) 
                           
                         end %></td>
 
@@ -51,7 +76,6 @@
     <tr><td><%= submit_tag %></td></tr>
   </tbody>
 </table>
-
 <hr/>
 <h3>Hints for Filter Creation</h3>
 
@@ -71,22 +95,11 @@ types of filters so far:</li>
      list is computed by splitting on commas.</li>
    <li><b>regexp:</b>The regexp-filter checks if the selected parameter value 
      matches the regexp given in the value. Be careful!</li>
-   <li><b>special:</b>The special-operator provides special filters. The
-     parameter value is ignored here. The filter value can be one of 
-     <ul><li>_mypackages: The filter matches if this notification is about 
-             a package which lists the user either in the project- or package
-             meta file.</li>
-         <li>_mypackagesstrict: The filter matches if the notification is about
-             a package which lists the user in the package meta file.</li>
-         <li>_myprojects: The filter matches if this notification is about one
-             of the users projects</li>
-         <li>_myrequests: All requests where you are listed in the target project.</li>
-     </ul>
-   </li>
-   </ul>
-   <li><b>Value:</b> The filter value with different meaning depending on the
+  </ul>
+  <li><b>Value:</b> The filter value with different meaning depending on the
   operator</li>
 </ol>
+</div>
 
 <% end %>
 

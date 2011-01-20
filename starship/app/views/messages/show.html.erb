@@ -4,7 +4,8 @@
 
 <p>
   <b>Date:</b>
-  <%=h @message.created.strftime('%d. %B %Y - %H:%M:%S UTC') %> <i>(<%= fuzzy_time_string(@message.created.strftime('%d. %B %Y - %H:%M:%S UTC')) %>)</i>
+  <%=h @message.created.strftime('%d. %B %Y - %H:%M:%S UTC') %> 
+  <i>(<%= fuzzy_time_string(@message.created.strftime('%d. %B %Y - %H:%M:%S UTC'), true) %>)</i>
 </p>
 
 <p>
