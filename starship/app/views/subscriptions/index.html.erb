@@ -1,5 +1,14 @@
+<% content_for :content_for_head do %>
+  <%= javascript_include_tag "jquery.tablesorter" %>
+<% end %>
 <%= javascript_include_tag "wz_tooltip.js" %>
-<%= javascript_include_tag "jquery.tablesorter" %>
+
+<%
+@title = "My Subscriptions (Expert) - openSUSE Hermes"
+@crumb_list = []
+@crumb_list << "My Subscriptions (Expert)"
+%>
+
 
 <% content_for :ready_function do %>
   $("#subscriptions_table").tablesorter( {
