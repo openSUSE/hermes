@@ -212,18 +212,17 @@ sub storeNotificationParameters($$$ )
 {
   my ($notiId, $typeId, $params) = @_;
 
-  my $cnt = 0;
-
   return unless( $typeId =~ /^\d+$/ );
 
   my $paramSth = dbh()->prepare( "SELECT id FROM parameters WHERE name=?" );
   my $inssth = dbh()->prepare( "INSERT INTO msg_types_parameters (msg_type_id, parameter_id) VALUES ($typeId, ?)" );
-  my $insparamSth = dbh()->prepare( 'INSERT INTO notification_parameters(notification_id, parameter_id, value ) VALUES (?,?,?)' );
 
   my $msgTypeSql = "SELECT parameter_id FROM msg_types_parameters WHERE msg_type_id=$typeId";
 
   # this call returns a ref to an array containing all parameter-ids for that msg_type
   my $msgTypesRef = dbh()->selectcol_arrayref( $msgTypeSql );
+
+  my @insertParams; # Store a list of insert tuples to combine them all into one large insert.
 
   foreach my $param  ( keys %{$params} ) {
     # check for the parameter and create if not yet known.
@@ -232,12 +231,13 @@ sub storeNotificationParameters($$$ )
 
     unless( $param_id ) {
       # Create the parameter in the parameters table
+      # this is seldomly called because most of the parameters should already exist
       my $isth = dbh()->prepare( "INSERT INTO parameters (name) VALUES (?)");
       $isth->execute( $param );
       $param_id = dbh()->last_insert_id( undef, undef, undef, undef, undef );
     }
 
-    # Check if the parameter is known for 
+    # Check if the parameter is known for this message type, also seldomly called.
     unless( isInArray( $param_id, $msgTypesRef ) ) {
       log( 'info', "Creating msg_types_parameters-Entry for type <$typeId>, param <$param>" );
       $inssth->execute( $param_id );
@@ -245,10 +245,16 @@ sub storeNotificationParameters($$$ )
 
     # now set the actual parameter value
     if( $param_id ) {
-      $insparamSth->execute( $notiId, $param_id, $params->{$param} || 'undefined' );
-      $cnt++;
+      push @insertParams, "($notiId, $param_id, " . dbh()->quote( $params->{$param}) . ")";
     }
   }
+
+  my $sql = 'INSERT INTO notification_parameters(notification_id, parameter_id, value ) VALUES ' . join(',', @insertParams );
+  log( 'infl', "Inserting the notification parameters: $sql" );
+  my $insparamSth = dbh()->prepare( $sql );
+  $insparamSth->execute();
+
+  my $cnt = @insertParams;
   return $cnt;
 }
 
