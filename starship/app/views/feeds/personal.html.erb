@@ -1,4 +1,8 @@
-<% @hermestitle = "Available web feeds for #{@loggedin_user.stringid} (#{@loggedin_user.email})" %>
+<%
+@title = "My Feeds - openSUSE Hermes"
+@crumb_list = []
+@crumb_list << "My Feeds"
+%>
 
 
 <% if @feed_subscriptions.length > 0 %>
