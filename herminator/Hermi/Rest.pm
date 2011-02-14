@@ -48,7 +48,6 @@ sub setup {
   $self->start_mode('hello');
   $self->run_modes(
 		   'ajaxupdate'   => 'ajaxUpdate',
-		   'post'         => 'postMessage',
 		   'notify'       => 'postNotification',
 		   'hello'        => 'sayHello',
 		   'doc'          => 'showDoc',
@@ -216,67 +215,16 @@ sub postNotification {
   my $self = shift;
 
   my $q = $self->query();
+  my $id;
+  
+  if( $isAdmin{ $user } ) {
+    my $type = $q->param( '_type' );
+    my $params = $q->Vars;
 
-  my $type = $q->param( '_type' );
-  my $params = $q->Vars;
-
-  my $id = notificationToInbox( $type, $params );
-
-  return "$id";
-}
-
-sub postMessage {
-  my $self = shift;
-
-  # Get CGI query object
-  my $q = $self->query();
-
-  # read either the normal param or the url_param in case it is a post 
-  # in mixed mode with url parameters 
-  my $type    = $q->param( 'type')     || $q->url_param( 'type' );
-  my $subject = $q->param( 'subject' ) || $q->url_param( 'subject' );
-  my $body    = $q->param( 'body' )    || $q->url_param( 'body' );
-  my @to      = $q->param( 'to' )      || $q->url_param( 'to' );
-  my @cc      = $q->param( 'cc' )      || $q->url_param( 'cc' );
-  my @bcc     = $q->param( 'bcc' )     || $q->url_param( 'bcc' );
-  my $from    = $q->param( 'from' )    || $q->url_param( 'from' );
-
-  # my $replyTo = $q->param( 'replyto' ); # Can be more than one! FIXME
-  my $delayStr= uc ( $q->url_param( 'delay' ) || $q->url_param( 'delay' ) );
-  # FIXME: Security, perfect spammer!
-
-  log( 'info', "This is delayStr: <$delayStr>" );
-  # Required: subject, body, from, one entry in to
-  unless( defined $subject && defined $body && defined $from && scalar @to > 0 ) {
-    log( 'error', "Message incomplete, required are subject, from body and a to entry." );
-
-    log( 'info', "Subject: " . ( $subject || "<empty>" ) );
-    log( 'info', "Body: " . ( $body || "<empty>" ) );
-    log( 'info', "from: " . ( $from || "<empty>" ) );
-    log( 'info', "to: " . join( ', ', @to ) );
-
-    my $err = "ERROR: Message incomplete, ";
-    $err .= "Subject empty" unless $subject;
-    $err .= " Body empty" unless $body;
-    $err .= " from empty" unless $from;
-    $err .= " to empty" unless @to;
-
-    return $err;
+    $id = notificationToInbox( $type, $params );
+  } else {
+    $id = "<h1>Permission denied - need admin flag to post notifications</h1>";
   }
-
-  # Check the delay
-  my $delay = SendNow;
-  if( $delayStr eq "HOURLY" ) {
-    $delay = SendHourly;
-  } elsif( $delayStr eq "DAILY" ) {
-    $delay = SendDaily;
-  } elsif( $delayStr eq "WEEKLY" ) {
-    $delay = SendWeekly;
-  } elsif( $delayStr eq "MONTHLY" ) {
-    $delay = SendMonthly;
-  }
-
-  my $id = newMessage( $subject, $body, $type, $delay, @to, @cc, @bcc, $from );
 
   return "$id";
 }
@@ -284,11 +232,13 @@ sub postMessage {
 sub subscribePerson()
 {
   my $self = shift;
+  
+  if( $isAdmin{$user} ) {
+    my $q = $self->query();
+    my $type = $q->param('person');
 
-  my $q = $self->query();
-  my $type = $q->param('person');
-
-  log( 'info', "subscribePerson: Not yet implemented!" );
+    log( 'info', "subscribePerson: Not yet implemented!" );
+  }
 }
 
 sub userSubscriptions()
@@ -297,6 +247,11 @@ sub userSubscriptions()
 
   my $q = $self->query();
   my @persons = $q->param('person');
+  if( ! $isAdmin{ $user } )  {
+    # for non admins only allow to query themselves
+    @persons = ($user);
+  }
+  
   my @msg_types = $q->param('types');
 
   my $wantXML = undef;
@@ -436,6 +391,8 @@ sub editType()
 {
   my $self = shift;
 
+  return unless( $isAdmin{ $user } );
+  
   # Get CGI query object
   my $q = $self->query();
   my $type = $q->param( 'type' );
