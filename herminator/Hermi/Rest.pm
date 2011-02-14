@@ -99,7 +99,15 @@ sub cgiapp_prerun
     # my @httpHeader = $q->http();
     # log('info', "HTTP-Header: " . join(", ", @httpHeader ) );
 
-    $loggedInUser = $q->http('X_USERNAME');
+    if( $q->http('X_USERNAME') && $q->http('X_USERNAME') ne '' ) {
+      $loggedInUser = $q->http('X_USERNAME');
+    } else {
+      # if we are ichain AND have no X_USERNAME it means that we come through
+      # a secret door from the backend. USE THIS AT YOUR OWN RISK!
+      $loggedInUser = 'obs_backend';
+    }
+     
+    
   } elsif( $Hermes::Config::authentication =~ /^ichaintest-(.+)$/) {
     $loggedInUser = $1;
   } elsif( $Hermes::Config::authentication =~ /^\s*basic-auth\s*$/ ) {
