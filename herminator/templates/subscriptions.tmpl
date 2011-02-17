@@ -1,3 +1,4 @@
+<TMPL_IF NAME="query_users_allowed">
 <form action="index.cgi" method="get">
   <input type="hidden" name="rm" value="subscriptions">
   <p>Enter a username:&nbsp;<input name="person" type="text" size="30" maxlength="30">
@@ -5,15 +6,16 @@
   </p>
 </form>
 <br/>
+</TMPL_IF>
 <p>
   User <TMPL_VAR NAME="person"> is subscribed to the following messages:
 </p>
 
 <TMPL_LOOP NAME="user">
-  <h1>User: <TMPL_VAR NAME="user"></h1>
+  <h1>User: <TMPL_VAR NAME="name"></h1>
   <table width="100%">
   <tr><th>Id</th><th>Notification Type</th><th>Delivery Type</th><th>Delay</th></tr>
-  <TMPL_LOOP NAME="subscriptions">
+  <TMPL_LOOP NAME="subs">
   <tr>
   <td><TMPL_VAR NAME="id"></td>
   <td><TMPL_VAR NAME="msgtype"></td>

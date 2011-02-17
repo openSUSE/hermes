@@ -22,7 +22,7 @@
 package Hermi::Rest;
 
 use XML::Simple qw(XMLout);
-
+use Data::Dumper;
 use strict;
 
 use base 'CGI::Application';
@@ -246,10 +246,13 @@ sub userSubscriptions()
   my $self = shift;
 
   my $q = $self->query();
+  my $query_users_allowed = 1;
   my @persons = $q->param('person');
-  if( ! $isAdmin{ $user } )  {
+  
+  unless( $isAdmin{ $user } )  {
     # for non admins only allow to query themselves
     @persons = ($user);
+    $query_users_allowed = 0;
   }
   
   my @msg_types = $q->param('types');
@@ -267,31 +270,33 @@ sub userSubscriptions()
 
   my @persList;
   my $persCnt = @persons;
-  if( $persCnt ) {
-    foreach my $person ( @persons ) {
-      my $subsList = subscriptions( $person );
-      my @subsList;
-      foreach my $subsHashRef ( @$subsList ) {
-	if( @msg_types ) {
-	  # check if the current type is in the list of wanted types
-	  log( 'info', "Checking for " . $subsHashRef->{msgtype} . "in " . join ( ' ', @msg_types ));
-	  next unless ( grep ( $subsHashRef->{msgtype}, @msg_types ) );
-	}
-	my %resHash;
-	if( $wantXML ) {
-	  $resHash{delivery} = [ deliveryIdToString( $subsHashRef->{delivery_id} ) ];
-	  $resHash{delay}    = [ delayIdToString( $subsHashRef->{delay_id} ) ];
-	  $resHash{msgtype}  = [ $subsHashRef->{msgtype} ];
-	} else {
-	  $resHash{id}       = $subsHashRef->{id};
-	  $resHash{delivery} = deliveryIdToString( $subsHashRef->{delivery_id} );
-	  $resHash{delay}    = delayIdToString( $subsHashRef->{delay_id} );
-	  $resHash{msgtype}  = $subsHashRef->{msgtype};
-	}
-	push @subsList, \%resHash;
+  @persons = ($user) unless( $persCnt );
+  
+  foreach my $person ( @persons ) {
+    log( 'info', "doing person $person" );
+    my $subsList = subscriptions( $person );
+    
+    my @subsList;
+    foreach my $subsHashRef ( @$subsList ) {
+      if( @msg_types ) {
+	# check if the current type is in the list of wanted types
+	log( 'info', "Checking for " . $subsHashRef->{msgtype} . "in " . join ( ' ', @msg_types ));
+	next unless ( grep ( $subsHashRef->{msgtype}, @msg_types ) );
       }
-      push @persList, { name => $person, subs => \@subsList };
+      my %resHash;
+      if( $wantXML ) {
+	$resHash{delivery} = [ deliveryIdToString( $subsHashRef->{delivery_id} ) ];
+	$resHash{delay}    = [ delayIdToString( $subsHashRef->{delay_id} ) ];
+	$resHash{msgtype}  = [ $subsHashRef->{msgtype} ];
+      } else {
+	$resHash{id}       = $subsHashRef->{id};
+	$resHash{delivery} = deliveryIdToString( $subsHashRef->{delivery_id} );
+	$resHash{delay}    = delayIdToString( $subsHashRef->{delay_id} );
+	$resHash{msgtype}  = $subsHashRef->{msgtype};
+      }
+      push @subsList, \%resHash;
     }
+    push @persList, { name => $person, subs => \@subsList };
   }
 
   if( $wantXML ) {
@@ -307,13 +312,13 @@ sub userSubscriptions()
     initFrame( "Hermes User Subscriptions" );
     my @personsList;
     $subsTmpl->param( user => \@persList );
+    $subsTmpl->param( query_users_allowed => $query_users_allowed );
+    
     # $subsTmpl->param( person => $person || "<no person>" );
     # $subsTmpl->param( subscriptions => \@subsList );
 
     $htmlTmpl->param( Content => $subsTmpl->output );
   } 
-
-  # print STDERR $self->dump();
 
   return $htmlTmpl->output;
 }
@@ -391,7 +396,10 @@ sub editType()
 {
   my $self = shift;
 
-  return unless( $isAdmin{ $user } );
+  unless( $isAdmin{ $user } ) {
+    return showError( 'Permission denied!', 
+      "Sorry, but you don't have proper permissions to edit document types" );
+  }
   
   # Get CGI query object
   my $q = $self->query();
@@ -613,6 +621,22 @@ sub templateTypeList(;$)
   }
   return ($res, $firstType) ;
 }
+
+sub showError( $$ )
+{
+  my ($header, $content) = @_;
+
+  initFrame( "<i>$header</i>" );
+  
+  my ($list, $firstType) = templateTypeList( '' );
+
+  $htmlTmpl->param( NotiTypeLinks => $list );
+
+  $htmlTmpl->param( Content => '<div id="error">' . $content . '</div>' );
+
+  return $htmlTmpl->output;
+}
+
 
 setLogFileName('herminator');
 

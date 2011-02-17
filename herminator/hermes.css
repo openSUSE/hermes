@@ -97,6 +97,12 @@ div#box {
   padding: 3px;
 }
 
+div#error {
+  padding: 15px;
+  background-color: #ff6c6c;
+  margin-bottom: 10px;
+}
+
 table {
   font-size:small;
 }

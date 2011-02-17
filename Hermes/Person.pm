@@ -216,6 +216,7 @@ sub subscriptions( $ )
 
   my $userInfo = personInfo( $person ); # Get the hermes user info
   if( $userInfo->{id} ) {
+    log('info', "Querying user subscriptions for id " . $userInfo->{id} );
     my $sql = "SELECT mt.msgtype, s.delay_id, s.delivery_id, s.id FROM subscriptions s,";
     $sql .= "msg_types mt where s.person_id=? AND s.enabled = 1 AND s.msg_type_id = mt.id";
     my $sth = dbh()->prepare( $sql );
