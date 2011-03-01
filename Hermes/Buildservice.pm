@@ -50,6 +50,37 @@ use vars qw(@ISA @EXPORT @EXPORT_OK );
 our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedStrictPackage, $cachedWatchlist);
 
 #
+# This sub generates a list of subscriptions (ie. from receiver) based on 
+# a parameter that comes with the notification which represents a group name.
+# It can be expanded by the OBS API to a list of users. With that, the list
+# of subscriptions for that users can be generated.
+# TBD: Can others subscribe to these notifications?
+#      Can the people from the group add additional filters to their 
+#      subscriptions?
+#
+sub expandByGroup( $$ )
+{
+  my ($msgType, $paramRef) = @_;
+ 
+  my @subsIds;
+  my @personStringIds;
+  
+  if( $msgType eq 'OBS_SRCSRV_REQUEST_REVIEWER_ADDED' ) {
+    @personStringIds = ($paramRef{newreviewer}) if( $paramRef->{newreviewer} );
+  } elsif( $msgType eq 'OBS_SRCSRV_REQUEST_GROUP_ADDED' ) {
+    # Add all members of the group in param newreviewer
+    @personStringIds = membersOfGroup( $paramRef{newreviewer} );
+  } elsif( $msgType eq 'OBS_SRCSRV_REQUEST_PACKAGE_ADDED' ) {
+    # Add all persons maintaining the PACKAGE
+  @personStringIds = ($paramRef{newreviewer}) if( $paramRef->{newreviewer} );
+  } elsif( $msgType eq 'OBS_SRCSRV_REQUEST_PROJECT_ADDED' ) {
+  @personStringIds = ($paramRef{newreviewer}) if( $paramRef->{newreviewer} );
+  }
+  
+  return \@subsIds;
+}
+
+#
 # generates a list of subscriptions which want to receive the incoming 
 # notification type based on the parameters. The subscriptions are identified
 # by their database ids. The subscriptions have all the information like receiver,
