@@ -330,6 +330,11 @@ sub subscribeToMailinglist()
   my $self = shift;
 
   my $q = $self->query();
+  unless( $isAdmin{ $user } ) {
+    log('info', "Permission denied to subscribe to mailinglists." );
+    return ""; # FIXME: Send permission denied error code
+  }
+
   my @mailinglists = $q->param('mailinglist');
   my $email        = $q->param('email');
   my $username     = $q->param('username' );
