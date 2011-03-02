@@ -46,37 +46,49 @@ use vars qw( @ISA @EXPORT @EXPORT_OK );
 #  subject    => string
 #  body       => string
 #  _debug      => debug flag, true if debug.
+#  _skip_user_check => do not check the from and to addresses 
 # 
 sub sendMail( $ )
 {
   my ($msg) = @_;
 
   my $pSenderRef = personInfo( $msg->{from} );
-  # get the emails out of the person module
+  my $fromMail = $pSenderRef->{email} || $Hermes::Config::DefaultSender;
+  
+  if( $msg->{_skip_user_check} ) {
+    $fromMail = $msg->{from};
+  }
   
   my $invalidMails = 0;
   my @t;
-  foreach my $p ( @{$msg->{to} } ) {
-    my $pInfoRef = personInfo( $p );
-    if( $pInfoRef->{email} eq 'notset@opensuse.org' ) {
-      $invalidMails++;
-    } else {
-      push @t, $pInfoRef->{email} if( $pInfoRef->{email} );
+   
+  if( $msg->{_skip_user_check} ) {
+    @t = @{$msg->{to} };
+  } else {
+    # get the emails out of the person module
+    foreach my $p ( @{$msg->{to} } ) {
+      my $pInfoRef = personInfo( $p );
+      if( $pInfoRef->{email} eq 'notset@opensuse.org' ) {
+	$invalidMails++;
+      } else {
+	push @t, $pInfoRef->{email} if( $pInfoRef->{email} );
+      }
     }
-  }
-  
-  my $toCnt = @t;
-  if( $toCnt == 0 ) { # No valid receivers found
-    if( $invalidMails > 0 ) {
-      # We do not have valid to receivers of the email, but we claim success
-      # to the caller. That makes the notification marked as sent.
-      return 1;
+    
+    my $toCnt = @t;
+    if( $toCnt == 0 ) { # No valid receivers found
+      if( $invalidMails > 0 ) {
+	# We do not have valid to receivers of the email, but we claim success
+	# to the caller. That makes the notification marked as sent.
+	return 1;
+      }
+      log( 'info', "No relevant receivers found for the message." );
+      return 0;
     }
-    return 0;
   }
 
 
-  my $mime_msg = MIME::Lite->new( From    => ($pSenderRef->{email} || $Hermes::Config::DefaultSender),
+  my $mime_msg = MIME::Lite->new( From    => $fromMail,
 				  Subject => $msg->{subject},
 				  Data    => $msg->{body},
 				  Type    => 'TEXT'
@@ -89,28 +101,43 @@ sub sendMail( $ )
   $mime_msg->add('To' => $toLine );
 
   @t = ();
-  foreach my $p ( @{$msg->{cc} } ) {
-    my $pInfoRef = personInfo( $p );
-    push @t, $pInfoRef->{email};
+  if( $msg->{cc} ) {
+    if( $msg->{_skip_user_check}  ) {
+      @t = @{$msg->{cc} };
+    } else {
+      foreach my $p ( @{$msg->{cc} } ) {
+	my $pInfoRef = personInfo( $p );
+	push @t, $pInfoRef->{email};
+      }
+    }
+    $mime_msg->add('Cc' => join( ', ', @t ) );
   }
-  $mime_msg->add('Cc' => join( ', ', @t ) );
-
+  
   @t = ();
-  foreach my $p ( @{$msg->{bcc} } ) {
-    my $pInfoRef = personInfo( $p );
-    push @t, $pInfoRef->{email};
+  if( $msg->{bcc} ) {
+  if( $msg->{_skip_user_check} ) {
+      @t = @{$msg->{bcc} };
+    } else {
+      foreach my $p ( @{$msg->{bcc} } ) {
+	my $pInfoRef = personInfo( $p );
+	push @t, $pInfoRef->{email};
+      }
+    }
+    $mime_msg->add('Bcc' => join( ', ', @t ) );
   }
-  $mime_msg->add('Bcc' => join( ', ', @t ) );
-
+  
   if( $msg->{replyto} ) {
-    my $pReplyToRef = personInfo( $msg->{replyto} );
-
-    $mime_msg->add('reply-to' => $pReplyToRef->{email} || "unknown" ) ;
+    my $pReplyTo = $msg->{replyto};
+    unless( $msg->{_skip_user_check} ) {
+      my $pReplyToRef = personInfo( $msg->{replyto} );
+      $pReplyTo = $pReplyToRef->{email} || 'hermes\@opensuse.org';
+    }
+    $mime_msg->add('reply-to' => $pReplyTo ) ;
   }
 
-  $mime_msg->add('X-hermes-msg-type' => $msg->{type} ) if( $msg->{type} );
-  $mime_msg->replace('Precedence' => 'bulk');
-  $mime_msg->replace('X-Mailer' => 'openSUSE Notification System');
+  $mime_msg->add( 'X-hermes-msg-type' => $msg->{type} ) if( $msg->{type} );
+  $mime_msg->replace( 'Precedence' => 'bulk');
+  $mime_msg->replace( 'X-Mailer' => 'openSUSE Notification System');
 
   # set the date manually because MIME:Lite does it with UT instead of UTC
   my ($u_wdy, $u_mon, $u_mdy, $u_time, $u_y4) = split /\s+/, gmtime()."";
@@ -118,12 +145,13 @@ sub sendMail( $ )
   my $date = "$u_wdy, $u_mdy $u_mon $u_y4 $u_time +0000";
   $mime_msg->replace("date", $date);
 
-
   # Send the message.
   my $res = 1;
   if ($msg->{_debug} ) {
-    log('info', "Saving debug mail for noti Id " . $msg->{_notiId} );
-    saveDebugMail( $msg->{_notiId}, $toLine, $mime_msg );
+    my $id = $msg->{_notiId} || "undef_id";
+    
+    log('info', "Saving debug mail for noti Id " . $id );
+    saveDebugMail( $id, $toLine, $mime_msg );
     # print STDERR "[ Hermes Mail Module Debug: Start of MIME-encoded message ]\n";
     # print STDERR $mime_msg->as_string;
     # print STDERR "\n[ Hermes Mail Module Debug: End of MIME-encoded message ]\n";

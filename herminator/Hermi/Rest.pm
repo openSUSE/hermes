@@ -37,6 +37,7 @@ use Hermes::Statistics;
 use Hermes::Person;
 use Hermes::Util;
 use Hermes::DB;
+use Hermes::Delivery::Mail;
 
 # sub do_stuff : Path('do/stuff') { ... }
 # sub do_more_stuff : Regex('^/do/more/stuff\/?$') { ... }
@@ -55,7 +56,8 @@ sub setup {
 		   'httptest'     => 'httpTest',
 		   'posthttptest' => 'httpTestInput',
 		   'subscribe'    => 'subscribePerson',
-		   'subscriptions'=> 'userSubscriptions'
+		   'subscriptions'=> 'userSubscriptions',
+		   'subscribe_ml' => 'subscribeToMailinglist'
 		  );
   $self->mode_param( 'rm' );
 
@@ -322,6 +324,42 @@ sub userSubscriptions()
 
   return $htmlTmpl->output;
 }
+
+sub subscribeToMailinglist()
+{
+  my $self = shift;
+
+  my $q = $self->query();
+  my @mailinglists = $q->param('mailinglist');
+  my $email        = $q->param('email');
+  my $username     = $q->param('username' );
+
+  unless( $email =~ /.?\@.?/ ) {
+    log( 'info', "Invalid email for subscription, can not do anything." );
+    return;
+  }
+  
+  log( 'info', "Subscription to Mailinglist wanted: User $username / $email to lists " . 
+        join(", ", @mailinglists ) );
+
+  my $re;
+  foreach my $ml ( @mailinglists ) {
+    my $to = "$ml+subscribe\@opensuse.org";
+    if( sendMail( { from    => $email,
+		    to      => [$to],
+		    subject => "Subscribe to $ml",
+		    body    => '',
+		    # _debug  => 1,
+		    _skip_user_check => 1} ) ) {
+	log( 'info', "subscription mail successfully sent" );    
+	$re .= "<p>Subscribed $to to mailinglist $ml</p>";
+    } else {
+      log( 'info', "Failed to send subscription mail" );
+    }
+  }
+  print $re;
+}
+
 
 sub httpTestInput()
 {
