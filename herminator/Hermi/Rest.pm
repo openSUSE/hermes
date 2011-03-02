@@ -76,8 +76,8 @@ sub cgiapp_prerun
   # Get CGI query object
   my $q = $self->query();
   my $mode = lc $q->url_param('rm');
-  if( $mode eq 'post' ) {
-    $self->prerun_mode( 'post' );
+  if( $mode eq 'subscribe_ml' ) {
+    $self->prerun_mode( 'subscribe_ml' );
   } elsif( $mode eq "notify" ) {
     $self->prerun_mode( 'notify' );
   } elsif( $mode eq "ajaxupdate" ) {
