@@ -66,15 +66,15 @@ sub expandByGroup( $$ )
   my @personStringIds;
   
   if( $msgType eq 'OBS_SRCSRV_REQUEST_REVIEWER_ADDED' ) {
-    @personStringIds = ($paramRef{newreviewer}) if( $paramRef->{newreviewer} );
+    @personStringIds = ($paramRef->{newreviewer}) if( $paramRef->{newreviewer} );
   } elsif( $msgType eq 'OBS_SRCSRV_REQUEST_GROUP_ADDED' ) {
     # Add all members of the group in param newreviewer
-    @personStringIds = membersOfGroup( $paramRef{newreviewer} );
+    @personStringIds = membersOfGroup( $paramRef->{newreviewer} );
   } elsif( $msgType eq 'OBS_SRCSRV_REQUEST_PACKAGE_ADDED' ) {
     # Add all persons maintaining the PACKAGE
-  @personStringIds = ($paramRef{newreviewer}) if( $paramRef->{newreviewer} );
+  @personStringIds = ($paramRef->{newreviewer}) if( $paramRef->{newreviewer} );
   } elsif( $msgType eq 'OBS_SRCSRV_REQUEST_PROJECT_ADDED' ) {
-  @personStringIds = ($paramRef{newreviewer}) if( $paramRef->{newreviewer} );
+  @personStringIds = ($paramRef->{newreviewer}) if( $paramRef->{newreviewer} );
   }
   
   return \@subsIds;
