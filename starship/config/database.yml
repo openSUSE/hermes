@@ -16,11 +16,11 @@
 #   http://dev.mysql.com/doc/refman/5.0/en/old-client.html
 development:
   adapter: mysql
-  host: bessel
+  host: localhost 
   encoding: utf8
-  database: hermes_dev
-  username: hermes
-  password: hermes
+  database: hermes
+  username: root
+  password: 
 
 # Warning: The database defined as 'test' will be erased and
 # re-generated from your development database when you run 'rake'.

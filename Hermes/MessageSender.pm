@@ -359,6 +359,7 @@ sub renderMessage( $$$$$$$ )
   my $tmpl = getTemplate( $type, $delayId, $deliveryId );
   if( $tmpl ) {
     # Fill the template, the expandMessageTemplateParams lives in Customize.pm
+    # it returns a hash ref which goes into the tmpl directly
     $tmpl->param( expandMessageTemplateParams( $paramHash, $tmpl ) );
     $text = $tmpl->output;
 

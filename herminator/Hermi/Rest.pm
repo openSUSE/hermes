@@ -107,11 +107,9 @@ sub cgiapp_prerun
       # a secret door from the backend. USE THIS AT YOUR OWN RISK!
       $loggedInUser = 'obs_backend';
     }
-     
-    
   } elsif( $Hermes::Config::authentication =~ /^ichaintest-(.+)$/) {
     $loggedInUser = $1;
-  } elsif( $Hermes::Config::authentication =~ /^\s*basic-auth\s*$/ ) {
+  } elsif( $Hermes::Config::authentication =~ /^\s*http-server\s*$/ ) {
     $loggedInUser = $ENV{REMOTE_USER};
   }
 

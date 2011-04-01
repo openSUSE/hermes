@@ -464,28 +464,23 @@ sub callOBSAPI( $$ )
   my $ua = LWP::UserAgent->new;
   $ua->agent( "Hermes Buildservice Processor" );
   my $uri = $OBSAPIUrl . "public/";
-  my $method = "get";
-
+  $uri = $OBSAPIUrl;
+  my $req;
+  
   if( $function eq 'prjMetaRef' || $function eq 'pkgMetaRef') {
     $uri .= "source/$urlstr/_meta";
+    $req = HTTP::Request->new( GET => $uri );
   } elsif($function eq 'personMetaRef') {
     $uri .= "person/$urlstr/_watchlist";
+    $req = HTTP::Request->new( GET => $uri );
 #   $auth = 1;
   } elsif( $function eq 'diff' ) {
-    $uri .= "source/$urlstr?cmd=diff&unified=1";
-    $method = "post";
+    $uri .= "source/$urlstr";
+    $req = HTTP::Request->new( POST => $uri, [ cmd => 'diff', unified => '1' ] );
   }
 
-  log( 'info', "Asking $uri with $method" );
+  log( 'info', "Asking $uri" );
 
-  my $req;
-  if( $method eq "post" ) {
-    $req = HTTP::Request->new( POST => $uri );
-  } elsif( $method eq "get" ) {
-    $req = HTTP::Request->new( GET => $uri );
-  } else {
-    log( 'info', "Unknown request type <$method>" );
-  }
   $req->header( 'Accept' => 'text/xml' );
 
   my $res = $ua->request( $req );
