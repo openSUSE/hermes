@@ -62,8 +62,15 @@ $DeliverTwitter = 1;
 $DebugTwitter = 0;
 
 #
-# OBS API Connection
-$OBSAPIBase = "http://api.opensuse.org";
+# OBS API Connection, the top level url of the OBS incl. port
+$OBSAPIBase = "https://api.opensuse.org:443";
+#
+# the OBS API credentials
+$OBSAPIUser = 'hermes';
+$OBSAPIPwd  = 'secret';
+
+# OBS max response size: Specifiy the maximum response body size in byte.
+$OBSMaxResponseSize = 1024;
 
 #
 # 

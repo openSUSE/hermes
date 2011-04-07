@@ -28,6 +28,7 @@ use Carp;
 
 use HTML::Template;
 use LWP::UserAgent;
+use HTTP::Request;
 use URI::Escape;
 
 use Hermes::Config;
@@ -435,7 +436,7 @@ sub invalidateCache()
 }
 
 #
-# calls the OBS API, uses credentials aus conf/hermes.conf
+# calls the OBS API, uses credentials from conf/hermes.conf
 # returns the result as plain text or undef, if an error happened
 # FIXME: report errors back to calling functions
 #
@@ -457,14 +458,13 @@ sub callOBSAPI( $$ )
 # return {} unless( $project );
 
   my %results;
-  my $OBSAPIUrl = $Hermes::Config::OBSAPIBase ||  "http://api.opensuse.org/";
+  my $OBSAPIUrl = $Hermes::Config::OBSAPIBase ||  "https://api.opensuse.org:443/";
   $OBSAPIUrl =~ s/\s*$//; # Wipe whitespace at end.
   $OBSAPIUrl .= '/' unless( $OBSAPIUrl =~ /\/$/ );
 
   my $ua = LWP::UserAgent->new;
   $ua->agent( "Hermes Buildservice Processor" );
-  my $uri = $OBSAPIUrl . "public/";
-  $uri = $OBSAPIUrl;
+  my $uri = $OBSAPIUrl;
   my $req;
   
   if( $function eq 'prjMetaRef' || $function eq 'pkgMetaRef') {
@@ -476,19 +476,28 @@ sub callOBSAPI( $$ )
 #   $auth = 1;
   } elsif( $function eq 'diff' ) {
     $uri .= "source/$urlstr";
-    $req = HTTP::Request->new( POST => $uri, [ cmd => 'diff', unified => '1' ] );
+    $req = HTTP::Request->new( POST => $uri );
+    my $content = 'cmd=diff&unified=1';
+    my $str = $req->content( $content );
+    $req->header('Content-Length' => length( $content ) );
   }
 
   log( 'info', "Asking $uri" );
 
+  my $user = $Hermes::Config::OBSAPIUser || '' ;
+  my $pwd  = $Hermes::Config::OBSAPIPwd || '';
+  
   $req->header( 'Accept' => 'text/xml' );
-
+  $req->authorization_basic( $user, $pwd );
+  $ua->credentials( $OBSAPIUrl, "iChain", "$user" => "$pwd" );
+  
   my $res = $ua->request( $req );
 
   if( $res->is_success ) {
     return $res->decoded_content;
   } else {
     log( 'error', "API Call Error: " . $res->status_line . "\n" );
+    log( 'error', "API Call Error: " . $res->as_string );
     return undef;
   }
 }
