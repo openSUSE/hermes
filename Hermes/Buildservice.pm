@@ -491,10 +491,19 @@ sub callOBSAPI( $$ )
   $req->authorization_basic( $user, $pwd );
   $ua->credentials( $OBSAPIUrl, "iChain", "$user" => "$pwd" );
   
+  if( $Hermes::Config::OBSMaxResponseSize ) {
+    $ua->max_size( $Hermes::Config::OBSMaxResponseSize );
+    log( 'info', "Limiting response size to <$Hermes::Config::OBSMaxResponseSize> byte" );
+  }
+  
   my $res = $ua->request( $req );
 
   if( $res->is_success ) {
-    return $res->decoded_content;
+    my $answer = $res->decoded_content;
+    if( $res->header( 'Client-Aborted' ) ) {
+      $answer .= "\n...\nThis diff was cut by Hermes due to size limitations. Check on the server.\n";
+    }
+    return $answer;
   } else {
     log( 'error', "API Call Error: " . $res->status_line . "\n" );
     log( 'error', "API Call Error: " . $res->as_string );
