@@ -1,0 +1,116 @@
+#! /bin/sh
+# Copyright (c) 2010, Novell Inc.
+#
+# Author: adrian@suse.de
+#         freitag@suse.de
+#
+# /etc/init.d/hermessetup
+#   and its symbolic  link
+# /usr/sbin/rchermessetup
+#
+### BEGIN INIT INFO
+# Provides:          hermessetup
+# Start-Before:      lighttpd
+# Should-Start:      $none
+# Should-Stop:       $none
+# Required-Start:    mysql
+# Required-Stop:     $null
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 4 6
+# Description:       Initialize Hermes personal messaging
+### END INIT INFO
+
+. /etc/rc.status
+
+# Determine the base and follow a runlevel link name.
+base=${0##*/}
+link=${base#*[SK][0-9][0-9]}
+
+hermesdir=/srv/www/hermes
+
+FQHOSTNAME=`hostname -f`
+
+. /etc/sysconfig/hermes
+
+if [ "$HERMES_AUTOSETUP" != "yes" ]; then
+   echo "Hermes Autosetup is not enabled in sysconfig, skipping!"
+   exit 0
+fi
+
+rc_reset
+case "$1" in
+	start)
+	    if [ ! -d /obs/MySQL ]; then
+                    mkdir -p /obs/MySQL
+            fi
+            if [ ! -e /obs/MySQL/hermes ]; then
+                    echo -n "Initialize Hermes database (first time only)"
+                    mysqladmin -u root create hermes
+                    mysqladmin -u root password "opensuse"
+            fi
+
+			
+	    echo -n "Migrate OBS webui database"
+            cd $hermesdir
+            RAILS_ENV=production rake db:migrate >> /var/log/hermes/db_migrate.log
+            echo
+	
+	    echo -n "Adjust webui configuration for api"
+            # it would be better to solve this in lighttpd.conf to accept also localhost:81,
+            # but no idea how to solve this
+            sed -i 's,^\$OBSAPIBase = .*,\$OBSAPIBase = "'"$FQHOSTNAME"'",' /etc/hermes.conf
+
+	    cat > /etc/lighttpd/vhosts.d/hermes.conf <<EOF
+#
+# WARNING: this file gets rewritten on each boot by obsapisetup runlevel script!
+#
+\$SERVER["socket"] == ":85" {
+  rails_app   = "starship"
+  rails_root  = "/srv/www/hermes/starship"
+  rails_procs = 5
+  # production/development are typical values here
+  rails_mode  = "production"
+
+  log_root = "/var/log/hermes"
+
+  include "vhosts.d/rails.inc"
+}
+\$SERVER["socket"] == ":86" {
+  server.name = "$FQHOSTNAME"
+  server.document-root = "/srv/www/hermes/herminator/"
+  accesslog.filename = "/var/log/hermes/notify.access_log"
+  static-file.exclude-extensions = ( ".cgi" )
+
+  dir-listing.activate = "disable"
+}
+
+EOF
+		
+	    rc_status -v
+	;;
+	stop)
+                # nothing to do
+		rc_status -v
+	;;
+	restart)
+                # nothing to do
+		rc_status
+	;;
+	try-restart)
+                # nothing to do
+		rc_status
+	;;
+	reload)
+                # nothing to do
+		rc_status
+	;;
+	status)
+		# nothing to do
+		rc_status -v
+	;;
+	*)
+		echo "Usage: $0 {start|stop|status|try-restart|restart|reload}"
+		exit 1
+	;;
+esac
+rc_exit
