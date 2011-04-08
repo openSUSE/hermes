@@ -5,8 +5,11 @@ is a message digesting and distribution system. See
 http://en.opensuse.org/openSUSE:Hermes
 for details.
 
-Message can be posted using either the Hermes::Message module
+Message can be posted using either the Hermes::Client perl module
 directly or via http. HTTP is supported through herminator in 
-the herminator directory. 
+the herminator directory.
+
+Ask for help in the #opensuse-buildservice channel on freenode.
 
 Klaas Freitag <freitag@suse.de>
+
