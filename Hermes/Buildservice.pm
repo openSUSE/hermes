@@ -36,6 +36,7 @@ use Hermes::DB;
 use Hermes::Log;
 use Hermes::Person;
 use Hermes::Util;
+use Hermes::Cache;
 
 use constant MAINTAINER_FLAG => 1;
 use constant BUGOWNER_FLAG   => 2;
@@ -48,7 +49,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK );
 @EXPORT	    = qw( expandNotification packageDiff );
 @EXPORT_OK  = qw( extractUserFromMeta usersOfPackage usersOfProject applyFilter);
 
-our($hermesUserInfoRef, $cachedProject, $cachedPackage, $cachedStrictPackage, $cachedWatchlist);
+our($hermesUserInfoRef, $cache);
 
 #
 # This sub generates a list of subscriptions (ie. from receiver) based on 
@@ -311,17 +312,19 @@ sub usersOfProject( $ )
   my ($project) = @_;
   confess 'no Project defined!' unless $project;
 
-  if( defined $cachedProject->{$project} ) {
-    log( 'info', "Using userdata for $project from cache" );
-    return $cachedProject->{$project}; 
-  }
+  my $cacheKey = 'prj_' . $project;
 
-  my $userHashRef;
+  my $userHashRef = $cache->get( $cacheKey );
+
+  if( defined $userHashRef ) {
+    log( 'info', "Using userdata for $project from cache" );
+    return $userHashRef; 
+  }
 
   if( $project ) {
     my $meta = callOBSAPI( 'prjMetaRef', ($project) );
     $userHashRef = extractUserFromMeta( $meta );
-    $cachedProject->{$project} = $userHashRef;
+    $cache->put( $cacheKey, $userHashRef );
     foreach my $user ( keys %{$userHashRef} ) {
       log('info', "This user is in project <$project>: $user, function $userHashRef->{$user}" );
     }
@@ -339,19 +342,23 @@ sub usersOfPackage( $;$ )
   my ($project, $package) = @_;
   confess 'no Project defined!' unless $project;
   confess 'no Package defined!' unless $package;
-  if( defined $cachedPackage->{"$project/$package"} ) {
+  my $cacheKey = 'pack_' . $project . '_' . $package;
+  
+  my $userHashRef = $cache->get( $cacheKey );
+  
+  if( defined $userHashRef ) {
     log( 'info', "Using userdata for package $project/$package from cache" );
-    return $cachedPackage->{"$project/$package"}; 
+    return $userHashRef; 
   }
 
   # All users of the project
-  my $userHashRef = usersOfProject( $project );
+  $userHashRef = usersOfProject( $project );
   
   if( $package ) {
     # since the api changed its behaviour silently to not longer 
     # deliver the users inherited from the project with the package
     # here both prj and pack need to be queried.
-    my $packUserHashRef = strictUsersOfPackage($project,$package);
+    my $packUserHashRef = strictUsersOfPackage($project, $package);
   
     # Unite the content of both hashes
     foreach my $k ( keys %$packUserHashRef ) {
@@ -361,7 +368,7 @@ sub usersOfPackage( $;$ )
     }
   }
 
-  $cachedPackage->{"$project/$package"} = $userHashRef;
+  $cache->put( $cacheKey , $userHashRef );
   log( 'info', "These users are in package <$project/$package>: " . join( ', ', keys %{$userHashRef} ) );
 
   return $userHashRef;
@@ -377,12 +384,13 @@ sub strictUsersOfPackage( $$ )
  my ($project, $package) = @_;
   
   my $userHashRef;
+  my $cacheKey = "strict_pack_" . $project . "_" . $package;
 
   if( $project && $package ) {
-    
-    if( defined $cachedStrictPackage->{"$project/$package"} ) {
+    $userHashRef = $cache->get( $cacheKey );
+    if( defined $userHashRef ) {
         log( 'info', "Using strict userdata for package $project/$package from cache" );
-        return $cachedStrictPackage->{"$project/$package"};
+        return $userHashRef;
      }
 
     # since the api changed its behaviour silently to not longer 
@@ -390,26 +398,31 @@ sub strictUsersOfPackage( $$ )
     # here both prj and pack need to be queried.
     my $meta = callOBSAPI( 'pkgMetaRef', ( $project,$package ) );
     $userHashRef = extractUserFromMeta( $meta );
-    $cachedStrictPackage->{"$project/$package"} = $userHashRef;
+    $cache->put( $cacheKey, $userHashRef );
   } else {
     log( 'info', "Problem: No sufficient input for strict package users" );
   }
   return $userHashRef;
 }
 
-sub userWatchList( $$ )
+sub userWatchList( $ )
 {
   my ($user) = @_;
-  if( defined $cachedWatchlist->{$user} ) {
+  confess 'no user defined' unless $user;
+  
+  my $cacheKey = 'watchlist_' . $user;
+  
+  my $watchlistHashRef = $cache->get( $cacheKey );
+  
+  if( defined $watchlistHashRef ) {
     log( 'info', "Using userdata for $user from cache" );
-    return $cachedWatchlist->{$user};
+    return $watchlistHashRef;
   }
-  my $watchlistHashRef;
-
+  
   if( $user ) {
     my $meta = callOBSAPI( 'personMetaRef', ($user) );
     $watchlistHashRef = extractProjectsFromPersonMeta( $meta );
-    $cachedWatchlist->{$user} = $watchlistHashRef;
+    $cache->put( $cacheKey, $watchlistHashRef );
     log( 'info', "These Projects are watched by <$user>: " . join( ', ', keys %{$watchlistHashRef} ) );
   } else {
     # unfortunately no user param, but privacy is requested.
@@ -422,17 +435,21 @@ sub userWatchList( $$ )
 
 #
 # fetch a package diff from the API
-sub packageDiff( $$;$ )
+sub packageDiff( $$$ )
 {
   my ( $project, $package, $orev ) = @_;
-  my $diff = callOBSAPI( 'diff', ( $project, $package ) );
+  my $cacheKey = 'diff_' . $project . '_' . $package . '_' . $orev;
+  my $diff = $cache->get( $cacheKey );
+  unless( defined $diff ) {
+    $diff = callOBSAPI( 'diff', ( $project, $package ) );
+    $cache->put( $cacheKey, $diff );
+  }
+  return $diff;
 }
 
 sub invalidateCache()
 {
-    $cachedPackage = {};
-    $cachedProject = {};
-    $cachedWatchlist = {};
+  $cache->invalidate();
 }
 
 #
@@ -561,5 +578,7 @@ $hermesUserInfoRef = personInfo( 'hermes2' ); # Get the hermes user info
 if( $hermesUserInfoRef->{id} ) {
   log( 'info', "The hermes user id is " . $hermesUserInfoRef->{id} );
 }
+
+$cache = Hermes::Cache->new();
 
 1;
