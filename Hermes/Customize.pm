@@ -77,10 +77,10 @@ sub expandMessageTemplateParams( $$ )
   log( 'info', "Parameters: " . join( ", ", @paramNames ) );
   
   if( isInArray( "diff", \@paramNames ) &&
-      $paramHash->{project} && $paramHash->{package} ) {
+      $paramHash->{project} && $paramHash->{package} && $paramHash->{sourcerevision} ) {
   
-    $paramHash->{diff} = packageDiff( $paramHash->{project}, $paramHash->{package} );
-    log('info', "Resulted diff: " . $paramHash->{diff} );
+    $paramHash->{diff} = packageDiff( $paramHash->{project}, $paramHash->{package}, $paramHash->{sourcerevision} );
+    log('info', "Result diff: " . $paramHash->{diff} );
   }
   return $paramHash;
 }

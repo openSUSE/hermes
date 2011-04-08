@@ -147,7 +147,7 @@ sub log($$;$)
     # Initialize the dispatcher if it hasn't already been done.
     unless ( HANDLE->opened() ) {
       unless( _init() ) {
-        print STDERR "Unable to initialize logging, return";
+        print STDERR "Unable to initialize logging, return\n";
         return;
       }
     }
