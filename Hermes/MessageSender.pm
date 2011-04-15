@@ -25,6 +25,7 @@ use strict;
 use Exporter;
 
 use Data::Dumper;
+use Email::Date::Format qw(email_date);
 
 use Hermes::Config;
 use Hermes::DB;
@@ -33,7 +34,7 @@ use Hermes::Util;
 use Hermes::Delivery::Mail;
 use Hermes::Delivery::RSS;
 use Hermes::Delivery::Http;
-use Hermes::Delivery::Twitter;
+# use Hermes::Delivery::Twitter;
 # use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;
@@ -49,8 +50,8 @@ use vars qw(@ISA @EXPORT $query );
 # stored in a module global variable, which only causes trouble if its used multiple 
 # times.
 #
-use constant SQL => scalar "SELECT gn.id, gn.notification_id, gn.created_at, subs.id, \
- subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
+use constant SQL => scalar "SELECT gn.id, gn.notification_id, UNIX_TIMESTAMP(gn.created_at), \
+ subs.id, subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
  generated_notifications gn\
  JOIN subscriptions subs ON subs.id = gn.subscription_id\
  WHERE gn.sent = 0 AND subs.enabled=1 AND subs.delay_id=?\
@@ -222,7 +223,7 @@ sub sendOneMessageDigest($;)
       next;
     }
 
-    my $subject = sprintf("[%2d. %s] ", $cnt, $genNotiCreated );
+    my $subject = sprintf("[%2d. %s] ", $cnt, email_date( $genNotiCreated ) );
     $subject .= ($renderedRef->{subject} || "no subject set");
 
     push @toc, $subject;
@@ -476,7 +477,9 @@ sub sendImmediateMessages(;$)
 
     $renderedMsgRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
 				     $delayId, $deliveryId, $paramHash );
-
+    # Store the date in the param hash when the message was delivered to hermes.
+    $renderedMsgRef->{_date} = $genNotiCreated;
+    
     if( deliverMessage( $deliveryId, $renderedMsgRef ) ) {
       # Successfully sent!
       markSent( $genNotiId );

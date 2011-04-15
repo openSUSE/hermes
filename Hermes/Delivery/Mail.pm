@@ -26,6 +26,7 @@ use Exporter;
 
 use Data::Dumper;
 use MIME::Lite;
+use Email::Date::Format qw(email_date);
 
 use Hermes::Config;
 use Hermes::Log;
@@ -110,10 +111,14 @@ sub sendMail( $ )
     log( 'debug', "Skipping mail signing!" );
   }
 
+  # date handling: either the date comes from the caller (immediate sending, where the
+  # timestamp comes from the receiving of the raw notification, or the date is the 
+  # current timestamp for digest mails.
   my $mime_msg = MIME::Lite->new( From    => $fromMail,
 				  Subject => $msg->{subject},
 				  Data    => $msg->{body},
-				  Type    => 'TEXT'
+				  Type    => 'TEXT',
+				  Date    => email_date( $msg->{_date} || time )
 				);
 
   # FIXME: Parametercheck.
