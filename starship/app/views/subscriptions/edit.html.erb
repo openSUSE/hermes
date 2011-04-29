@@ -1,7 +1,14 @@
-<h3>Changing settings for your subscription to message type: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
-
+<h2>Basic Subscription Parameters</h2>
+<h3>Subscription to notification type: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
 <% form_for @subscr do |f| %>
 <table class="defaultTable">
+  <tr>
+    <td><strong>Description:</strong></td>
+    <td><%= text_field_tag('subscr[description]', @subscr.description, :size => 50 ) %></td>
+    <td rowspan="3">
+      <strong>Comment</strong> (for you to help remembering):</br>
+      <div id="comment_box"><%= text_area('subscr','comment', :size => "50x5") %></div>
+    </td>
   <tr>
     <td><strong>Delay: </strong></td>
     <td><%= collection_select('subscr', 'delay_id', @availDelay, 'id','name') %></td>
@@ -11,57 +18,36 @@
     <td><strong>Delivery: </strong></td>
     <td><%=  collection_select('subscr','delivery_id', @availDeliveries, 'id','description') %> </td>
   </tr>
+ </table>
 
-  <tr>
-    <td><strong>Description: </strong></td>
-    <td><%= text_field_tag('subscr[description]', @subscr.description, :size => 50 ) %></td>
-  </tr>
+<h2>Predefined Filters</h2>
+<p>These filters are prepared by the Hermes system admin for you to pick. They should
+  cover the most common use  cases.</p>
+<div style="margin-left: 50px;">
+<% FILTERABSTRACTIONS.each { |id, abstraction| %>
+  <p><%= radio_button( "special", "filter", id ) %>&nbsp <%= abstraction.summary %><br/>
+    <span style="margin-left: 30px; color: #999999;"><%= abstraction.description %></span>
+  </p>
+<% } %>
+</div>
 
-  <tr>
-    <td valign=top><strong> <%= link_to_function "Comment", "$('#comment_box').toggle()" %></strong></td>
-
-    <td> <div id="comment_box" style="display: none;"><%= text_area('subscr','comment', :size => "50x5") %></div></td>
-  </tr>
-
-  <tr>
-    <td><strong>Filters:</strong></td><td><%= radio_button("special" , "filter", "_mypackages") %>&nbsp; Only notify me if I am in the list of users in the package</td>
-  </tr>
-  <tr>
-    <td></td><td><%= radio_button("special" , "filter", "_mypackagesstrict") %>&nbsp; Only notify me if I am in the list of users in the package</td>
-  </tr>
-  <tr>
-    <td></td><td><%= radio_button("special" , "filter", "_myprojects") %>&nbsp; Only notify me if the notification is about one of my projects</td>
-  </tr>
-  <tr>
-    <td></td><td><%= radio_button("special" , "filter", "_myrequests") %>&nbsp; Only notify me if the request targets one of my projects</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>
-    <%= link_to_function("extended filtering...", nil, :id => "more_link") do |page|
-          page[:extended_filtering].visual_effect  :toggle
-          page[:more_link].replace_html "Show me less"
-        end
-    %> </td>
-  </td>
-</table>
-<div id="extended_filtering" style="display:none;">
-<h3>Extended Filter for your subscription to notification: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
-<p>No filter means, you will get all notifications for the chosen message type. Multiple filters mean &lt;filter1&gt; AND &lt;filter2&gt;...
-</p>
+<h2>Parameter Filters</h2>
+<p>Note that all filters are combined with logical AND, that means they must match
+  all to make the notification happen</p>
+<div style="margin-left:50px;">
 <table>
   <tbody id="filter_table" style="">
-      <tr> 
+      <tr>
         <td>Parameter</td>
         <td>Operator</td>
         <td></td>
         <td>Value(s)</td>
         <td></td>
-        <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page| 
-             page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } ) 
-                          
-                        end %></td>
+        <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page|
+             page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } )
 
+                        end %>
+        </td>
       </tr>
       <% @filters.each_with_index  { |filt,i| %>
         <%= render :partial => 'filter', :locals => {:parameter_list => @avail_params, :selected_param => filt.parameter_id, :selected_oper => filt.operator, :value => filt.filterstring} %>
@@ -72,10 +58,12 @@
     <script type="text/javascript">
       recalc_filter_ids();
     </script>
-
-    <tr><td><%= submit_tag %></td></tr>
   </tbody>
 </table>
+</div>
+
+<p><%= submit_tag %></p>
+
 <hr/>
 <h3>Hints for Filter Creation</h3>
 

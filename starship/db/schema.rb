@@ -109,7 +109,7 @@ ActiveRecord::Schema.define(:version => 20100115135209) do
     t.text     "body"
     t.datetime "created"
     t.integer  "msg_type_id",                    :null => false
-    t.integer  "msg_state_id"
+    t.integer  "msg_state_id",    :default => 1
     t.integer  "subscription_id",                :null => false
   end
 

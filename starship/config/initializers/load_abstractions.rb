@@ -88,7 +88,8 @@ if (ENV['RAILS_ENV'])
       puts "Error parsing #{file}: #{e.to_s}"
     end
   }
-  
+ 
+  FILTERABSTRACTIONS = filterabstractions 
   SUBSCRIPTIONABSTRACTIONS = abstractions
   ABSTRACTIONGROUPS = abstractiongroups
 end

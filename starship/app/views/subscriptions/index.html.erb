@@ -16,7 +16,7 @@
   sortList: [[0,1]]
   } );
 <% end %>
-
+<p>Switch back to <%= link_to "simple mode", :controller => :subscriptions, :action => :simple %></p>
 <h2>Subscription configuration (expert mode)</h2>
 
 <table id="subscriptions_table">
@@ -59,7 +59,7 @@
 </table>
 
 
-<p>Switch to <%= link_to "simple", :controller => :subscriptions, :action => :simple %> mode | <%= link_to_function "Add a new subscription", "$('#new_subscr').toggle()" %></p>
+<p><%= link_to_function "Add a new subscription", "$('#new_subscr').toggle()" %></p>
 
 <div id='new_subscr' style="display: none;">
   <%= render(:partial => 'new_subscription', :locals => { :delays => @avail_delays, :deliveries => @avail_deliveries, :types => @avail_types } ) %>

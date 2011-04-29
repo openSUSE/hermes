@@ -11,13 +11,18 @@ class Subscription < ActiveRecord::Base
   validates_presence_of :delay
   validates_presence_of :delivery
   
-  
+  def initialize(attribs={})
+    super(attribs)
+    self.delay = Delay.find_by_name( 'NO_DELAY' ) unless self.delay.present?
+    self.delivery = Delivery.find_by_name( 'Mail' ) unless self.delivery.present?
+    self
+  end
+
   def subscription_desc
     if (description)
       return description
     end
    return  "#{msg_type.type_desc} (#{filters.count}  filters)"
-    
   end
   
 end

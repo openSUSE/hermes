@@ -44,15 +44,15 @@ class SubscriptionsController < ApplicationController
       sub_param[:person_id] = session[:userid]
       sub = Subscription.new(sub_param)
       logger.debug("Creating subscription for #{params["sub_param"]}")
-      0.upto(params[:filter_count].to_i-1) { |counter|
-        # set the parameter_id of the _special filter
-        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
-        logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
-        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],
-          :filterstring => SubscriptionFilter.replaced_filterstring(params["filter_value_#{counter}"], user.stringid) )
-      }
+#      0.upto(params[:filter_count].to_i-1) { |counter|
+#        # set the parameter_id of the _special filter
+#        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
+#        logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
+#        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],
+#          :filterstring => SubscriptionFilter.replaced_filterstring(params["filter_value_#{counter}"], user.stringid) )
+#      }
       if sub.save
-        redirect_to_index()
+        redirect_to :action => 'edit', :id => sub.id;
       else
         redirect_to_index(sub.errors.full_messages())
         sub.errors.clear()

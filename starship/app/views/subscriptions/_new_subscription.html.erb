@@ -24,28 +24,11 @@
 
 </script>
 
-<h2>Adding subscription: </h2>
+<h2>Add a Subscription: </h2>
 
 <% form_for :subscr do |f| %>
-  <table class="defaultTable">
-    <tr>
-      <td><b>Message Type: </b></td>
-      <td><b>Digest mode: </b></td>
-      <td><b>Delivery mode: </b></td>
-      <td> </td>
-    </tr>
-    <tr>
-      <td><%= collection_select('subscr', 'msg_type_id', @avail_types, 'id', 'type_desc') %></td>
-      <%= observe_field('subscr_msg_type_id', :url => { :action => 'get_type_params' }, :with => "'msg_type='+value", :success => 'update_filter_params(request.responseText)') %>
-      <td><%= collection_select('subscr', 'delay_id', @avail_delays, 'id','name') %></td>
-      <td><%= collection_select('subscr', 'delivery_id', @avail_deliveries, 'id', 'description') %></td>
-    </tr>
-    <tr><td colspan="4"><b>Description:</b> <%= f.text_field :description, :size => 50 %></td></tr>
-  </table>
-
-  <p><%= submit_tag %></p>
-  <p>To add filters to your new subscription, please use the 'edit' link after it was created. </p>
-
+<p>Pick a notification type to subscribe to: <%= collection_select('subscr', 'msg_type_id', @avail_types, 'id', 'type_desc') %></p>
+<p><%= submit_tag "Create Subscription" %> and continue to edit.</p>
 
 <% end %>
 
