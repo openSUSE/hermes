@@ -1,0 +1,21 @@
+## Path:        Applications/Hermes
+## Description: Hermes database name
+## Type:        string
+## Default:     "hermes"
+## Config:      Hermes
+#
+# This is the name of the database Hermes will use
+#
+#
+HERMES_DATABASE_NAME="hermes"
+
+## Path:        Applications/Hermes
+## Description: Automatically setup the Hermes Database if not existing
+## Type:        ("yes" | "no")
+## Default:     "no"
+## Config:      Hermes
+#
+# This is usally only enabled on the OBS Appliance
+#
+HERMES_AUTOSETUP="yes"
+

@@ -125,11 +125,3 @@ var special_operator_values = new Array('_mypackages', '_mypackagesstrict', '_my
     input_string += ' </input>';
     return input_string;
   }
-
-function googleTracker() {
- try {
-   var pageTracker = _gat._getTracker("UA-3367212-3");
-   pageTracker._setDomainName(".opensuse.org");
-   pageTracker._trackPageview();
- } catch(err) {}
-}

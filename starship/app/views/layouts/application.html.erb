@@ -17,7 +17,6 @@
     <%= stylesheet_link_tag "hermes" %>
     <%= javascript_include_tag 'https://static.opensuse.org/themes/bento/js/jquery.js' %>
     <%= javascript_include_tag 'https://static.opensuse.org/themes/bento/js/script' %>
-    <%= javascript_include_tag "https://ssl.google-analytics.com/ga.js" %>
 
     <%= javascript_include_tag "jrails", "application" %>
 
@@ -27,7 +26,6 @@
     /* <![CDATA[ */
     <%= yield :head_javascript %>
     $(function() {
-      googleTracker();
       <%= yield :ready_function %>
     });
     /* ]]> */

@@ -34,7 +34,6 @@ class ApplicationController < ActionController::Base
       end
   end
 
-
   def login_via_ichain
     user = Hash.new
     # AUTHENTICATION is set in config/environments/development.rb

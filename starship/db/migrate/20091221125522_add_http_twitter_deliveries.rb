@@ -5,7 +5,7 @@ class AddHttpTwitterDeliveries < ActiveRecord::Migration
   end
 
   def self.down
-    Delivery.find(:name => 'HTTP' ).each{ |d| d.destroy }
-    Delivery.find(:name => 'Twitter').each{ |d| d.destroy }
+    Delivery.find_by_name('HTTP').destroy
+    Delivery.find_by_name('Twitter').destroy
   end
 end

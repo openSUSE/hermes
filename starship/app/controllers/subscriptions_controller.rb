@@ -179,8 +179,7 @@ class SubscriptionsController < ApplicationController
   end
 
 
-  def disable
-    @curr_sub_index = params[:id]
+  def toggle_enabled
     user = Person.find session[:userid]
     @curr_sub = user.subscriptions.find(params[:subs])
     if @curr_sub.enabled
