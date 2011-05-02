@@ -1,6 +1,13 @@
 table.messageTable {
 }
 
+label {
+  display: block;
+  float: left;
+  width: 10em;
+  font-weight: bold;
+}
+
 td.msgtable {
    padding: 5px; 
 }

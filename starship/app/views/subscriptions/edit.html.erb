@@ -1,24 +1,24 @@
 <h2>Basic Subscription Parameters</h2>
 <h3>Subscription to notification type: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
 <% form_for @subscr do |f| %>
-<table class="defaultTable">
-  <tr>
-    <td><strong>Description:</strong></td>
-    <td><%= text_field_tag('subscr[description]', @subscr.description, :size => 50 ) %></td>
-    <td rowspan="3">
-      <strong>Comment</strong> (for you to help remembering):</br>
-      <div id="comment_box"><%= text_area('subscr','comment', :size => "50x5") %></div>
-    </td>
-  <tr>
-    <td><strong>Delay: </strong></td>
-    <td><%= collection_select('subscr', 'delay_id', @availDelay, 'id','name') %></td>
-  </tr>
 
-  <tr>
-    <td><strong>Delivery: </strong></td>
-    <td><%=  collection_select('subscr','delivery_id', @availDeliveries, 'id','description') %> </td>
-  </tr>
- </table>
+<p>
+  <label>Description:</label><%= text_field_tag('subscr[description]', @subscr.description, :size => 50 ) %>
+</p>
+<p>
+  <label>Comment:</label><%= link_to_function( "Enter Comment", nil, :id => "comment_link") do |page|
+     page[:comment_box].toggle()
+     page[:comment_link].hide()
+  end %> (to help you remember what happens here)
+<div id="comment_box" style="display: none; margin-left: 11em;">
+  <%= text_area('subscr','comment', :size => "50x3") %>
+</div>
+<p>
+  <label>Delay:</label><%= collection_select('subscr', 'delay_id', @availDelay, 'id','name') %>
+</p>
+<p>
+  <label>Delivery:</label><%=  collection_select('subscr','delivery_id', @availDeliveries, 'id','description') %>
+</p>
 
 <h2>Predefined Filters</h2>
 <p>These filters are prepared by the Hermes system admin for you to pick. They should
