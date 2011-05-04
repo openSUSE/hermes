@@ -119,14 +119,17 @@ sub personInfoByMail( $ )
   return {};
 }
 
-sub createSubscription( $$$;$$ )
+sub createSubscription( $$;$$$ )
 {
-  my ($msgTypeId, $personId, $deliveryId, $filterListRef, $delayId) = @_;
+  my ($msgTypeId, $personId, $filterListRef, $deliveryId, $delayId) = @_;
   # the filterRef is a reference to an array with hash references in it.
   # each hash must contain the keys
   #         parameter => the parameter (or its id)
   #         operator  => one of the strings "special", "oneof", "regexp" or "containsitem"
-  #         filterstring => the filter string
+  #         filterListRef=> a list of hashes containing filter information in the form
+  #         { parameter   => a parameter name
+  #           operator    => one of the valid operators
+  #          filterstring => 'string to filter'
   # Note that filters only get added for new subscriptions. Existing ones are not going
   # to be updated
   # 
@@ -181,8 +184,12 @@ sub createSubscription( $$$;$$ )
       if( exists $filterRef->{parameter} && $filterRef->{parameter} &&
           exists $filterRef->{operator} && $filterRef->{operator} &&
 	  exists $filterRef->{filterstring} && $filterRef->{filterstring} ) {
-	  log( 'info', "Adding filter def. for $id: $filterRef->{parameter}, $filterRef->{operator}, $filterRef->{filterstring}" );
-	  $sti->execute( $filterRef->{parameter}, $filterRef->{operator}, $filterRef->{filterstring} );
+	  my $paramId = $filterRef->{parameter};
+	  unless( $paramId =~ /^\d+$/ ) {
+	    $paramId = parameterId( $paramId );
+	  }
+	  log( 'info', "Adding filter def. for $id: $paramId, $filterRef->{operator}, $filterRef->{filterstring}" );
+	  $sti->execute( $paramId, $filterRef->{operator}, $filterRef->{filterstring} );
       }
     }
   }

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 
-use Test::More tests => 10;
+use Test::More tests => 14;
 use Test::DatabaseRow;
 
 use Hermes::DB;
@@ -63,23 +63,57 @@ ok( $personId > 0, "PersonID termite valid" );
 my $msgTypeId = createMsgType( 'MSGTYPE_1', SendNow );
 ok( $msgTypeId > 0, "MsgType MSGTYPE_1 exists" );
 
-my $deliveryId = deliveryStringToId( 'Mail' );
+my $deliveryId = deliveryStringToId( 'MAIL' );
 
 ok( $deliveryId > 0, "Delivery id for Mail valid: $deliveryId" );
 
 print "MessageTypeID: $msgTypeId\n";
 
-my $subscriptId = createSubscription( $msgTypeId, $personId, $deliveryId );
+my $subscriptId = createSubscription( $msgTypeId, $personId, (), $deliveryId );
 row_ok( table => "subscriptions",
         where => [ msg_type_id => $msgTypeId, person_id => $personId, delivery_id => $deliveryId ],
 	label => "Subcription table entry exists." );
 
 $msgTypeId = createMsgType( 'MSGTYPE_2', SendMinutely );
-$subscriptId = createSubscription( $msgTypeId, $personId, $deliveryId, SendMinutely );
+$subscriptId = createSubscription( $msgTypeId, $personId, (), $deliveryId, SendMinutely );
 
 row_ok( table => "subscriptions",
         where => [ msg_type_id => $msgTypeId, person_id => $personId, delivery_id => $deliveryId, 
 		   delay_id => SendMinutely ],
 	label => "Subcription table entry exists." );
 
+
+$msgTypeId = createMsgType( 'MSGTYPE_3', SendHourly );
+
+notificationToInbox( 'MSGTYPE_3', { 'testparam_3' => 'foobar' } );
+
+my @filters;
+push @filters, { parameter => 'testparam_3', operator => 'oneof', filterstring => 'filterstring' };
+$subscriptId = createSubscription( $msgTypeId, $personId, \@filters, $deliveryId, SendMinutely );
+
+row_ok( table => "subscriptions",
+        where => [ msg_type_id => $msgTypeId, person_id => $personId, delivery_id => $deliveryId, 
+		   delay_id => SendMinutely ],
+	label => "Subcription table entry exists." );
+
+my $msgTypeInfo = notificationTemplateDetails( 'MSGTYPE_3' );
+my $msgTypeParams = $msgTypeInfo->{_parameterList};
+
+my $paramId;
+foreach my $param ( @$msgTypeParams ) {
+  if( $param->{name} eq 'testparam_3' ) {
+    $paramId = $param->{testparam_3};
+    last;
+  }
+}
+
+
+ok( $subscriptId > 0, "Subscription id is $subscriptId" );
+ok( $paramId > 0, "Parameter id is $paramId" );
+
+row_ok( table => "subscription_filters",
+        where => [ subscription_id => $subscriptId, parameter_id => $paramId, operator => 'oneof', 
+                   filterstring => 'filterstring' ],
+        label => "Filter string correct." );
+        
 print "Thanks.\n\n";

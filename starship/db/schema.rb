@@ -103,16 +103,17 @@ ActiveRecord::Schema.define(:version => 20100115135209) do
   create_table "starship_messages", :force => true do |t|
     t.integer  "notification_id",                :null => false
     t.string   "sender"
-    t.integer  "person_id",       :default => 1, :null => false
+    t.integer  "person_id",       :default => 1
     t.string   "subject"
     t.string   "replyto"
     t.text     "body"
     t.datetime "created"
     t.integer  "msg_type_id",                    :null => false
-    t.integer  "msg_state_id",    :default => 1
+    t.integer  "msg_state_id"
     t.integer  "subscription_id",                :null => false
   end
 
+  add_index "starship_messages", ["created"], :name => "created"
   add_index "starship_messages", ["notification_id"], :name => "index_starship_messages_on_notification_id"
   add_index "starship_messages", ["person_id"], :name => "index_starship_messages_on_user"
   add_index "starship_messages", ["subscription_id"], :name => "index_starship_messages_on_subscription_id"

@@ -307,13 +307,16 @@ sub deliveryStringToId( $ )
   my ($str) = @_;
 
   my $id;
-
+  log( 'info', "The search String is <$str>" );
+  
   if( $str ) {
     my $sql = "SELECT id FROM deliveries WHERE name=?";
     my $sth = dbh()->prepare( $sql );
     $sth->execute( $str );
 
-    ($id) = $sth->fetchrow_array;
+    my @a = $sth->fetchrow_array;
+    $id = $a[0];
+    log('info', "The id is: " . $id );
   }
   return $id;
 }
