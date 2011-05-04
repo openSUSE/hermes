@@ -28,12 +28,10 @@ development:
 test:
   adapter: mysql
   host: localhost
-  port: 3306
   encoding: utf8
   database: hermes_test
   username: root
   password:
-  socket: /var/lib/mysql/mysql.sock
 
 production:
   adapter: mysql
