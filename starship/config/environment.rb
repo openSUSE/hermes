@@ -37,7 +37,7 @@ Rails::Initializer.run do |config|
   # Make sure the secret is at least 30 characters and all random, 
   # no regular words or you'll be exposed to dictionary attacks.
   config.action_controller.session = {
-    :session_key => '_starship_session',
+    :key => '_starship_session',
     :secret      => '421f062ad354dd67baac045c41237ad6465ec6366dd4cb058368834ea4ad569eac1a2b209c498eb3f4427c05ef421506ea485b8f30a0d4877e5b20f98de854f8'
   }
 
