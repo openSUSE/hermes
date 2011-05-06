@@ -1,5 +1,23 @@
 <h2>Basic Subscription Parameters</h2>
 <h3>Subscription to notification type: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
+
+<script type="text/javascript">
+var count = 0;
+$(function(){
+  $('p#add_filter').click(function(){
+    count = 1+ $('[id^=param_id_]').size();
+    newline = $('<%= escape_javascript( render :partial => "filter", :locals => { :indx => "", :parameter_list => @avail_params, :selected_param => "0", :selected_oper => "0", :value => ""} )%>');
+    $('#filter_table').append( newline );
+    // set a correct name 
+    $('#param_id_').attr('id', 'param_id_' + count.toString() );
+    $('#filter_operator_').attr('id', 'filter_operator_' + count.toString() );
+    $('#filter_value_').attr('id', 'filter_value_' + count.toString() );
+
+    $('#filter_count').attr('value', count.toString() );
+  });
+});
+</script>
+
 <% form_for @subscr do |f| %>
 
 <p>
@@ -10,6 +28,7 @@
      page[:comment_box].toggle()
      page[:comment_link].hide()
   end %> (to help you remember what happens here)
+</p>
 <div id="comment_box" style="display: none; margin-left: 11em;">
   <%= text_area('subscr','comment', :size => "50x3") %>
 </div>
@@ -35,25 +54,19 @@
 <p>Note that all filters are combined with logical AND, that means they must match
   all to make the notification happen</p>
 <div style="margin-left:50px;">
+  <p id="add_filter"><a href="#"><span>&raquo; Add another filter...</span></a></p>
 <table>
   <tbody id="filter_table" style="">
       <tr>
         <td>Parameter</td>
         <td>Operator</td>
-        <td></td>
-        <td>Value(s)</td>
-        <td></td>
-        <td><%= link_to_function("Add Filter", nil, :id => 'add_filter_link') do |page|
-             page.insert_html(:before, 'counter', :partial => 'filter', :locals => { :parameter_list => @avail_params, :selected_param => nil, :selected_oper => nil, :value => nil } )
-
-                        end %>
-        </td>
+        <td colspan="3">Value(s)</td>
       </tr>
       <% @filters.each_with_index  { |filt,i| %>
-        <%= render :partial => 'filter', :locals => {:parameter_list => @avail_params, :selected_param => filt.parameter_id, :selected_oper => filt.operator, :value => filt.filterstring} %>
-      <% } %>
+        <%= render :partial => 'filter', :locals => {:indx => i.to_s, :parameter_list => @avail_params, :selected_param => filt.parameter_id, :selected_oper => filt.operator, :value => filt.filterstring} %>
+      <% }%>
 
-    <tr id='counter'><td><%= hidden_field_tag 'filter_count',@filters.size %></td></tr>
+      <tr id='counter'><td><%= hidden_field_tag 'filter_count',@filters.size %></td></tr>
 
     <script type="text/javascript">
       recalc_filter_ids();
