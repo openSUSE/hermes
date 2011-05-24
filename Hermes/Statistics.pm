@@ -32,7 +32,8 @@ use Hermes::Log;
 use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( latestNMessages countMessages latestNRawNotifications countRawNotificationsInHours);
+@EXPORT	    = qw( latestNMessages countMessages latestNRawNotifications countRawNotificationsInHours
+                  unsentMessages );
 
 sub countRawNotificationsInHours( ;$ )
 {
@@ -44,6 +45,7 @@ sub countRawNotificationsInHours( ;$ )
   my ($cnt) = dbh()->selectrow_array( $sql );
   return $cnt;
 }
+
 sub latestNRawNotifications( ;$ )
 {
   my ($cnt) = @_;
@@ -57,6 +59,15 @@ sub latestNRawNotifications( ;$ )
   return dbh()->selectall_arrayref( $sql, { Slice => {} } );
 }
 
+sub unsentMessages()
+{
+  my $sql = "select d.name as delayString, s.delay_id as delayId, count(gn.id) as count ";
+  $sql .= "FROM generated_notifications gn, delays d, subscriptions s ";
+  $sql .= "WHERE gn.sent=0 AND gn.subscription_id = s.id AND s.delay_id=d.id ";
+  $sql .= "GROUP BY s.delay_id";
+
+  return dbh()->selectall_arrayref( $sql, { Slice => {} });
+}
 
 sub latestNMessages( ;$ )
 {

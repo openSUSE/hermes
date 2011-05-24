@@ -18,6 +18,15 @@ none.
 <p>Amount of raw notifications added in the last hour: <TMPL_VAR NAME=RawNotiLastHour></p>
 </div>
 
+<h2>Currently undelivered but generated messages:</h2>
+<div id="box">
+<table>
+<TMPL_LOOP NAME="UndeliveredMsgs">
+<tr><td><TMPL_VAR NAME=delayString>:</td><td><TMPL_VAR NAME=count></td></tr>
+</TMPL_LOOP>
+</table>
+</div>
+
 <h2>The latest Messages added:</h2>
 <div id="box">
 <table>

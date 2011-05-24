@@ -185,6 +185,9 @@ sub sayHello
   my $notiList = latestNRawNotifications( 25 );
   my $cnt = @{$notiList};
 
+  my $undeliveredMsgRaw = unsentMessages();
+  $detailTmpl->param( UndeliveredMsgs => $undeliveredMsgRaw );
+
   $detailTmpl->param( CntRawNotifications => $cnt );
   $detailTmpl->param( RawNotiLastHour => countRawNotificationsInHours( 1 ) );
   $detailTmpl->param( LatestMessages => $msgList );
