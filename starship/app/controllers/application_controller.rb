@@ -6,7 +6,9 @@ require 'ichain_auth'
 class ApplicationController < ActionController::Base
   helper :all # include all helpers, all the time
   before_filter :set_return_to, :authenticate, :require_auth
+  protect_from_forgery
 
+  class InvalidHttpMethodError < Exception; end
   $OPERATORS = %w{ oneof containsitem regexp}
 
   def require_auth
@@ -26,12 +28,12 @@ class ApplicationController < ActionController::Base
   end
 
   def basic_auth
-      authenticate_or_request_with_http_basic("Hermes Starship Login") do |id, password|
-        @loggedin_user = Person.authenticate id, password
-        if @loggedin_user
-          session[:userid] = @loggedin_user.id
-        end
+    authenticate_or_request_with_http_basic("Hermes Starship Login") do |id, password|
+      @loggedin_user = Person.authenticate id, password
+      if @loggedin_user
+        session[:userid] = @loggedin_user.id
       end
+    end
   end
 
   def login_via_ichain
@@ -73,7 +75,20 @@ class ApplicationController < ActionController::Base
     return AUTHENTICATION.to_s == 'ichain' || AUTHENTICATION.to_s == 'simulate'
   end
 
-  # See ActionController::RequestForgeryProtection for details
-  # Uncomment the :secret if you're not using the cookie session store
-  protect_from_forgery # :secret => '444c9e73283339dd0f004698ba1e3f85'
+  def valid_http_methods(*methods)
+    methods.map {|x| x.to_s.downcase.to_s}
+    unless methods.include? request.method
+      raise InvalidHttpMethodError, "Invalid HTTP Method: #{request.method.to_s.upcase}"
+    end
+  end
+
+  def rescue_action_locally( exception )
+    rescue_action_in_public( exception )
+  end
+
+  def rescue_action_in_public( exception )
+    logger.error "rescue_action: caught #{exception.class}: #{exception.message}"
+    render :template => 'error', :status => 500, :locals => {:exception => exception }
+  end
+
 end
