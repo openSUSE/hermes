@@ -139,7 +139,6 @@ class SubscriptionsController < ApplicationController
     @filters = @subscr.filters
     @availDelay = Delay.find(:all)
     @availDeliveries = valid_deliveries
-    
     @avail_params = @subscr.msg_type.parameters
   end
   
@@ -156,7 +155,7 @@ class SubscriptionsController < ApplicationController
               params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
   	    @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => params["filter_value_#{counter}"] )
   	  }
-        redirect_to_index()
+        redirect_to_index "Subscription updated"
       else
         redirect_to_index(@subscr.errors.full_messages())
         @subscr.errors.clear()
