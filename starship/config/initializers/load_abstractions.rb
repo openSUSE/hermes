@@ -19,8 +19,7 @@ if (ENV['RAILS_ENV'])
       
       doc.find("//filterabstract").each do | node | 
         filter_abstraction = FilterAbstract.new()
-        filter_abstraction.id = node["id"]
-                                                         
+        filter_abstraction.id = node["id"]      
         filter_abstraction.summary = node.find_first("summary").content
         filter_abstraction.description = node.find_first("description").content
         filter_abstraction.filters = Array.new
@@ -38,6 +37,10 @@ if (ENV['RAILS_ENV'])
           end
           filter.parameter_id = db_parameter.id
           filter_abstraction.filters << filter
+        end
+        filter_abstraction.valid_msg_types = Array.new
+        node.find("valid_msg_types/msg_type").each do | valid_msg_type |
+          filter_abstraction.valid_msg_types << valid_msg_type.content
         end
         filterabstractions[filter_abstraction.id] = filter_abstraction
       end

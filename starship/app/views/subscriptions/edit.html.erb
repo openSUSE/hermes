@@ -5,12 +5,21 @@
   /* <![CDATA[ */
   $(function() {
     $('#add_filter').click(function(){
-      newline = $('<%= escape_javascript( render :partial => "filter", :locals => { :indx => "", :parameter_list => @avail_params, :selected_param => "0", :selected_oper => "0", :value => ""} )%>');
-      $('#filter_table').append( newline );
-      recalc_filter_ids();
+      add_filter_line("0", "0", "");
       return false;
     });
+
   });
+  function add_filter_line(param, operator, value) {
+    newline = $('<%= escape_javascript( render :partial => "filter", :locals => { :indx => "", :parameter_list => @avail_params, :selected_param => "0", :selected_oper => "0", :value => ""} )%>');
+    $(newline.find('.param_select')[0]).val(param);
+    $(newline.find('.filter_select')[0]).val(operator);
+    $(newline.find('.filter_value_input')[0]).val(value);
+    $('#filter_table').append( newline );
+    recalc_filter_ids();
+    return false;
+  }
+
   /* ]]> */
 </script>
 
@@ -35,16 +44,24 @@
     <label>Delivery:</label><%=  collection_select('subscr','delivery_id', @availDeliveries, 'id','description') %>
   </p>
 
-  <h2>Predefined Filters</h2>
-  <p>These filters are prepared by the Hermes system admin for you to pick. They should
-    cover the most common use  cases.</p>
-  <div style="margin-left: 50px;">
-    <% FILTERABSTRACTIONS.each { |id, abstraction| %>
-      <p><%= radio_button( "special", "filter", id ) %>&nbsp <%= abstraction.summary %><br/>
-        <span style="margin-left: 30px; color: #999999;"><%= abstraction.description %></span>
-      </p>
-    <% } %>
-  </div>
+  <% unless @subscr.abstraction_filters.blank? %>
+    <h2>Predefined Filters</h2>
+    <p>These filters are prepared by the Hermes system admin for you to pick. They should
+      cover the most common use  cases.</p>
+    <div style="margin-left: 50px;">
+      <ul>
+        <% @subscr.abstraction_filters.each { |id, abstraction| %>
+          <li><%= abstraction.summary %> (
+            <%#FIXME: make this work with multiple filters in one abstraction when we need it %>
+            <a href="#" onclick="add_filter_line('<%= abstraction.filters[0].parameter_id %>', '<%= abstraction.filters[0].operator %>', '<%= abstraction.filters[0].filterstring %>'); return false;">add this filter</a>)<br/>
+            <span style="margin-left: 30px; color: #999999;"><%= abstraction.description %></span>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  <% end %>
+
+
 
   <h2>Parameter Filters</h2>
   <p>Note that all filters are combined with logical AND, that means they must match
@@ -66,8 +83,8 @@
   </div>
 
   <p>
-<%= hidden_field_tag 'filter_count',@filters.size %>
-  <%= submit_tag "Update subscription" %>
+    <%= hidden_field_tag 'filter_count',@filters.size %>
+    <%= submit_tag "Update subscription" %>
   </p>
 
   <hr/>
