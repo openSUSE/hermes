@@ -2,50 +2,40 @@
 // This file is automatically included by javascript_include_tag :defaults
 
 //to save and restore filter values
-var old_operator_hash = new Hash();
-var old_value_hash = new Hash();
-var special_operator_values = new Array('_mypackages', '_mypackagesstrict', '_myprojects','_myrequests', '_packagebugowner');
+//var old_operator_hash = new Hash();
+//var old_value_hash = new Hash();
+//var special_operator_values = new Array('_mypackages', '_mypackagesstrict', '_myprojects','_myrequests', '_packagebugowner');
 
-  // removes filter and updates filter ids
-  // last filter gets hidden to ensure there's always a filter to
-  // clone for add_filter()
+
   function remove_filter(element) {
-    element.parentNode.parentNode.remove();
+    $(element).parent().parent().remove();
     recalc_filter_ids();
+    return false;
   }
 
   // updates all filter ids to be in the range [0..filter_count()[
   function recalc_filter_ids() {
-    $('#filter_count').val(filter_count());
-    fc = filter_count()
-    for(var i=0; i<fc; i++) {
+    filters = $('#filter_table > .filter_line')
+    $('#filter_count').val(filters.size());
+    filters.each(function(index) {
+        $(this).find('.param_select')[0].name = 'param_id_' + index;
+        $(this).find('.param_select')[0].id = 'param_id_' + index;
+        $(this).find('.filter_select')[0].name = 'filter_operator_' + index;
+        $(this).find('.filter_select')[0].id = 'filter_operator_' + index;
+        $(this).find('.filter_value_input')[0].name = 'filter_value_' + index;
+        $(this).find('.filter_value_input')[0].id = 'filter_value_' + index;
+    });
 
-      filters = $('#filter_table > .filter_line')
-       
-      filter = $('#filter_table').children()[0];
-      filter.adjacent('select.param_select')[i].name = 'param_id_'+i;
-      filter.adjacent('select.param_select')[i].id = 'param_id_'+i;
-      filter.adjacent('select.filter_select')[i].name = 'filter_operator_'+i;
-      filter.adjacent('select.filter_select')[i].id = 'filter_operator_'+i;
 
-      filter.adjacent('.filter_value_input')[i].name = 'filter_value_'+i;
-      filter.adjacent('.filter_value_input')[i].id = 'filter_value_'+i;
-
-      param_select = filter.adjacent('select.param_select')[i];
-      operator_select = filter.adjacent('select.filter_select')[i];
-      
       //delete the old Observer and create a new one
-      stop_observer(operator_select);
+      //stop_observer(operator_select);
 
-      add_observer(operator_select);
+      //add_observer(operator_select);
 
-      special_operator_checks(param_select);
-    }
+      //special_operator_checks(param_select);
+
   }
 
-  function filter_count() {
-    return $('.filter_line').size();
-  }
 
   function stop_observer(element) {
     Event.stopObserving(element,'change',function(event) {

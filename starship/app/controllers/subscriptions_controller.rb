@@ -29,8 +29,8 @@ class SubscriptionsController < ApplicationController
     @subscribedMsgs.each {|subs|
       if subs.filters.count > 0
         subs.filters.each_with_index{|filt,i|
-            @filter_tooltips[subs.id] ||= "<table><tr><td></td><td><b>Parameter</b></td><td><b>Operator</b></td><td><b>Value</b></td></tr>"
-            @filter_tooltips[subs.id] += "<tr><td>#{i+1}.</td><td>#{filt.parameter.name}</td><td>#{filt.operator}</td><td>#{filt.filterstring}</td></tr>"
+          @filter_tooltips[subs.id] ||= "<table><tr><td></td><td><b>Parameter</b></td><td><b>Operator</b></td><td><b>Value</b></td></tr>"
+          @filter_tooltips[subs.id] += "<tr><td>#{i+1}.</td><td>#{filt.parameter.name}</td><td>#{filt.operator}</td><td>#{filt.filterstring}</td></tr>"
         }
         @filter_tooltips[subs.id] += "</table>"
       end
@@ -38,97 +38,94 @@ class SubscriptionsController < ApplicationController
   end
   
   def create
-    if request.post?
-      user = Person.find session[:userid]
-      sub_param = params[:subscr]
-      sub_param[:person_id] = session[:userid]
-      sub = Subscription.new(sub_param)
-      logger.debug("Creating subscription for #{params["sub_param"]}")
-#      0.upto(params[:filter_count].to_i-1) { |counter|
-#        # set the parameter_id of the _special filter
-#        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
-#        logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
-#        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],
-#          :filterstring => SubscriptionFilter.replaced_filterstring(params["filter_value_#{counter}"], user.stringid) )
-#      }
-      if sub.save
-        redirect_to :action => 'edit', :id => sub.id;
-      else
-        redirect_to_index(sub.errors.full_messages())
-        sub.errors.clear()
-      end
+    valid_http_methods :post
+    user = Person.find session[:userid]
+    sub_param = params[:subscr]
+    sub_param[:person_id] = session[:userid]
+    sub = Subscription.new(sub_param)
+    logger.debug("Creating subscription for #{params["sub_param"]}")
+    #      0.upto(params[:filter_count].to_i-1) { |counter|
+    #        # set the parameter_id of the _special filter
+    #        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
+    #        logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
+    #        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],
+    #          :filterstring => SubscriptionFilter.replaced_filterstring(params["filter_value_#{counter}"], user.stringid) )
+    #      }
+    if sub.save
+      redirect_to :action => 'edit', :id => sub.id;
+    else
+      redirect_to_index(sub.errors.full_messages())
+      sub.errors.clear()
     end
   end
   
   
   def modify_simple_subscriptions
-    if request.post?
-      flash[:success] = ""
-      flash[:error] = ""
+    valid_http_methods :post
+    flash[:success] = ""
+    flash[:error] = ""
 
-      user = Person.find session[:userid]
+    user = Person.find session[:userid]
       
-      SUBSCRIPTIONABSTRACTIONS.keys.each do | group_id | 
-        SUBSCRIPTIONABSTRACTIONS[group_id].values.each do | abstraction |
-          abstraction.filterabstracts.values.each do | filterabstract | 
-            # load matching user subscription
-            subscription = user.subscribed_to_abstraction(group_id, abstraction.id, filterabstract.id)
-            if ( params["#{abstraction.id}||#{filterabstract.id}"])
-              if (!subscription)
-                logger.debug "Adding subscription for filterabstraction #{abstraction.id}||#{filterabstract.id}"
+    SUBSCRIPTIONABSTRACTIONS.keys.each do | group_id |
+      SUBSCRIPTIONABSTRACTIONS[group_id].values.each do | abstraction |
+        abstraction.filterabstracts.values.each do | filterabstract |
+          # load matching user subscription
+          subscription = user.subscribed_to_abstraction(group_id, abstraction.id, filterabstract.id)
+          if ( params["#{abstraction.id}||#{filterabstract.id}"])
+            if (!subscription)
+              logger.debug "Adding subscription for filterabstraction #{abstraction.id}||#{filterabstract.id}"
                 
-                subscription = Subscription.new(:msg_type_id => MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'").id, 
-                  :person_id => user.id, :delay_id => params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i,
-                  :delivery_id => params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i, 
-                  :description => "#{abstraction.summary} / #{filterabstract.summary}")
+              subscription = Subscription.new(:msg_type_id => MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'").id,
+                :person_id => user.id, :delay_id => params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i,
+                :delivery_id => params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i,
+                :description => "#{abstraction.summary} / #{filterabstract.summary}")
                 
-                filterabstract.filters.each do | filter |
-                  subscription.filters <<  SubscriptionFilter.new( :parameter_id => filter.parameter_id, 
-                    :operator => filter.operator, 
-                    :filterstring => SubscriptionFilter.replaced_filterstring(filter.filterstring, user.stringid) )
-                end
-                if subscription.save
-                  flash[:success] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} has been added.\n"
-                else 
-                  flash[:error] = "Adding new subscription for #{abstraction.summary} - #{filterabstract.summary} failed.\n"
-                end
-              elsif (params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i != subscription.delay_id ||
-                  params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i != subscription.delivery_id)
-                logger.debug "Updating Filterabstract #{abstraction.id}||#{filterabstract.id}"
-                subscription.delay_id = params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i
-                subscription.delivery_id = params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i
-                if subscription.save
-                  flash[:success] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} has been updated.\n"
-                else
-                  flash[:error] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} update failed.\n"
-                end
+              filterabstract.filters.each do | filter |
+                subscription.filters <<  SubscriptionFilter.new( :parameter_id => filter.parameter_id,
+                  :operator => filter.operator,
+                  :filterstring => SubscriptionFilter.replaced_filterstring(filter.filterstring, user.stringid) )
               end
-            elsif ( !params["#{abstraction.id}||#{filterabstract.id}"] && subscription)
-              logger.debug "Removing Filterabstract #{abstraction.id}||#{filterabstract.id}"
-              if subscription.destroy
-                flash[:success] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} has been removed.\n"
+              if subscription.save
+                flash[:success] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} has been added.\n"
               else
-                flash[:error] += "Removing subscription for #{abstraction.summary} - #{filterabstract.summary} failed.\n"
+                flash[:error] = "Adding new subscription for #{abstraction.summary} - #{filterabstract.summary} failed.\n"
               end
+            elsif (params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i != subscription.delay_id ||
+                  params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i != subscription.delivery_id)
+              logger.debug "Updating Filterabstract #{abstraction.id}||#{filterabstract.id}"
+              subscription.delay_id = params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i
+              subscription.delivery_id = params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i
+              if subscription.save
+                flash[:success] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} has been updated.\n"
+              else
+                flash[:error] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} update failed.\n"
+              end
+            end
+          elsif ( !params["#{abstraction.id}||#{filterabstract.id}"] && subscription)
+            logger.debug "Removing Filterabstract #{abstraction.id}||#{filterabstract.id}"
+            if subscription.destroy
+              flash[:success] += "Subscription for #{abstraction.summary} - #{filterabstract.summary} has been removed.\n"
+            else
+              flash[:error] += "Removing subscription for #{abstraction.summary} - #{filterabstract.summary} failed.\n"
             end
           end
         end
-      end    
-      redirect_to :action => :simple
+      end
     end
+    redirect_to :action => :simple
   end
   
   
   def destroy
-    if request.delete?
-      user = Person.find session[:userid]
-      curr_subscr = user.subscriptions.find(:first, :conditions => {:id => params[:id]})
-      if curr_subscr
-        curr_subscr.destroy
-        redirect_to_index "Subscription for #{curr_subscr.msg_type.msgtype} deleted"
-      else
-        redirect_to_index "Only your own subscriptions can be deleted."
-      end
+    valid_http_methods :delete
+    user = Person.find session[:userid]
+    curr_subscr = user.subscriptions.find(:first, :conditions => {:id => params[:id]})
+    if curr_subscr
+      curr_subscr.destroy
+      redirect_to_index "Subscription for #{curr_subscr.msg_type.msgtype} deleted"
+    else
+      redirect_to_index "Only your own subscriptions can be deleted."
     end
   end
   
@@ -144,22 +141,21 @@ class SubscriptionsController < ApplicationController
   
   
   def update
-    if request.put?
-      user = Person.find session[:userid]
-      @subscr = user.subscriptions.find(params[:id])
-      if @subscr.update_attributes params[:subscr]
-        @subscr.filters.each { |filt| 
-          filt.destroy
-        }
-        0.upto(params[:filter_count].to_i-1) { |counter|
-              params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
+    valid_http_methods :put
+    user = Person.find session[:userid]
+    @subscr = user.subscriptions.find(params[:id])
+    if @subscr.update_attributes params[:subscr]
+      @subscr.filters.each { |filt|
+        filt.destroy
+      }
+      0.upto(params[:filter_count].to_i-1) { |counter|
+        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
   	    @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"], :filterstring => params["filter_value_#{counter}"] )
   	  }
-        redirect_to_index "Subscription updated"
-      else
-        redirect_to_index(@subscr.errors.full_messages())
-        @subscr.errors.clear()
-      end
+      redirect_to_index "Subscription updated"
+    else
+      redirect_to_index(@subscr.errors.full_messages())
+      @subscr.errors.clear()
     end
   end
   

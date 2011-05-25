@@ -4,17 +4,10 @@
 <script type="text/javascript">
   /* <![CDATA[ */
   $(function() {
-    var count = 0;
     $('#add_filter').click(function(){
-      var count = 1+ $('[id^=param_id_]').size();
       newline = $('<%= escape_javascript( render :partial => "filter", :locals => { :indx => "", :parameter_list => @avail_params, :selected_param => "0", :selected_oper => "0", :value => ""} )%>');
       $('#filter_table').append( newline );
-      // set a correct name
-      $('#param_id_').attr('id', 'param_id_' + count.toString() );
-      $('#filter_operator_').attr('id', 'filter_operator_' + count.toString() );
-      $('#filter_value_').attr('id', 'filter_value_' + count.toString() );
-
-      $('#filter_count').attr('value', count.toString() );
+      recalc_filter_ids();
       return false;
     });
   });
@@ -68,17 +61,14 @@
         <% @filters.each_with_index  { |filt,i| %>
           <%= render :partial => 'filter', :locals => {:indx => i.to_s, :parameter_list => @avail_params, :selected_param => filt.parameter_id, :selected_oper => filt.operator, :value => filt.filterstring} %>
         <% }%>
-
-        <tr id='counter'><td><%= hidden_field_tag 'filter_count',@filters.size %></td></tr>
-
-      <script type="text/javascript">
-        recalc_filter_ids();
-      </script>
       </tbody>
     </table>
   </div>
 
-  <p><%= submit_tag %></p>
+  <p>
+<%= hidden_field_tag 'filter_count',@filters.size %>
+  <%= submit_tag "Update subscription" %>
+  </p>
 
   <hr/>
   <h3>Hints for Filter Creation</h3>
