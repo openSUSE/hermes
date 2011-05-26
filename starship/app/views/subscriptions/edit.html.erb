@@ -57,15 +57,13 @@
     <p>These filters are prepared by the Hermes system admin for you to pick. They should
       cover the most common use  cases.</p>
     <div style="margin-left: 50px;">
-      <ul>
-        <% @subscr.abstraction_filters.each { |id, abstraction| %>
-          <li><%= abstraction.summary %> (
-      <%#FIXME: make this work with multiple filters in one abstraction when we need it %>
-            <a href="#" onclick="add_filter_line('<%= abstraction.filters[0].parameter_id %>', '<%= abstraction.filters[0].operator %>', '<%= abstraction.filters[0].filterstring %>'); return false;">add this filter</a>)<br/>
-            <span style="margin-left: 30px; color: #999999;"><%= abstraction.description %></span>
-          </li>
-        <% } %>
-      </ul>
+      <% @subscr.abstraction_filters.each { |id, abstraction| %>
+      <% #debugger %>
+        <p><%= check_box_tag "abstraction_filter[]", id, false %>
+          <b><%= abstraction.summary %></b>
+          <span style="margin-left: 10px; color: #999999;"><%= abstraction.description %></span>
+        </p>
+      <% } %>
     </div>
   <% end %>
 
@@ -114,15 +112,6 @@
         list is computed by splitting on commas.</li>
       <li><b>regexp:</b> The regexp-filter checks if the selected parameter value
         matches the regexp given in the value. Be careful!</li>
-      <li><b>special:</b> The special-operator provides special filters.
-        The parameter value is ignored here. The filter value can be one of
-        <ul><li>
-            _mypackages: The filter matches if this notification is about a package which lists the user either in the project- or package meta file.
-          </li><li>_mypackagesstrict: The filter matches if the notification is about a package which lists the user in the package meta file.
-          </li><li>_myprojects: The filter matches if this notification is about one of the users projects
-          </li><li>_myrequests: All requests where you are listed in the target project.
-          </li></ul>
-      </li>
     </ul>
     <li><b>Value:</b> The filter value with different meaning depending on the
       operator</li>

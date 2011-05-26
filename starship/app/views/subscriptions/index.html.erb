@@ -39,7 +39,16 @@
         <td id="edit_link_<%=i%>">
           <tt><%= subs.msg_type.type_desc %></tt></td>
         <td><%= subs.delay.name %></td>
-        <td><%= subs.delivery ? subs.delivery.description : '' %></td>
+        <td>
+          <%
+          desc = subs.delivery.description
+          if subs.delivery.name == "RSS"
+            desc.gsub! "Web", link_to( 'Web', {:action => "show", :controller => "feeds", :id => subs.id} )
+            desc.gsub! "RSS", link_to( 'RSS', {:action => "show", :controller => "feeds", :id => subs.id, :format => 'rdf'} )
+          end
+          -%>
+          <%= desc %>
+        </td>
         <% if subs.filters.count > 0 %>
           <td><a href="#" onmouseover="Tip('<%=@filter_tooltips[subs.id]%>')" onmouseout="UnTip()"><%= subs.filters.count %></a></td>
         <% else %>

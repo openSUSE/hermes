@@ -137,6 +137,7 @@ class SubscriptionsController < ApplicationController
     @availDelay = Delay.find(:all)
     @availDeliveries = valid_deliveries
     @avail_params = @subscr.msg_type.parameters
+
   end
   
   
@@ -148,15 +149,18 @@ class SubscriptionsController < ApplicationController
       @subscr.filters.destroy
       @subscr.filters = []
       0.upto(params[:filter_count].to_i - 1) { |counter|
-        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
-        if (@subscr.filters.select{|filter| filter.parameter_id.to_s == params["param_id_#{counter}"] &&
-                filter.operator == params["filter_operator_#{counter}"] &&
-                filter.filterstring == params["filter_value_#{counter}"]}.blank?)
-          @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, 
-            :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],
-            :filterstring => params["filter_value_#{counter}"] )
-        end
+        @subscr.add_filter params["param_id_#{counter}"],
+          params["filter_operator_#{counter}"], params["filter_value_#{counter}"]
   	  }
+      # set abstraction filters
+      if params[:abstraction_filter]
+        params[:abstraction_filter].each do |filter|
+          afilters = @subscr.abstraction_filters.select{|f| f.first == filter}.first.last.filters
+          afilters.each do |afilter|
+            @subscr.add_filter afilter.parameter_id, afilter.operator, afilter.filterstring
+          end
+        end
+      end
       redirect_to_index "Subscription updated"
     else
       redirect_to_index(@subscr.errors.full_messages())

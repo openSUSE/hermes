@@ -22,11 +22,20 @@ class Subscription < ActiveRecord::Base
     if (description)
       return description
     end
-   return  "#{msg_type.type_desc} (#{filters.count}  filters)"
+    return  "#{msg_type.type_desc} (#{filters.count}  filters)"
   end
 
   def abstraction_filters
     FILTERABSTRACTIONS.select{|name, abs| abs.valid_msg_types.include? msg_type.msgtype }
+  end
+
+  def add_filter parameter_id, operator, value
+    if (filters.select{|filter| filter.parameter_id.to_s == parameter_id &&
+            filter.operator == operator && filter.filterstring == value}.blank?)
+      filters << SubscriptionFilter.new( :subscription_id => id,
+        :parameter_id => parameter_id, :operator => operator,
+        :filterstring => value )
+    end
   end
 
 end
