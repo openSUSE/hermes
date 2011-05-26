@@ -7,80 +7,84 @@
 
 <% simple_subscriptions = 0 %>
 
-<% if (@abstraction_groups.length > 0) %>
+<div style="float: left; margin: 0 10px 0 10px; "><%= image_tag "120px-R4-hermes.png" %></div>
+<p><b>Hermes</b> is the central notification hub of the openSUSE Project.
+  It gives you control over which kind of notifications you want to receive, in which way and when.
+  Please configure your notification settings below.</p>
+<div style="clear: left"/>
 
-<p><b>Please select below for which events you want to receive notifications.</b></p>
+<% if (@abstraction_groups.length > 0) %>    
 
-<% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
-<table class="noborder">
-<% for group_id in @abstraction_groups.keys %>
+  <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
+    <table class="noborder">
+      <% for group_id in @abstraction_groups.keys %>
 
-  <tr><td colspan="4"><h3><%= @abstraction_groups[group_id] %> </h3></td></tr>
-  
-  <% for abstraction in @abstractions[group_id].values.sort { |a1,a2| a1.sort_key <=> a2.sort_key } %>
-  
-   <% abstraction.filterabstracts.values.each_with_index do |filter_abstract, i|  %>
-  
-    <!-- form part for abstract id: <%= abstraction.id %> filter_abstract id: <%= filter_abstract.id %> -->
- 
-    <% if i == 0 %>
-      <tr style="border: 1px solid #e0e0e0; <% if abstraction.filterabstracts.size > 1 %>border-bottom: 0px; <% end %>"><td valign='top' width="30%">
-        <b><%= abstraction.summary %></b> <br/>
-        <i><%= abstraction.description %></i> 
-        </td>      
-    <% else %>
-      <tr style="border: 1px solid #e0e0e0; border-top: 0px; "><td> </td>
+        <tr><td colspan="4"><h3><%= @abstraction_groups[group_id] %> </h3></td></tr>
+
+        <% for abstraction in @abstractions[group_id].values.sort { |a1,a2| a1.sort_key <=> a2.sort_key } %>
+
+          <% abstraction.filterabstracts.values.each_with_index do |filter_abstract, i|  %>
+
+            <!-- form part for abstract id: <%= abstraction.id %> filter_abstract id: <%= filter_abstract.id %> -->
+
+            <% if i == 0 %>
+              <tr style="border: 1px solid #e0e0e0; <% if abstraction.filterabstracts.size > 1 %>border-bottom: 0px; <% end %>"><td valign='top' width="30%">
+                  <b><%= abstraction.summary %></b> <br/>
+                  <i><%= abstraction.description %></i>
+                </td>
+              <% else %>
+              <tr style="border: 1px solid #e0e0e0; border-top: 0px; "><td> </td>
+              <% end %>
+
+              <td valign='top' width="20">
+                <% subscription = @person.subscribed_to_abstraction( group_id, abstraction.id, filter_abstract.id ) %>
+                <%= check_box_tag "#{abstraction.id}||#{filter_abstract.id}", "1", subscription %>
+              </td>
+              <td valign='top' width="60%">
+                <%= filter_abstract.summary %> <br/>
+                <i><%= filter_abstract.description %></i>
+              </td><td valign='top'><div id="<%= "#{abstraction.id}||#{filter_abstract.id}||options" %>">
+                  <% if ( subscription )
+                    deliveryid = subscription.delivery.id
+                    delayid = subscription.delay.id
+                    simple_subscriptions += 1
+                  else
+                    deliveryid = nil
+                    delayid = nil
+                  end %>
+                  <p>
+                    <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delivery", options_for_select(@avail_deliveries.map {|d| [d.description || d.name, d.id]}, deliveryid) %>
+                  </p><p>
+                    <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delay", options_for_select(@avail_delays, delayid) %>
+                  </p></div></td></tr>
+
+          <% end %>
+
+        <% end %>
+
+      <% end %>
+      <tr><td colspan="4"><%= submit_tag "Save settings" %></td></tr>
     <% end %>
 
-    <td valign='top' width="20">
-    <% subscription = @person.subscribed_to_abstraction( group_id, abstraction.id, filter_abstract.id ) %>
-    <%= check_box_tag "#{abstraction.id}||#{filter_abstract.id}", "1", subscription %>
-    </td>
-    <td valign='top' width="60%">
-    <%= filter_abstract.summary %> <br/>
-    <i><%= filter_abstract.description %></i>
-    </td><td valign='top'><div id="<%= "#{abstraction.id}||#{filter_abstract.id}||options" %>">
-    <% if ( subscription ) 
-         deliveryid = subscription.delivery.id
-         delayid = subscription.delay.id
-         simple_subscriptions += 1
-       else
-         deliveryid = nil
-         delayid = nil
-    end %>
-    <p>
-    <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delivery", options_for_select(@avail_deliveries.map {|d| [d.description || d.name, d.id]}, deliveryid) %>
-    </p><p>
-    <%= select_tag "#{abstraction.id}||#{filter_abstract.id}||delay", options_for_select(@avail_delays, delayid) %>
-    </p></div></td></tr>
-  
-  <% end %>
-
-  <% end %>
- 
-  <% end %>
-  <tr><td colspan="4"><%= submit_tag "Save settings" %></td></tr>
-  <% end %>
-
   </table>
-  
+
 <% else %>
 
-<p>There are no simple subscriptions configured, please use the expert interface. </p>
+  <p>There are no simple subscriptions configured, please use the expert interface. </p>
 
 <% end %>
-  
+
 <br/>
 
 <% if ( @subscribedMsgs.size > simple_subscriptions ) %>  
 
-<p>You have <%= pluralize((@subscribedMsgs.size - simple_subscriptions), "additional subscription") %> that can only be changed in the
-<a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. </p>
+  <p>You have <%= pluralize((@subscribedMsgs.size - simple_subscriptions), "additional subscription") %> that can only be changed in the
+    <a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. </p>
 
 <% else %>
 
-<p>You can choose from a list of default notifications here.
-To configure more complex notifications, please use the 
-<a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. </p>
+  <p>You can choose from a list of default notifications here.
+    To configure more complex notifications, please use the
+    <a href="<%= url_for(:controller => "subscriptions" , :action => "index") %>">expert interface</a>. </p>
 
 <% end %>

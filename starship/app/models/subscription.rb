@@ -24,5 +24,9 @@ class Subscription < ActiveRecord::Base
     end
    return  "#{msg_type.type_desc} (#{filters.count}  filters)"
   end
-  
+
+  def abstraction_filters
+    FILTERABSTRACTIONS.select{|name, abs| abs.valid_msg_types.include? msg_type.msgtype }
+  end
+
 end

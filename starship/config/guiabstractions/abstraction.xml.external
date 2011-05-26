@@ -6,42 +6,69 @@
          <summary>My Packages</summary>
          <description>All packages where you are listed as maintainer either in the package or the project.</description>
          <filter parameter="_special" operator="special" value="_mypackages"/>
+         <valid_msg_types>
+         <msg_type>obs_build_success</msg_type>
+         <msg_type>obs_build_fail</msg_type>
+         </valid_msg_types>
       </filterabstract>
 
       <filterabstract id="my_packs_strict">
          <summary>My Packages</summary>
          <description>All packages where you are listed as maintainer in the package.</description>
          <filter parameter="_special" operator="special" value="_mypackagesstrict"/>
+         <valid_msg_types>
+         <msg_type>obs_build_success</msg_type>
+         <msg_type>obs_build_fail</msg_type>
+         </valid_msg_types>
       </filterabstract>
 
       <filterabstract id="my_projects">
          <summary>My Projects</summary>
          <description>All projects where you are listed as maintainer.</description>
          <filter parameter="_special" operator="special" value="_myprojects"/>
+         <valid_msg_types>
+         <msg_type>obs_build_success</msg_type>
+         <msg_type>obs_build_fail</msg_type>
+         </valid_msg_types>
       </filterabstract>
 
       <filterabstract id="my_requests">
          <summary>My incoming Requests</summary>
          <description>All requests where you are listed in the target project.</description>
          <filter parameter="_special" operator="special" value="_myrequests" />
+         <valid_msg_types>
+         <msg_type>OBS_SRCSRV_REQUEST_CREATE</msg_type>
+         <msg_type>OBS_SRCSRV_REQUEST_STATECHANGE</msg_type>
+         </valid_msg_types>
       </filterabstract>
 
      <filterabstract id="my_reviews">
          <summary>My incoming Review Tasks</summary>
          <description>All reviews of requests where you are involved.</description>
          <filter parameter="newreviewer" operator="oneof" value="${username}" />
+         <valid_msg_types>
+         <msg_type>OBS_SRCSRV_REQUEST_REVIEWER_ADDED</msg_type>
+         </valid_msg_types>
       </filterabstract>
 
       <filterabstract id="request_author_is_me">
          <summary>My created Requests</summary>
          <description>All requests you are the author of.</description>
          <filter parameter="author" operator="oneof" value="${username}" />
+         <valid_msg_types>
+         <msg_type>OBS_SRCSRV_REQUEST_CREATE</msg_type>
+         <msg_type>OBS_SRCSRV_REQUEST_STATECHANGE</msg_type>
+         </valid_msg_types>
       </filterabstract>
 
       <filterabstract id="my_features">
          <summary>My Features</summary>
          <description>All features where you are listed as "interested" or in any other role.</description>
          <filter parameter="to" operator="containsitem" value="${username}" />
+         <valid_msg_types>
+         <msg_type>FATE:FEATURE_CHANGED</msg_type>
+         <msg_type>FATE:FEATURE_ADDED</msg_type>
+         </valid_msg_types>
       </filterabstract>
 
   </filterabstractions>

@@ -1,106 +1,132 @@
+<%
+@title = "Edit Subscription - openSUSE Hermes"
+@crumb_list = []
+@crumb_list << link_to( "Subscriptions", :controller => :subscriptions, :action => :index )
+@crumb_list << "Edit Subscription"
+%>
+
+
 <h2>Basic Subscription Parameters</h2>
 <h3>Subscription to notification type: <%= MsgType.find(@subscr.msg_type_id).type_desc %></h3>
 
 <script type="text/javascript">
-var count = 0;
-$(function(){
-  $('p#add_filter').click(function(){
-    count = 1+ $('[id^=param_id_]').size();
-    newline = $('<%= escape_javascript( render :partial => "filter", :locals => { :indx => "", :parameter_list => @avail_params, :selected_param => "0", :selected_oper => "0", :value => ""} )%>');
-    $('#filter_table').append( newline );
-    // set a correct name 
-    $('#param_id_').attr('id', 'param_id_' + count.toString() );
-    $('#filter_operator_').attr('id', 'filter_operator_' + count.toString() );
-    $('#filter_value_').attr('id', 'filter_value_' + count.toString() );
+  /* <![CDATA[ */
+  $(function() {
+    $('#add_filter').click(function(){
+      add_filter_line("0", "0", "");
+      return false;
+    });
 
-    $('#filter_count').attr('value', count.toString() );
   });
-});
+  function add_filter_line(param, operator, value) {
+    newline = $('<%= escape_javascript( render :partial => "filter", :locals => { :indx => "", :parameter_list => @avail_params, :selected_param => "0", :selected_oper => "0", :value => ""} )%>');
+    $(newline.find('.param_select')[0]).val(param);
+    $(newline.find('.filter_select')[0]).val(operator);
+    $(newline.find('.filter_value_input')[0]).val(value);
+    $('#filter_table').append( newline );
+    recalc_filter_ids();
+    return false;
+  }
+
+  /* ]]> */
 </script>
 
 <% form_for @subscr do |f| %>
 
-<p>
-  <label>Description:</label><%= text_field_tag('subscr[description]', @subscr.description, :size => 50 ) %>
-</p>
-<p>
-  <label>Comment:</label><%= link_to_function( "Enter Comment", nil, :id => "comment_link") do |page|
-     page[:comment_box].toggle()
-     page[:comment_link].hide()
-  end %> (to help you remember what happens here)
-</p>
-<div id="comment_box" style="display: none; margin-left: 11em;">
-  <%= text_area('subscr','comment', :size => "50x3") %>
-</div>
-<p>
-  <label>Delay:</label><%= collection_select('subscr', 'delay_id', @availDelay, 'id','name') %>
-</p>
-<p>
-  <label>Delivery:</label><%=  collection_select('subscr','delivery_id', @availDeliveries, 'id','description') %>
-</p>
-
-<h2>Predefined Filters</h2>
-<p>These filters are prepared by the Hermes system admin for you to pick. They should
-  cover the most common use  cases.</p>
-<div style="margin-left: 50px;">
-<% FILTERABSTRACTIONS.each { |id, abstraction| %>
-  <p><%= radio_button( "special", "filter", id ) %>&nbsp <%= abstraction.summary %><br/>
-    <span style="margin-left: 30px; color: #999999;"><%= abstraction.description %></span>
+  <p>
+    <label>Description:</label><%= text_field_tag('subscr[description]', @subscr.description, :size => 50 ) %>
   </p>
-<% } %>
-</div>
+  <p>
+    <label>Comment:</label><%= link_to_function( "Enter Comment", nil, :id => "comment_link") do |page|
+      page[:comment_box].toggle()
+      page[:comment_link].hide()
+    end %> (to help you remember what happens here)
+  </p>
+  <div id="comment_box" style="display: none; margin-left: 11em;">
+    <%= text_area('subscr','comment', :size => "50x3") %>
+  </div>
+  <p>
+    <label>Delay:</label><%= collection_select('subscr', 'delay_id', @availDelay, 'id','description') %>
+  </p>
+  <p>
+    <label>Delivery:</label><%=  collection_select('subscr','delivery_id', @availDeliveries, 'id','description') %>
+  </p>
 
-<h2>Parameter Filters</h2>
-<p>Note that all filters are combined with logical AND, that means they must match
-  all to make the notification happen</p>
-<div style="margin-left:50px;">
-  <p id="add_filter"><a href="#"><span>&raquo; Add another filter...</span></a></p>
-<table>
-  <tbody id="filter_table" style="">
-      <tr>
-        <td>Parameter</td>
-        <td>Operator</td>
-        <td colspan="3">Value(s)</td>
-      </tr>
-      <% @filters.each_with_index  { |filt,i| %>
-        <%= render :partial => 'filter', :locals => {:indx => i.to_s, :parameter_list => @avail_params, :selected_param => filt.parameter_id, :selected_oper => filt.operator, :value => filt.filterstring} %>
-      <% }%>
+  <% unless @subscr.abstraction_filters.blank? %>
+    <h2>Predefined Filters</h2>
+    <p>These filters are prepared by the Hermes system admin for you to pick. They should
+      cover the most common use  cases.</p>
+    <div style="margin-left: 50px;">
+      <ul>
+        <% @subscr.abstraction_filters.each { |id, abstraction| %>
+          <li><%= abstraction.summary %> (
+      <%#FIXME: make this work with multiple filters in one abstraction when we need it %>
+            <a href="#" onclick="add_filter_line('<%= abstraction.filters[0].parameter_id %>', '<%= abstraction.filters[0].operator %>', '<%= abstraction.filters[0].filterstring %>'); return false;">add this filter</a>)<br/>
+            <span style="margin-left: 30px; color: #999999;"><%= abstraction.description %></span>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  <% end %>
 
-      <tr id='counter'><td><%= hidden_field_tag 'filter_count',@filters.size %></td></tr>
 
-    <script type="text/javascript">
-      recalc_filter_ids();
-    </script>
-  </tbody>
-</table>
-</div>
 
-<p><%= submit_tag %></p>
+  <h2>Parameter Filters</h2>
+  <p>Note that all filters are combined with logical AND, that means they must match
+    all to make the notification happen</p>
+  <div style="margin-left:50px;">
+    <p id="add_filter"><a href="#"><span>&raquo; Add another filter...</span></a></p>
+    <table>
+      <tbody id="filter_table" style="">
+        <tr>
+          <td>Parameter</td>
+          <td>Operator</td>
+          <td colspan="3">Value(s)</td>
+        </tr>
+        <% @filters.each_with_index  { |filt,i| %>
+          <%= render :partial => 'filter', :locals => {:indx => i.to_s, :parameter_list => @avail_params, :selected_param => filt.parameter_id, :selected_oper => filt.operator, :value => filt.filterstring} %>
+        <% }%>
+      </tbody>
+    </table>
+  </div>
 
-<hr/>
-<h3>Hints for Filter Creation</h3>
+  <p>
+    <%= hidden_field_tag 'filter_count',@filters.size %>
+    <%= submit_tag "Update subscription" %>
+  </p>
 
-<p>Filters for subscriptions consist of three different settings:</p>
-<ol>
-<li><b>Parameter:</b> The first combo box contains a list of the parameters
-  which belong to selected message type. The filter operation works on the 
-  content of the parameter.</li>
-<li><b>Operator:</b> The operator sets the type of the filter. There are some 
-types of filters so far:</li>
-  <ul>
-   <li><b>oneof:</b>The oneof filter checks if the parameter value equals one
-     of the list entries in value. The list of values is built by splitting the
-     filter value at the commas.</li>
-   <li><b>containsitem:</b> The containsitem filter checks if the list of
-     filter values contains the value of the selected parameter. Again, the
-     list is computed by splitting on commas.</li>
-   <li><b>regexp:</b>The regexp-filter checks if the selected parameter value 
-     matches the regexp given in the value. Be careful!</li>
-  </ul>
-  <li><b>Value:</b> The filter value with different meaning depending on the
-  operator</li>
-</ol>
-</div>
+  <hr/>
+  <h3>Hints for Filter Creation</h3>
+
+  <p>Filters for subscriptions consist of three different settings:</p>
+  <ol>
+    <li><b>Parameter:</b> The first combo box contains a list of the parameters
+      which belong to selected message type. The filter operation works on the
+      content of the parameter.</li>
+    <li><b>Operator:</b> The operator sets the type of the filter. There are some
+      types of filters so far:</li>
+    <ul>
+      <li><b>oneof:</b> The oneof filter checks if the parameter value equals one
+        of the list entries in value. The list of values is built by splitting the
+        filter value at the commas.</li>
+      <li><b>containsitem:</b> The containsitem filter checks if the list of
+        filter values contains the value of the selected parameter. Again, the
+        list is computed by splitting on commas.</li>
+      <li><b>regexp:</b> The regexp-filter checks if the selected parameter value
+        matches the regexp given in the value. Be careful!</li>
+      <li><b>special:</b> The special-operator provides special filters.
+        The parameter value is ignored here. The filter value can be one of
+        <ul><li>
+            _mypackages: The filter matches if this notification is about a package which lists the user either in the project- or package meta file.
+          </li><li>_mypackagesstrict: The filter matches if the notification is about a package which lists the user in the package meta file.
+          </li><li>_myprojects: The filter matches if this notification is about one of the users projects
+          </li><li>_myrequests: All requests where you are listed in the target project.
+          </li></ul>
+      </li>
+    </ul>
+    <li><b>Value:</b> The filter value with different meaning depending on the
+      operator</li>
+  </ol>
 
 <% end %>
 
