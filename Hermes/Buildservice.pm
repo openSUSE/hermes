@@ -440,7 +440,10 @@ sub packageDiff( $$$ )
   my ( $project, $package, $orev ) = @_;
   my $cacheKey = 'diff_' . $project . '_' . $package . '_' . $orev;
   my $diff = $cache->get( $cacheKey );
-  unless( defined $diff ) {
+  if( $diff ) {
+    log( 'info', "Got diff for <$package>, <$project> from cache!" );
+  } else {
+    log( 'info', "Calling OBS API to generate diff!" );
     $diff = callOBSAPI( 'diff', ( $project, $package ) );
     $cache->put( $cacheKey, $diff );
   }
