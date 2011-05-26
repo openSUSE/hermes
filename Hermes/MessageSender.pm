@@ -40,6 +40,7 @@ use Hermes::Message;
 use Hermes::Customize;
 
 use HTML::Template;
+use GPG;
 
 use vars qw(@ISA @EXPORT $query );
 
@@ -280,6 +281,9 @@ sub deliverMessage( $$ )
 
   my $deliveryString = deliveryIdToString( $delivery );
 
+  my $attribs = deliveryAttribs( $delivery );  
+  $msgRef->{_send_signed_mail} = 1 if( $attribs->{send_signed_mails} );
+
   unless( $deliveryString ) {
     log('warning', "Problem: Delivery <$delivery> seems to be unknown!" );
   } else {
@@ -288,7 +292,7 @@ sub deliverMessage( $$ )
     # FIXME: Better detection of the delivery type
     if( $deliveryString =~ /mail/i ) {
       $res = sendMail( $msgRef );
-    } elsif( $deliveryString =~ /jabber personal/i ) {
+    } elsif( $deliveryString =~ /jabber/i ) {
       # sendJabber( $msgRef );
       log( 'debug', "Unable to send Jabber at the moment!" );
       $res = 1;

@@ -46,7 +46,8 @@ use vars qw( @ISA @EXPORT @EXPORT_OK );
 #  subject    => string
 #  body       => string
 #  _debug      => debug flag, true if debug.
-#  _skip_user_check => do not check the from and to addresses 
+#  _skip_user_check   => do not check the from and to addresses 
+#  _send_signed_mail  => do GPG signing
 # 
 sub sendMail( $ )
 {
@@ -87,6 +88,27 @@ sub sendMail( $ )
     }
   }
 
+  if( $msg->{_send_signed_mail} && $Hermes::Config::EnableMailSigning ) {
+    my $keyId = $Hermes::Config::GPGKeyId;
+    my $passphrase = $Hermes::Config::GPGPassphrase;
+    my $gpgHome = $Hermes::Config::GPGHome;
+    
+    my $msgBody;
+    my $gpg = new GPG( homedir  => $gpgHome );
+    if( $gpg->error() ) {
+      log( 'error', "" . $gpg->error() );
+    } else {
+      log( 'info', "Signing email with key " . $keyId );
+      $msgBody = $gpg->clearsign( $keyId, $passphrase,$msg->{body});
+      if( $gpg->error() ) {
+        log( 'error', "GPG-signing of mail content failed: " . $gpg->error() );
+      } else {
+        $msg->{body} = $msgBody;
+      }
+    }
+  } else {
+    log( 'debug', "Skipping mail signing!" );
+  }
 
   my $mime_msg = MIME::Lite->new( From    => $fromMail,
 				  Subject => $msg->{subject},

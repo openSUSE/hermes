@@ -73,6 +73,17 @@ $OBSAPIPwd  = 'secret';
 $OBSMaxResponseSize = 1024;
 
 #
+# GPG Mail Signing
+# Enable this to make Hermes sending out signed emails.
+# Note that this can have a performance impact. Also make sure your key is
+# protected enough!
+# Switched off by default
+$EnableMailSigning = 0;
+$GPGKeyId      = '';
+$GPGPassphrase = '';
+$GPGHome       = '';
+
+#
 # 
 
 # authentication setting
