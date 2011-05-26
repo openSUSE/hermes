@@ -148,7 +148,8 @@ class SubscriptionsController < ApplicationController
       @subscr.filters.destroy
       @subscr.filters = []
       0.upto(params[:filter_count].to_i - 1) { |counter|
-        if (@subscr.filters.select{|filter| filter.parameter_id.to_s == params["param_id_#{counter}"] && 
+        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
+        if (@subscr.filters.select{|filter| filter.parameter_id.to_s == params["param_id_#{counter}"] &&
                 filter.operator == params["filter_operator_#{counter}"] &&
                 filter.filterstring == params["filter_value_#{counter}"]}.blank?)
           @subscr.filters << SubscriptionFilter.new( :subscription_id => @subscr.id, 

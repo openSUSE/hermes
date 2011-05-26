@@ -1,3 +1,10 @@
+<%
+@title = "Feed: #{@title}"
+@crumb_list = []
+@crumb_list << link_to( "Feeds", :controller => :feeds, :action => :index )
+@crumb_list << "Feed: #{@title}"
+%>
+
 
 <%= auto_discovery_link_tag(:rss, :action => 'show', :format => "rdf", :id => @feed_id) %>
 
