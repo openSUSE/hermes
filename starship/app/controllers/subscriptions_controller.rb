@@ -36,21 +36,13 @@ class SubscriptionsController < ApplicationController
       end
     }
   end
-  
+
+
   def create
     valid_http_methods :post
-    user = Person.find session[:userid]
     sub_param = params[:subscr]
     sub_param[:person_id] = session[:userid]
     sub = Subscription.new(sub_param)
-    logger.debug("Creating subscription for #{params["sub_param"]}")
-    #      0.upto(params[:filter_count].to_i-1) { |counter|
-    #        # set the parameter_id of the _special filter
-    #        params["param_id_#{counter}"] ||= (Parameter.find(:first, :conditions => {:name => '_special'})).id
-    #        logger.debug("[Create Subscription] add filter: #{params["filter_value_#{counter}"]}")
-    #        sub.filters <<  SubscriptionFilter.new( :parameter_id => params["param_id_#{counter}"], :operator => params["filter_operator_#{counter}"],
-    #          :filterstring => SubscriptionFilter.replaced_filterstring(params["filter_value_#{counter}"], user.stringid) )
-    #      }
     if sub.save
       redirect_to :action => 'edit', :id => sub.id;
     else
@@ -64,9 +56,7 @@ class SubscriptionsController < ApplicationController
     valid_http_methods :post
     flash[:success] = ""
     flash[:error] = ""
-
     user = Person.find session[:userid]
-      
     SUBSCRIPTIONABSTRACTIONS.keys.each do | group_id |
       SUBSCRIPTIONABSTRACTIONS[group_id].values.each do | abstraction |
         abstraction.filterabstracts.values.each do | filterabstract |
@@ -133,11 +123,11 @@ class SubscriptionsController < ApplicationController
   def edit
     user = Person.find session[:userid]
     @subscr = user.subscriptions.find(params[:id])
-    @filters = @subscr.filters
     @availDelay = Delay.find(:all)
     @availDeliveries = valid_deliveries
     @avail_params = @subscr.msg_type.parameters
-
+    # pick out the abstraction filters
+    @filters = @subscr.non_abstraction_filters
   end
   
   
@@ -155,7 +145,7 @@ class SubscriptionsController < ApplicationController
       # set abstraction filters
       if params[:abstraction_filter]
         params[:abstraction_filter].each do |filter|
-          afilters = @subscr.abstraction_filters.select{|f| f.first == filter}.first.last.filters
+          afilters = @subscr.abstraction_filter_templates.select{|f| f.first == filter}.first.last.filters
           afilters.each do |afilter|
             @subscr.add_filter afilter.parameter_id, afilter.operator, afilter.filterstring
           end
@@ -171,7 +161,6 @@ class SubscriptionsController < ApplicationController
   
   def get_type_params
     param_list = MsgType.find(params[:msg_type]).parameters
-    #param_list = param_list.map{|param| param.name}
     logger.debug "Available parameters for msg_type #{params[:msg_type]}: #{param_list.inspect}"
     render :partial => 'filter_param', :locals => {:param_list => param_list, :selected => nil}
   end

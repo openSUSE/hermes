@@ -6,7 +6,7 @@ class SubscriptionFilter < ActiveRecord::Base
   def replaced_filterstring (username)
     return SubscriptionFilter.replaced_filterstring(filterstring, username)
   end
-  
+
   def self.replaced_filterstring (filterstring, username)
     my_filterstring = filterstring.gsub(/\$\{username\}/, "#{username}")
     return my_filterstring

@@ -52,14 +52,14 @@
     <label>Delivery:</label><%=  collection_select('subscr','delivery_id', @availDeliveries, 'id','description') %>
   </p>
 
-  <% unless @subscr.abstraction_filters.blank? %>
+  <% unless @subscr.abstraction_filter_templates.blank? %>
     <h2>Predefined Filters</h2>
     <p>These filters are prepared by the Hermes system admin for you to pick. They should
       cover the most common use  cases.</p>
     <div style="margin-left: 50px;">
-      <% @subscr.abstraction_filters.each { |id, abstraction| %>
+      <% @subscr.abstraction_filter_templates.each { |id, abstraction| %>
       <% #debugger %>
-        <p><%= check_box_tag "abstraction_filter[]", id, false %>
+        <p><%= check_box_tag "abstraction_filter[]", id, @subscr.uses_abstraction_filter?( id )  %>
           <b><%= abstraction.summary %></b>
           <span style="margin-left: 10px; color: #999999;"><%= abstraction.description %></span>
         </p>

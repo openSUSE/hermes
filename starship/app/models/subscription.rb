@@ -10,13 +10,15 @@ class Subscription < ActiveRecord::Base
 
   validates_presence_of :delay
   validates_presence_of :delivery
-  
+
+
   def initialize(attribs={})
     super(attribs)
     self.delay = Delay.find_by_name( 'NO_DELAY' ) unless self.delay.present?
     self.delivery = Delivery.find_by_name( 'Mail' ) unless self.delivery.present?
     self
   end
+
 
   def subscription_desc
     if (description)
@@ -25,9 +27,42 @@ class Subscription < ActiveRecord::Base
     return  "#{msg_type.type_desc} (#{filters.count}  filters)"
   end
 
-  def abstraction_filters
+
+  def abstraction_filter_templates
     FILTERABSTRACTIONS.select{|name, abs| abs.valid_msg_types.include? msg_type.msgtype }
   end
+
+
+  def uses_abstraction_filter? id
+    afilters = abstraction_filter_templates.select{|f| f.first == id}.first.last.filters
+    uses_abstraction_filter = !afilters.blank?
+    afilters.each do |afilter|
+      if filters.select{|f| f.parameter_id == afilter.parameter_id &&
+            f.operator == afilter.operator && f.filterstring == afilter.filterstring }.blank?
+        uses_abstraction_filter = false
+      end
+    end
+    uses_abstraction_filter
+  end
+
+
+  # return the included filters minus that ones that were covered by an abstraction filter
+  def non_abstraction_filters
+    non_abstraction_filters = filters
+    abstraction_filter_templates.each do |filter_template|
+      afilters = filter_template.last.filters
+      uses_abstraction_filter = !afilters.blank?
+      used_filters = []
+      afilters.each do |afilter|
+        used_filters = filters.select{|f| f.parameter_id == afilter.parameter_id &&
+            f.operator == afilter.operator && f.filterstring == afilter.filterstring }
+        uses_abstraction_filter = false if used_filters.blank?
+      end
+      non_abstraction_filters -= used_filters if uses_abstraction_filter
+    end
+    non_abstraction_filters
+  end
+
 
   def add_filter parameter_id, operator, value
     if (filters.select{|filter| filter.parameter_id.to_s == parameter_id &&
