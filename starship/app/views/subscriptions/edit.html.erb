@@ -59,7 +59,7 @@
     <div style="margin-left: 50px;">
       <% @subscr.abstraction_filter_templates.each { |id, abstraction| %>
       <% #debugger %>
-        <p><%= check_box_tag "abstraction_filter[]", id, @subscr.uses_abstraction_filter?( id )  %>
+        <p><%= check_box_tag "abstraction_filter[]", id, @subscr.uses_abstraction_filter?( id, @loggedin_user.stringid )  %>
           <b><%= abstraction.summary %></b>
           <span style="margin-left: 10px; color: #999999;"><%= abstraction.description %></span>
         </p>

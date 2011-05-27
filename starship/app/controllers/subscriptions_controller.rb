@@ -127,7 +127,7 @@ class SubscriptionsController < ApplicationController
     @availDeliveries = valid_deliveries
     @avail_params = @subscr.msg_type.parameters
     # pick out the abstraction filters
-    @filters = @subscr.non_abstraction_filters
+    @filters = @subscr.non_abstraction_filters user.stringid
   end
   
   
@@ -140,14 +140,14 @@ class SubscriptionsController < ApplicationController
       @subscr.filters = []
       0.upto(params[:filter_count].to_i - 1) { |counter|
         @subscr.add_filter params["param_id_#{counter}"],
-          params["filter_operator_#{counter}"], params["filter_value_#{counter}"]
+          params["filter_operator_#{counter}"], params["filter_value_#{counter}"], user.stringid
   	  }
       # set abstraction filters
       if params[:abstraction_filter]
         params[:abstraction_filter].each do |filter|
           afilters = @subscr.abstraction_filter_templates.select{|f| f.first == filter}.first.last.filters
           afilters.each do |afilter|
-            @subscr.add_filter afilter.parameter_id, afilter.operator, afilter.filterstring
+            @subscr.add_filter afilter.parameter_id, afilter.operator, afilter.filterstring, user.stringid
           end
         end
       end

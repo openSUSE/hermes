@@ -33,12 +33,13 @@ class Subscription < ActiveRecord::Base
   end
 
 
-  def uses_abstraction_filter? id
+  def uses_abstraction_filter? id, username
     afilters = abstraction_filter_templates.select{|f| f.first == id}.first.last.filters
     uses_abstraction_filter = !afilters.blank?
     afilters.each do |afilter|
       if filters.select{|f| f.parameter_id == afilter.parameter_id &&
-            f.operator == afilter.operator && f.filterstring == afilter.filterstring }.blank?
+            f.operator == afilter.operator && 
+            f.filterstring == SubscriptionFilter.replaced_filterstring(afilter.filterstring, username) }.blank?
         uses_abstraction_filter = false
       end
     end
@@ -47,7 +48,7 @@ class Subscription < ActiveRecord::Base
 
 
   # return the included filters minus that ones that were covered by an abstraction filter
-  def non_abstraction_filters
+  def non_abstraction_filters username
     non_abstraction_filters = filters
     abstraction_filter_templates.each do |filter_template|
       afilters = filter_template.last.filters
@@ -55,7 +56,8 @@ class Subscription < ActiveRecord::Base
       used_filters = []
       afilters.each do |afilter|
         used_filters = filters.select{|f| f.parameter_id == afilter.parameter_id &&
-            f.operator == afilter.operator && f.filterstring == afilter.filterstring }
+            f.operator == afilter.operator && 
+            f.filterstring == SubscriptionFilter.replaced_filterstring(afilter.filterstring, username) }
         uses_abstraction_filter = false if used_filters.blank?
       end
       non_abstraction_filters -= used_filters if uses_abstraction_filter
@@ -64,7 +66,8 @@ class Subscription < ActiveRecord::Base
   end
 
 
-  def add_filter parameter_id, operator, value
+  def add_filter parameter_id, operator, value, username
+    value = SubscriptionFilter.replaced_filterstring(value, username)
     if (filters.select{|filter| filter.parameter_id.to_s == parameter_id &&
             filter.operator == operator && filter.filterstring == value}.blank?)
       filters << SubscriptionFilter.new( :subscription_id => id,
