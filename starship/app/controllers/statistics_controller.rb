@@ -10,7 +10,7 @@ class StatisticsController < ApplicationController
       notifications = []
       messages = []
       @timespan.downto(1).each do |time|
-        notifications << [time, Notification.find(:all, :conditions => { :received => time.hours.ago..(time-1).hours.ago }).count]
+        notifications << [time, Notification.find(:all, :conditions => { :generated => time.hours.ago..(time-1).hours.ago }).count]
         messages << [time, StarshipMessage.find(:all, :conditions => { :created => time.hours.ago..(time-1).hours.ago }).count]
       end
       [notifications, messages]
