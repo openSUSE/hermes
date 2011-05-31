@@ -1,0 +1,42 @@
+<% content_for :content_for_head do %>
+  <%= javascript_include_tag "jquery.flot.js" %>
+<% end %>
+<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/javascripts/excanvas.min.js"></script><![endif]-->
+
+<%
+@title = "Statistics - openSUSE Hermes"
+@crumb_list = []
+@crumb_list << "Statistics"
+%>
+
+<p>
+  The hermes system currently has <b><%= @users.size %></b> users with
+  <b><%= @subscriptions.size %></b> individual subscriptions
+</p>
+
+
+<p>Notifications and Feed (Web/RSS) Messages in the last 48 hours: </p>
+
+<p><div id="starship_messages_graph" style="margin-left: 20px; width:900px;height:300px"></div></p>
+
+<script type="text/javascript">
+  $(function () {
+
+    var notifications = [<%= @notifications_graph.map{|time, n| "[#{time}, #{n}]" }.join(",") -%>];
+    var messages = [<%= @messages_graph.map{|time, n| "[#{time}, #{n}]" }.join(",") -%>];
+
+    $.plot($("#starship_messages_graph"),
+    [ { data: notifications, label: "Notifications" },
+      { data: messages, label: "Web/RSS Messages" }],
+    {
+      xaxis: {
+        ticks: [<%= @timespan.downto(1).select{|t| t%24 == 0}.map{|t| "[#{@timespan-t}, '-#{t/24} day']"}.join(",") -%>]
+      },
+      yaxis: {
+      },
+      grid: {
+        backgroundColor: { colors: ["#fff", "#eee"] }
+      }
+    });
+  });
+</script>
