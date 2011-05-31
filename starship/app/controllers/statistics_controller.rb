@@ -4,8 +4,8 @@ class StatisticsController < ApplicationController
     @users = Person.find :all
     @subscriptions = Subscription.find :all
 
-    cacheid = "hermes_statistics"
-    @timespan = 168
+    cacheid = "hermes_stats"
+    @timespan = 120
     @notifications_graph, @messages_graph = Rails.cache.fetch(cacheid, :expires_in => 2.hours) do
       notifications = []
       messages = []

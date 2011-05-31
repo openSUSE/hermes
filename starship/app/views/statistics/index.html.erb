@@ -15,7 +15,7 @@
 </p>
 
 
-<p>Notifications and Feed (Web/RSS) Messages in the last 48 hours: </p>
+<p>Notifications and Feed (Web/RSS) Messages in the last <%= @timespan/24 %> days (values are per hour): </p>
 
 <p><div id="starship_messages_graph" style="margin-left: 20px; width:900px;height:300px"></div></p>
 
@@ -30,7 +30,7 @@
       { data: messages, label: "Web/RSS Messages" }],
     {
       xaxis: {
-        ticks: [<%= @timespan.downto(1).select{|t| t%24 == 0}.map{|t| "[#{@timespan-t}, '-#{t/24} day']"}.join(",") -%>]
+        ticks: [<%= @timespan.downto(1).select{|t| t%24 == 0}.map{|t| "[#{@timespan-t}, '-#{pluralize(t/24, 'day')}']"}.join(",") -%>]
       },
       yaxis: {
       },
