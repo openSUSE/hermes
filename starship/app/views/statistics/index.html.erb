@@ -22,15 +22,17 @@
 <script type="text/javascript">
   $(function () {
 
-    var notifications = [<%= @notifications_graph.map{|time, n| "[#{time}, #{n}]" }.join(",") -%>];
-    var messages = [<%= @messages_graph.map{|time, n| "[#{time}, #{n}]" }.join(",") -%>];
+    var notifications_in = [<%= @notifications_in.map{|time, n| "[#{time}, #{n}]" }.join(",") -%>];
+    var notifications_out = [<%= @notifications_out.map{|time, n| "[#{time}, #{n}]" }.join(",") -%>];
+    var messages = [<%= @messages.map{|time, n| "[#{time}, #{n}]" }.join(",") -%>];
 
     $.plot($("#starship_messages_graph"),
-    [ { data: notifications, label: "Notifications" },
+    [ { data: notifications_in, label: "Incoming notifications" },
+      { data: notifications_out, label: "Outgoing notifications" },
       { data: messages, label: "Web/RSS Messages" }],
     {
       xaxis: {
-        ticks: [<%= @timespan.downto(1).select{|t| t%24 == 0}.map{|t| "[#{@timespan-t}, '-#{pluralize(t/24, 'day')}']"}.join(",") -%>]
+        ticks: [<%= (-@timespan).upto(1).select{|t| t%24 == 0}.map{|t| "[#{t}, '#{pluralize(-t/24, 'day')} ago']"}.join(",") -%>]
       },
       yaxis: {
       },
