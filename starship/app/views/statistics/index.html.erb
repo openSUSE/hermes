@@ -15,7 +15,7 @@
 </p>
 
 
-<p>Notifications and Feed (Web/RSS) Messages in the last <%= @timespan/24 %> days (values are per hour): </p>
+<p>Hermes message traffic in the last <%= @timespan/24 %> days (values are per hour): </p>
 
 <p><div id="starship_messages_graph" style="margin-left: 20px; width:900px;height:300px"></div></p>
 
@@ -32,7 +32,7 @@
       { data: messages, label: "Web/RSS Messages" }],
     {
       xaxis: {
-        ticks: [<%= (-@timespan).upto(1).select{|t| t%24 == 0}.map{|t| "[#{t}, '#{pluralize(-t/24, 'day')} ago']"}.join(",") -%>]
+        ticks: [<%= (-@timespan).upto(-1).select{|t| t%24 == 0}.map{|t| "[#{t}, '#{pluralize(-t/24, 'day')} ago']"}.join(",") -%>]
       },
       yaxis: {
       },
@@ -42,3 +42,12 @@
     });
   });
 </script>
+
+<p>
+  <i>Incoming notifications</i> are the messages that reach hermes from outside, eg.
+  if a package build succeeded, or a wiki page has been changed. Hermes then goes through the
+  users subscriptions and creates an <i>outgoing notification</i> for each of the subscriptions
+  that match the notification. <i>Web/RSS</i> messages are those that got delivered to a subscription
+  with the Web/RSS delivery type and can be viewed directly in this webapp.  
+</p>
+
