@@ -1,8 +1,9 @@
 class StatisticsController < ApplicationController
 
   def index
-    @users = Person.find :all
-    @subscriptions = Subscription.find :all
+
+    @users = Person.count
+    @subscriptions = Subscription.count
     cacheid = "hermes_stats"
     @timespan = 7*24
     @notifications_in, @notifications_out, @messages = Rails.cache.fetch(cacheid, :expires_in => 1.hour) do
