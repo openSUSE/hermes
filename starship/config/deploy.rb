@@ -5,7 +5,7 @@ set :application, "starship"
 # git settings
 set :scm, :git
 set :repository,  "git://gitorious.org/opensuse/hermes.git"
-set :branch, "0.6"
+set :branch, "0.8"
 set :deploy_via, :remote_cache
 set :git_enable_submodules, 1
 set :git_subdir, '/starship'
@@ -55,22 +55,15 @@ namespace :config do
 
   desc "Set permissions"
   task :permissions do
-    run "chown -R lighttpd #{current_path}/db #{current_path}/tmp #{current_path}/log"
+    run "chown -R wwwrun #{current_path}/db #{current_path}/tmp #{current_path}/log"
   end
 end
 
 # server restarting
 namespace :deploy do
-  task :start do
-    run "sv start /service/starship-*"
-  end
 
   task :restart do
-    run "sv 1 /service/starship-*"
-  end
-
-  task :stop do
-    run "sv stop /service/starship-*"
+    run "touch #{current_path}/tmp/restart.txt"
   end
 
   task :use_subdir do
