@@ -1,5 +1,4 @@
 ## parse xml files from config/guiabstractions
-gem 'libxml-ruby', '>= 0.8.3'
 require 'xml'
 
 
