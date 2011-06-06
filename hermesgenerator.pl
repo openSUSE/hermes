@@ -72,7 +72,7 @@ sub gotSignalTerm
 # ---------------------------------------------------------------------------
 
 # Process the commandline arguments.
-getopts('ohl:w:t:p:');
+getopts('ohsl:w:t:p:');
 
 usage() if ($opt_h );
 
