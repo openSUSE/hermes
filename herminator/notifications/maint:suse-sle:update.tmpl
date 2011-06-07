@@ -1,0 +1,32 @@
+@subject: <TMPL_VAR NAME="issue"> (<TMPL_VAR NAME="rating">): <TMPL_VAR NAME="title">
+
+______________________________________________________________________________
+Announcement ID:    <TMPL_VAR NAME="issue">
+Rating:             <TMPL_VAR NAME="rating">
+References:         <TMPL_VAR NAME="bugs"><TMPL_IF NAME="cve">
+Cross-References:   <TMPL_VAR NAME="cve"></TMPL_IF>
+Affected Products:
+
+<TMPL_VAR NAME="product_list">
+______________________________________________________________________________
+
+Description: 
+
+<TMPL_VAR NAME="descr">
+
+<TMPL_IF NAME="special_instructions">
+Special Instructions and Notes:
+<TMPL_VAR NAME="special_instructions">
+</TMPL_IF>
+<TMPL_IF NAME="patch_instructions">
+Patch Instructions: 
+
+<TMPL_VAR NAME="patch_instructions">
+</TMPL_IF>
+
+Package List: 
+<TMPL_VAR NAME="package_list">
+
+References:
+<TMPL_VAR NAME="references">
+

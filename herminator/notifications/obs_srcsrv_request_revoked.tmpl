@@ -1,0 +1,13 @@
+subject: [obs <TMPL_VAR NAME="type">-request <TMPL_VAR NAME="id">] <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">: revoked by <TMPL_VAR NAME="who">
+<TMPL_IF NAME="sourceproject">
+   <TMPL_VAR NAME="sourceproject">/<TMPL_VAR NAME="sourcepackage"> -> <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
+
+   https://build.opensuse.org/request/show/<TMPL_VAR NAME="id">
+<TMPL_IF NAME="description">
+   Description: 
+<TMPL_VAR NAME="description"></TMPL_IF>
+</TMPL_IF>
+-- 
+Hermes messaging (http://hermes.opensuse.org)
+openSUSE Build Service (https://build.opensuse.org/)
+Collaboration: http://en.opensuse.org/Build_Service/Collaboration
