@@ -1,2 +1,9 @@
 @subject: [obs del] Package <TMPL_VAR NAME="package"> from <TMPL_VAR NAME="project"> deleted
-Package <TMPL_VAR NAME="package"> from project <TMPL_VAR NAME="project"> was deleted.
+Package <TMPL_VAR NAME="package"> from project <TMPL_VAR NAME="project"> was deleted 
+by user <TMPL_VAR NAME="sender">.
+
+<TMPL_VAR NAME="comment">
+
+<TMPL_IF NAME="requestid">
+Check delete request: osc request log <TMPL_VAR NAME="requestid">
+</TMPL_IF>
