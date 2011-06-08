@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20110531153631) do
+ActiveRecord::Schema.define(:version => 20110608124448) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",        :limit => 64
@@ -82,6 +82,7 @@ ActiveRecord::Schema.define(:version => 20110531153631) do
   end
 
   add_index "notifications", ["generated"], :name => "index_notifications_on_generated"
+  add_index "notifications", ["received"], :name => "index_notifications_on_received"
 
   create_table "parameters", :force => true do |t|
     t.string "name",    :limit => 64
@@ -115,6 +116,7 @@ ActiveRecord::Schema.define(:version => 20110531153631) do
 
   add_index "starship_messages", ["created"], :name => "index_starship_messages_on_created"
   add_index "starship_messages", ["notification_id"], :name => "index_starship_messages_on_notification_id"
+  add_index "starship_messages", ["person_id"], :name => "index_starship_messages_on_person_id"
   add_index "starship_messages", ["person_id"], :name => "index_starship_messages_on_user"
   add_index "starship_messages", ["subscription_id"], :name => "index_starship_messages_on_subscription_id"
 
