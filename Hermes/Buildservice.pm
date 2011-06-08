@@ -46,7 +46,7 @@ use Data::Dumper;
 use vars qw(@ISA @EXPORT @EXPORT_OK );
 
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( expandNotification packageDiff );
+@EXPORT	    = qw( expandNotification packageDiff requestDiff );
 @EXPORT_OK  = qw( extractUserFromMeta usersOfPackage usersOfProject applyFilter);
 
 our($hermesUserInfoRef, $cache);
@@ -445,7 +445,27 @@ sub packageDiff( $$$ )
   } else {
     log( 'info', "Calling OBS API to generate diff!" );
     $diff = callOBSAPI( 'diff', ( $project, $package ) );
-    $cache->put( $cacheKey, $diff );
+    $cache->put( $cacheKey, $diff ) if( $diff );
+  }
+  return $diff;
+}
+
+sub requestDiff( $ )
+{
+  my ($id) = @_;
+  
+  unless( $id =~ /\s*\d+\s*$/ ) {
+    log( 'info', "<$id> not valid id, can not generate request diff" );
+  }
+  my $cacheKey = 'reqdiff_' . $id;
+  my $diff = $cache->get( $cacheKey );
+  
+  if( $diff ) {
+    log( 'info', "Got reqdiff for id <$id> from cache!" );
+  } else {
+    log( 'info', "Calling OBS API to generate req diff for id <$id>!" );
+    $diff = callOBSAPI( 'reqdiff', ( $id ) );
+    $cache->put( $cacheKey, $diff ) if( $diff );
   }
   return $diff;
 }
@@ -464,8 +484,6 @@ sub callOBSAPI( $$ )
 {
   my ( $function, @urlparams ) = @_;
   my $urlstr = "";
-# my $auth = 0;
-
 
 # new perl way: join( '/', map{ uri_escape($_)} (@urlparams) );
   foreach (@urlparams){
@@ -496,6 +514,12 @@ sub callOBSAPI( $$ )
 #   $auth = 1;
   } elsif( $function eq 'diff' ) {
     $uri .= "source/$urlstr";
+    $req = HTTP::Request->new( POST => $uri );
+    my $content = 'cmd=diff&unified=1';
+    my $str = $req->content( $content );
+    $req->header('Content-Length' => length( $content ) );
+  } elsif( $function eq 'reqdiff' ) {
+    $uri .= "request/$urlstr";
     $req = HTTP::Request->new( POST => $uri );
     my $content = 'cmd=diff&unified=1';
     my $str = $req->content( $content );
