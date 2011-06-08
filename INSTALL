@@ -25,6 +25,8 @@ Dependencies:
    Net::Twitter             perl-Net-Twitter
    JSON::DWIW               perl-JSON-DWIW
    JSON::Any                perl-JSON-Any
+   Cache::Memcached         perl-Cache-Memcached
+   Cache::Memcached::Fast   perl-Cache-Memcached-Fast
 
 The Hermes Server Herminator
 ============================
