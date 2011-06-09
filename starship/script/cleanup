@@ -57,7 +57,7 @@ slice_length = options.slicelength
 ####
 # 1. Delete all GeneratedNotifications that exceed the maximum age
 
-gen_not = GeneratedNotification.find :all, :select => :id, :conditions => ["sent < ? ", delete_time]
+gen_not = GeneratedNotification.find :all, :select => :id, :conditions => ["sent < ? AND sent > ?", delete_time, "0000-00-00 00:00:00"]
 gen_not.map! {|n| n.id}
 @gncount = 0
 
