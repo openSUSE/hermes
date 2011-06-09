@@ -16,7 +16,7 @@ require 'ostruct'
 
 options = OpenStruct.new
 options.days = 7
-options.starship_days = 30*4
+options.starship_days = 30*3
 options.env = "development"
 options.slicelength = 10000
 
@@ -57,7 +57,7 @@ slice_length = options.slicelength
 ####
 # 1. Delete all GeneratedNotifications that exceed the maximum age
 
-gen_not = GeneratedNotification.find :all, :select => :id, :conditions => ["sent < ? ", delete_time]
+gen_not = GeneratedNotification.find :all, :select => :id, :conditions => ["sent < ? AND sent > ?", delete_time, "0000-00-00 00:00:00"]
 gen_not.map! {|n| n.id}
 @gncount = 0
 
@@ -78,7 +78,7 @@ notifications = Notification.find_by_sql <<-END_SQL
   LEFT OUTER JOIN generated_notifications gn
     ON n.id = gn.notification_id
   WHERE ISNULL(gn.notification_id)
-  AND n.generated < '#{delete_time}'
+  AND n.received < '#{delete_time}'
 END_SQL
 notifications.map! {|n| n.id}
 @ncount = @npcount = 0
