@@ -78,7 +78,7 @@ notifications = Notification.find_by_sql <<-END_SQL
   LEFT OUTER JOIN generated_notifications gn
     ON n.id = gn.notification_id
   WHERE ISNULL(gn.notification_id)
-  AND n.generated < '#{delete_time}'
+  AND n.received < '#{delete_time}'
 END_SQL
 notifications.map! {|n| n.id}
 @ncount = @npcount = 0
