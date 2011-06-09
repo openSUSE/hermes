@@ -40,7 +40,7 @@ use Hermes::Message;
 use Hermes::Customize;
 
 use HTML::Template;
-use GPG;
+# use GPG;
 
 use vars qw(@ISA @EXPORT $query );
 

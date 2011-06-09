@@ -220,7 +220,7 @@ sub applyFilter( $$ )
 	my $tPackUsers = usersOfPackage( $tPrj, $tPack );
 	$res = 0 unless( userHasFunction( $tPackUsers, $user, MAINTAINER_FLAG ) );
       } else {
-	log('info', "targetproject <$tPrj> does not exist!" );
+	log('info', "targetproject does not existing!" );
 	$res = 0;
       }
     } else {
@@ -310,7 +310,7 @@ sub userHasFunction( $$$ )
 sub usersOfProject( $ )
 {
   my ($project) = @_;
-  confess 'no Project defined!' unless $project;
+  return undef unless $project;
 
   my $cacheKey = 'prj_' . $project;
 
@@ -340,8 +340,10 @@ sub usersOfProject( $ )
 sub usersOfPackage( $;$ )
 {
   my ($project, $package) = @_;
-  confess 'no Project defined!' unless $project;
-  confess 'no Package defined!' unless $package;
+  unless( defined $project && defined $package ) {
+   log( 'info', "Invalid incoming package or project!" );
+   return undef;
+  }
   my $cacheKey = 'pack_' . $project . '_' . $package;
   
   my $userHashRef = $cache->get( $cacheKey );
@@ -381,12 +383,12 @@ sub usersOfPackage( $;$ )
 # (yet, patches welcome)
 sub strictUsersOfPackage( $$ )
 {
- my ($project, $package) = @_;
+  my ($project, $package) = @_;
   
   my $userHashRef;
-  my $cacheKey = "strict_pack_" . $project . "_" . $package;
 
   if( $project && $package ) {
+    my $cacheKey = "strict_pack_" . $project . "_" . $package;
     $userHashRef = $cache->get( $cacheKey );
     if( defined $userHashRef ) {
         log( 'info', "Using strict userdata for package $project/$package from cache" );
@@ -408,7 +410,7 @@ sub strictUsersOfPackage( $$ )
 sub userWatchList( $ )
 {
   my ($user) = @_;
-  confess 'no user defined' unless $user;
+  return undef unless $user;
   
   my $cacheKey = 'watchlist_' . $user;
   
