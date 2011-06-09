@@ -26,7 +26,7 @@ sub new
     bless( $self, $class );
     
     $self->{memd} = new Cache::Memcached::Fast({
-        servers => [ { address => '/tmp/keepercache.sock'} ],
+        servers => [ { address => 'localhost:11211'} ],
         namespace => 'hermes:',
         connect_timeout => 0.2,
         io_timeout => 0.5,
