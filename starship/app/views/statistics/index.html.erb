@@ -9,11 +9,7 @@
 @crumb_list << "Statistics"
 %>
 
-<p>
-  The hermes system currently has <b><%= @users %></b> users with
-  <b><%= @subscriptions %></b> individual subscriptions
-</p>
-
+<h3>Global traffic</h3>
 
 <p>Hermes message traffic in the last <%= @timespan/24 %> days (values are per hour): </p>
 
@@ -50,4 +46,20 @@
   that match the notification. <i>Web/RSS</i> messages are those that got delivered to a subscription
   with the Web/RSS delivery type and can be viewed directly in this webapp.  
 </p>
+
+<h3>Global statistics</h3>
+
+<p>
+  The hermes system currently has <b><%= @users %></b> users with
+  <b><%= @subscriptions %></b> individual subscriptions
+</p>
+
+<h3>Message type statistics</h3>
+
+<% form_tag({:controller => :statistics, :action => :msg_type}, :method => :get ) do %>
+  <p>Create graph for message type:
+    <%= select_tag 'msg_type[]', options_from_collection_for_select(@msg_types, :id, :type_desc)  %>
+    <%= submit_tag "Create Graph" %>
+  </p>
+<% end %>
 
