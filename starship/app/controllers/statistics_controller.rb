@@ -52,7 +52,7 @@ class StatisticsController < ApplicationController
       FROM subscriptions
       GROUP BY msg_type_id
       ORDER BY msg_type_id
-      LIMIT 20
+      LIMIT 7
     END_SQL
     rows.each {|row| types << row}
     types
