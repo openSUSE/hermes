@@ -78,9 +78,9 @@
 <h3>Message type statistics</h3>
 
 <% form_tag({:controller => :statistics, :action => :msg_type}, :method => :get ) do %>
-  <p>Create graph for message type:
-    <%= select_tag 'msg_type[]', options_from_collection_for_select(@msg_types, :id, :type_desc)  %>
+  <p>Create graph for message type: <br/>
+    <%= select_tag "msg_type[]", options_from_collection_for_select(@msg_types, :id, :type_desc),
+      {:multiple => true, :size => 10} %>
     <%= submit_tag "Create Graph" %>
   </p>
 <% end %>
-
