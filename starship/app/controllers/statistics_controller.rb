@@ -7,7 +7,7 @@ class StatisticsController < ApplicationController
     cacheid = "hermes_stats"
     @timespan = 7*24
     @notifications_in, @notifications_out, @messages = Rails.cache.fetch(cacheid, :expires_in => 1.hour) do
-      notifications_in = get_notification_rows "notifications", "generated", @timespan
+      notifications_in = get_notification_rows "notifications", "received", @timespan
       notifications_out = get_notification_rows "generated_notifications", "sent", @timespan
       messages = get_notification_rows "starship_messages", "created", @timespan
       [notifications_in, notifications_out, messages]

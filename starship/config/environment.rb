@@ -32,6 +32,8 @@ Rails::Initializer.run do |config|
   # (by default production uses :info, the others :debug)
   # config.log_level = :debug
 
+  config.gem 'libxml-ruby', :lib => "xml/libxml"
+
   # Your secret key for verifying cookie session data integrity.
   # If you change this key, all old sessions will become invalid!
   # Make sure the secret is at least 30 characters and all random, 
@@ -56,6 +58,10 @@ Rails::Initializer.run do |config|
 
   # Make Active Record use UTC-base instead of local time
   # config.active_record.default_timezone = :utc
-  #
+
+  config.cache_store = :compressed_mem_cache_store, 'localhost:11211', {:namespace => 'starship'}
+
+
+  
 end
 

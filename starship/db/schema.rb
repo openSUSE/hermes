@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20100115135209) do
+ActiveRecord::Schema.define(:version => 20110608124448) do
 
   create_table "delays", :force => true do |t|
     t.string  "name",        :limit => 64
@@ -82,6 +82,7 @@ ActiveRecord::Schema.define(:version => 20100115135209) do
   end
 
   add_index "notifications", ["generated"], :name => "index_notifications_on_generated"
+  add_index "notifications", ["received"], :name => "index_notifications_on_received"
 
   create_table "parameters", :force => true do |t|
     t.string "name",    :limit => 64
@@ -103,18 +104,19 @@ ActiveRecord::Schema.define(:version => 20100115135209) do
   create_table "starship_messages", :force => true do |t|
     t.integer  "notification_id",                :null => false
     t.string   "sender"
-    t.integer  "person_id",       :default => 1
+    t.integer  "person_id",       :default => 1, :null => false
     t.string   "subject"
     t.string   "replyto"
     t.text     "body"
     t.datetime "created"
     t.integer  "msg_type_id",                    :null => false
-    t.integer  "msg_state_id"
+    t.integer  "msg_state_id",    :default => 1
     t.integer  "subscription_id",                :null => false
   end
 
-  add_index "starship_messages", ["created"], :name => "created"
+  add_index "starship_messages", ["created"], :name => "index_starship_messages_on_created"
   add_index "starship_messages", ["notification_id"], :name => "index_starship_messages_on_notification_id"
+  add_index "starship_messages", ["person_id"], :name => "index_starship_messages_on_person_id"
   add_index "starship_messages", ["person_id"], :name => "index_starship_messages_on_user"
   add_index "starship_messages", ["subscription_id"], :name => "index_starship_messages_on_subscription_id"
 
