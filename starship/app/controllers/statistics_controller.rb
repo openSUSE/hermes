@@ -51,7 +51,7 @@ class StatisticsController < ApplicationController
       SELECT msg_type_id, COUNT( msg_type_id )
       FROM subscriptions
       GROUP BY msg_type_id
-      ORDER BY msg_type_id
+      ORDER BY COUNT( msg_type_id ) DESC
       LIMIT 7
     END_SQL
     rows.each {|row| types << row}
