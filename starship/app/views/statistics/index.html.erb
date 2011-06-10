@@ -1,5 +1,6 @@
 <% content_for :content_for_head do %>
-  <%= javascript_include_tag "jquery.flot.js" %>
+  <%= javascript_include_tag "jquery.flot.min.js" %>
+  <%= javascript_include_tag "jquery.flot.pie.min.js" %>
 <% end %>
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/javascripts/excanvas.min.js"></script><![endif]-->
 
@@ -53,6 +54,26 @@
   The hermes system currently has <b><%= @users %></b> users with
   <b><%= @subscriptions %></b> individual subscriptions
 </p>
+
+<h3>Subscriptions by message type: </h3>
+
+<div id="pie_subscription_types" style="margin-left: 20px; width:550px;height:150px"></div>
+
+<script type="text/javascript">
+  $(function () {
+
+    $.plot($("#pie_subscription_types"),
+    [ <%= @subscription_stats.map{|s| "{label: \"#{@msg_types.select{|m| m.id.to_s == s.first}.first.type_desc}\", data: #{s.last}}" }.join(',') %> ],
+    {
+      series: {
+        pie: {
+          innerRadius: 0.4,
+          show: true
+        }
+      }
+    });
+  });
+</script>
 
 <h3>Message type statistics</h3>
 

@@ -12,6 +12,7 @@ class StatisticsController < ApplicationController
       [notifications_in, notifications_out, messages]
     end
     @msg_types = MsgType.find(:all, :order => 'description, msgtype DESC')
+    @subscription_stats = get_suscription_rows
   end
 
   def msg_type
@@ -42,5 +43,20 @@ class StatisticsController < ApplicationController
     rows.each {|row| notifications << row}
     notifications
   end
+
+
+  def get_suscription_rows
+    types = []
+    rows = ActiveRecord::Base.connection.execute <<-END_SQL
+      SELECT msg_type_id, COUNT( msg_type_id )
+      FROM subscriptions
+      GROUP BY msg_type_id
+      ORDER BY msg_type_id
+      LIMIT 20
+    END_SQL
+    rows.each {|row| types << row}
+    types
+  end
+
 
 end
