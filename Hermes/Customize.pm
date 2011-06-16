@@ -80,10 +80,10 @@ sub expandMessageTemplateParams( $$ )
       $paramHash->{project} && $paramHash->{package} && $paramHash->{sourcerevision} ) {
   
     $paramHash->{diff} = packageDiff( $paramHash->{project}, $paramHash->{package}, $paramHash->{sourcerevision} );
-    log('info', "Result diff: " . $paramHash->{diff} );
+#    log('info', "Result diff: " . $paramHash->{diff} );
   } elsif( isInArray("reqdiff", \@paramNames ) && $paramHash->{id} ) {
     $paramHash->{reqdiff} = requestDiff( $paramHash->{id} );
-    log( 'info', "Resulting request Diff: " . $paramHash->{reqdiff} );
+#    log( 'info', "Resulting request Diff: " . $paramHash->{reqdiff} );
   }
   return $paramHash;
 }
