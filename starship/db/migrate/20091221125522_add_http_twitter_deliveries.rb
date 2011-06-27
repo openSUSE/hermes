@@ -1,7 +1,7 @@
 class AddHttpTwitterDeliveries < ActiveRecord::Migration
   def self.up
-    Delivery.create( :name => 'HTTP', :public => false )
-    Delivery.create( :name => 'Twitter', :public => false )
+    Delivery.create( :name => 'HTTP' )
+    Delivery.create( :name => 'Twitter' )
   end
 
   def self.down
