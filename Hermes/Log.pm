@@ -77,6 +77,11 @@ sub _init()
     $logFileName = 'unspec' unless( defined $logFileName );
     if( exists $params{'logpath'} ) {
       $f = $params{'logpath'} . "/" . $logFileName . '.log';
+      if( $params{'cronolog'} ) {
+        my $pattern = $params{'logpath'} . "/$logFileName/%Y/%m/$logFileName-%Y%m%d.log";
+	$f = "|/usr/sbin/cronolog -S $f $pattern";
+	# print STDERR "XX $f\n";
+      }
     } else {
        print "Can not assemble log file name, please check configuration $logFileName !\n";
       return 0;
@@ -84,8 +89,9 @@ sub _init()
   }
 
   $name = $params{'name' };
+  $f = ">>" . $f unless( $params{'cronolog'} );
 
-  if( $f && open HANDLE, ">>$f" ) {
+  if( $f && open HANDLE, "$f" ) {
     HANDLE->autoflush(1);
   } else {
     # This should not be uncommented in production mode because it makes apache bail out.
