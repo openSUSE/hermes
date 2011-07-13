@@ -23,6 +23,13 @@
 # This script diggs through the hermes database and generates messages
 # from the raw notifications stored through herminator
 
+BEGIN {
+  my ($wd) = $0 =~ m-(.*)/- ;
+  $wd ||= '.';
+  chdir "$wd";
+  unshift @INC,  ".";
+}
+
 use strict;
 use Getopt::Std;
 use Data::Dumper;
