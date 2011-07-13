@@ -178,8 +178,8 @@ case "$1" in
 	echo -n "Starting Hermes"
 	## Start daemon with startproc(8). If this fails
 	## the return value is set appropriately by startproc.
-	/sbin/startproc $GENERATOR_BIN -s
-	/sbin/startproc $WORKER_BIN
+	/sbin/startproc -u hermes -g hermes -- $GENERATOR_BIN -s
+	/sbin/startproc -u hermes -g hermes -- $WORKER_BIN
 	
 	# Remember status and be verbose
 	rc_status -v
