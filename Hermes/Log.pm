@@ -44,11 +44,21 @@ use Exporter;
 use Hermes::Config;
 use IO::Handle;
 
-use vars qw(@ISA @EXPORT $name $openChecked $logFileName);
+use vars qw(@ISA @EXPORT $name $openChecked $logFileName $minLogLevel);
 
 @ISA	= qw(Exporter);
 @EXPORT	= qw(log setLogFileName);
 
+sub logLevelNumeric( ;$ )
+{
+  my ($level) = @_;
+  
+  return 0 unless( $level );
+  return 1 if( $level eq 'warning' );
+  return 2 if( $level eq 'error' );
+  
+  return 0;
+}
 
 sub setLogFileName($)
 {
@@ -87,7 +97,9 @@ sub _init()
       return 0;
     }
   }
-
+  
+  $minLogLevel = logLevelNumeric( $params{'min_level'} );
+  
   $name = $params{'name' };
   $f = ">>" . $f unless( $params{'cronolog'} );
 
@@ -104,6 +116,7 @@ sub _init()
   
   return 1;
 }
+
 
 
 =head1 NAME
@@ -124,14 +137,9 @@ Adds a new log entry.
 
 The first parameter is the log level of this entry.  The possible values are:
 
-    debug
     info
-    notice
     warning
     error
-    critical
-    alert
-    emergency
 
 The second parameter is the text of the log message.
 
@@ -144,18 +152,20 @@ sub log($$;$)
 {
     my ($level, $message, $minimal) = @_;
 
-    # Make sure we've been given a valid log level string.
-    unless ( 1 ) { # We log every log level atm.
-	# print STDERR "Invalid log level: '$level'\n";
-	return;
-    }
-
     # Initialize the dispatcher if it hasn't already been done.
     unless ( HANDLE->opened() ) {
       unless( _init() ) {
         print STDERR "Unable to initialize logging, return\n";
         return;
       }
+    }
+
+    # Make sure we've been given a valid log level string.
+    my $thisLogLevel = logLevelNumeric( $level );
+    
+    if( $thisLogLevel < $minLogLevel ) { # We log every log level atm.
+	# print STDERR "Invalid log level: '$level'\n";
+	return;
     }
 
     # Get the current function context.
