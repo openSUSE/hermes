@@ -23,6 +23,13 @@
 # This script diggs through the hermes database and sends the due
 # messages, sleeping again for a short time. 
 
+BEGIN {
+  my ($wd) = $0 =~ m-(.*)/- ;
+  $wd ||= '.';
+  chdir "$wd";
+  unshift @INC,  ".";
+}
+
 use strict;
 use Getopt::Std;
 
