@@ -250,7 +250,7 @@ sub storeNotificationParameters($$$ )
   }
 
   my $sql = 'INSERT INTO notification_parameters(notification_id, parameter_id, value ) VALUES ' . join(',', @insertParams );
-  log( 'infl', "Inserting the notification parameters: $sql" );
+  log( 'info', "Inserting the notification parameters: $sql" );
   my $insparamSth = dbh()->prepare( $sql );
   $insparamSth->execute();
 

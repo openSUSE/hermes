@@ -84,7 +84,7 @@ sub markSent( $ )
       } else {
 	$res += $sth->execute( $id );
       }
-      log( 'notice', $logMsg );
+      log( 'info', $logMsg );
     }
   } else { # Assume that it is a scalar id from sendImmediate
     my $logMsg = "set generated_notification id <$notiIds> to sent!";
@@ -294,7 +294,7 @@ sub deliverMessage( $$ )
       $res = sendMail( $msgRef );
     } elsif( $deliveryString =~ /jabber/i ) {
       # sendJabber( $msgRef );
-      log( 'debug', "Unable to send Jabber at the moment!" );
+      log( 'info', "Unable to send Jabber at the moment!" );
       $res = 1;
     } elsif( $deliveryString =~ /RSS/i ) {
       $res = sendRSS( $msgRef ); # $res contains the id in the starship table
@@ -427,7 +427,7 @@ sub getTemplate( $;$$ )
 
     return $tmpl;
   } else {
-    log( 'debug', "Template not existing for type <$type>" );
+    log( 'info', "Template not existing for type <$type>" );
   }
 
   return undef;
