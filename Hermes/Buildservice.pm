@@ -533,7 +533,7 @@ sub callOBSAPI( $$ )
   my $user = $Hermes::Config::OBSAPIUser || '' ;
   my $pwd  = $Hermes::Config::OBSAPIPwd || '';
   
-  $req->header( 'Accept' => 'text/xml' );
+  $req->header( 'Accept' => 'text/xml', 'X-Username' => $user );
   $req->authorization_basic( $user, $pwd );
   $ua->credentials( $OBSAPIUrl, "iChain", "$user" => "$pwd" );
   
