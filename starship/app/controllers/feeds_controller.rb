@@ -1,3 +1,5 @@
+require 'nokogiri'
+
 class FeedsController < ApplicationController
   skip_before_filter :require_auth, :only => ["show", "index", "person"]
 
@@ -38,7 +40,8 @@ class FeedsController < ApplicationController
   # shows a feed either as RSS or web list. 
   # params[:id] is a comma seperated id list
   def show
-    @subscriptions = Subscription.find(:all, :conditions => ["id IN (#{params[:id]})"])
+    @ids = params[:id].split(',').map {|s| s.to_i}
+    @subscriptions = Subscription.find(:all, :conditions => { :id => @ids } )
     if (@subscriptions.empty?)
       flash[:error] = "Feed with id: #{params[:id]} not found"
       redirect_to :action => :index
@@ -50,14 +53,47 @@ class FeedsController < ApplicationController
       #redirect_to :action => :index
     end
     
-    @items = StarshipMessage.paginate( :page => params[:page], :per_page => 100,
-      :order => "id DESC",
-      :conditions => ["subscription_id IN (#{params[:id]})"] )
     @title = @subscriptions.collect {|s| s.subscription_desc }.join(", ")
     @feed_id = params[:id]
-    render_feed()
-  end
 
+    respond_to do |format|
+      format.html do 
+         @items = StarshipMessage.paginate( :page => params[:page], :per_page => 100,
+           :order => "id DESC", :select => :id,
+           :conditions => { :subscription_id => @ids } )
+         @items = StarshipMessage.find(:all, :conditions => { :id => @items.map{|i| i.id } })
+         render :template => 'feeds/show' 
+        end
+      format.rdf do
+         @items = StarshipMessage.find(:all, :select => :id, :order => "id DESC", :limit => 100, 
+                                       :conditions => { :subscription_id => @ids } )
+         @items = StarshipMessage.find(:all, :conditions => { :id => @items.map{|i| i.id } })
+         builder = nil
+         builder = Nokogiri::XML::Builder.new do |xml|
+           xml.rss(:version=>"2.0") do
+             xml.channel do
+               xml.title(@title)
+               xml.link url_for :only_path => false, :controller => 'feeds', :action => "index"
+               xml.description("openSUSE Hermes RSS Feed for subscription: #{@title}")
+               xml.language('en-us')
+               @items.each do |item|
+                 xml.item do
+                   xml.title(item.subject)
+                   xml.description "<pre>" + CGI.escapeHTML(item.body) + "</pre>"
+                   xml.author(item.sender)
+                   xml.pubDate(item.created.xmlschema)
+                   path = url_for :only_path => false, :controller => 'messages', :action => "show", :id => item.id
+                   xml.link path
+                   xml.guid path
+                end
+              end
+            end
+          end
+        end
+        render :text => builder.to_xml
+      end
+    end
+  end
 
   private
 
@@ -68,5 +104,4 @@ class FeedsController < ApplicationController
       #format.atom  { render :layout => false }
     end
   end
-
 end

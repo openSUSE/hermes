@@ -27,3 +27,5 @@ config.action_mailer.raise_delivery_errors = false
 # :off      => basic auth
 AUTHENTICATION = :off
 
+
+config.log_level = :debug
