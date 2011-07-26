@@ -59,10 +59,8 @@ class FeedsController < ApplicationController
     respond_to do |format|
       format.html do 
          @items = StarshipMessage.paginate( :page => params[:page], :per_page => 100,
-           :order => "id DESC", :select => :id,
-           :conditions => { :subscription_id => @ids } )
-         @items = StarshipMessage.find(:all, :conditions => { :id => @items.map{|i| i.id } })
-         render :template => 'feeds/show' 
+           :order => "id DESC", :conditions => { :subscription_id => @ids } )
+         render :template => 'feeds/show' and return
         end
       format.rdf do
          @items = StarshipMessage.find(:all, :select => :id, :order => "id DESC", :limit => 100, 
