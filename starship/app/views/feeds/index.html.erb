@@ -18,7 +18,7 @@
 <tr>
 <td><%= feed.subscription_desc %></td> 
 <td>
-<% if (feed.starship_messages.count > 0) %>
+<% if feed.has_starship_messages? %>
   <%= link_to 'web', {:action => "show", :controller => "feeds", :id => feed.id} %>
   <%= link_to 'rss', {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rdf'} %>
   <%= link_to image_tag("feeds.png"), {:action => "show", :controller => "feeds", :id => feed.id, :format => 'rdf'} %>
