@@ -63,8 +63,14 @@ class FeedsController < ApplicationController
          render :template => 'feeds/show' and return
         end
       format.rdf do
-         @items = StarshipMessage.find(:all, :select => :id, :order => "id DESC", :limit => 100, 
+         lastid = params[:last_id]
+         if lastid
+           @items = StarshipMessage.find(:all, :select => :id, :order => "id ASC", :limit => 100,
+                                       :conditions => ["subscription_id in (?) AND id > ?", @ids, lastid.to_i] )
+         else
+           @items = StarshipMessage.find(:all, :select => :id, :order => "id DESC", :limit => 100, 
                                        :conditions => { :subscription_id => @ids } )
+         end
          @items = StarshipMessage.find(:all, :conditions => { :id => @items.map{|i| i.id } })
          builder = nil
          builder = Nokogiri::XML::Builder.new do |xml|
