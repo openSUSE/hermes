@@ -59,19 +59,17 @@ class FeedsController < ApplicationController
     respond_to do |format|
       format.html do 
          @items = StarshipMessage.paginate( :page => params[:page], :per_page => 100,
-           :order => "id DESC", :conditions => { :subscription_id => @ids } )
+           :order => "id DESC", :conditions => { :subscription_id => @ids }, :include => :msg_state )
          render :template => 'feeds/show' and return
         end
       format.rdf do
-         lastid = params[:last_id]
-         if lastid
-           @items = StarshipMessage.find(:all, :select => :id, :order => "id ASC", :limit => 100,
+         if lastid = params[:last_id]
+           @items = StarshipMessage.find(:all, :order => "id ASC", :limit => 100,
                                        :conditions => ["subscription_id in (?) AND id > ?", @ids, lastid.to_i] )
          else
-           @items = StarshipMessage.find(:all, :select => :id, :order => "id DESC", :limit => 100, 
+           @items = StarshipMessage.find(:all, :order => "id DESC", :limit => 100, 
                                        :conditions => { :subscription_id => @ids } )
          end
-         @items = StarshipMessage.find(:all, :conditions => { :id => @items.map{|i| i.id } })
          builder = nil
          builder = Nokogiri::XML::Builder.new do |xml|
            xml.rss(:version=>"2.0") do
