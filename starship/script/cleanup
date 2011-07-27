@@ -16,7 +16,7 @@ require 'ostruct'
 
 options = OpenStruct.new
 options.days = 7
-options.starship_days = 30*3
+options.starship_days = 30*1
 options.env = "development"
 options.slicelength = 10000
 
