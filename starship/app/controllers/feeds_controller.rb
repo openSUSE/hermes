@@ -11,11 +11,21 @@ class FeedsController < ApplicationController
       render :template => 'error.html.erb', :status => 404
       return
     end
-    
-    @items = user.starship_messages.paginate( :page => params[:page], :per_page => 100,
-      :order => "id DESC" )
     @title = "All feed messages for user " + params[:person]
-    render_feed()
+    respond_to do |format|
+      format.html  do
+        @items = user.starship_messages.paginate( :page => params[:page], :per_page => 100,
+          :order => "id DESC", :include => :msg_state )
+        render :template => 'feeds/show'
+      end
+      format.rdf  do
+        @items = StarshipMessage.find(:all, :select => :id, :order => "id DESC", :limit => 100,
+          :conditions => { :person_id => user.id } )
+        @items = StarshipMessage.find(:all, :conditions => { :id => @items.map{|i| i.id } })
+        builder = build_rdf @title, @items
+        render :text => builder.to_xml
+      end
+    end
   end
 
 
@@ -58,42 +68,22 @@ class FeedsController < ApplicationController
 
     respond_to do |format|
       format.html do 
-         @items = StarshipMessage.paginate( :page => params[:page], :per_page => 100,
-           :order => "id DESC", :conditions => { :subscription_id => @ids } )
-         render :template => 'feeds/show' and return
-        end
+        @items = StarshipMessage.paginate( :page => params[:page], :per_page => 100,
+          :order => "id DESC", :conditions => { :subscription_id => @ids }, :include => :msg_state )
+        render :template => 'feeds/show' and return
+      end
       format.rdf do
-         lastid = params[:last_id]
-         if lastid
-           @items = StarshipMessage.find(:all, :select => :id, :order => "id ASC", :limit => 100,
-                                       :conditions => ["subscription_id in (?) AND id > ?", @ids, lastid.to_i] )
-         else
-           @items = StarshipMessage.find(:all, :select => :id, :order => "id DESC", :limit => 100, 
-                                       :conditions => { :subscription_id => @ids } )
-         end
-         @items = StarshipMessage.find(:all, :conditions => { :id => @items.map{|i| i.id } })
-         builder = nil
-         builder = Nokogiri::XML::Builder.new do |xml|
-           xml.rss(:version=>"2.0") do
-             xml.channel do
-               xml.title(@title)
-               xml.link url_for :only_path => false, :controller => 'feeds', :action => "index"
-               xml.description("openSUSE Hermes RSS Feed for subscription: #{@title}")
-               xml.language('en-us')
-               @items.each do |item|
-                 xml.item do
-                   xml.title(item.subject)
-                   xml.description "<pre>" + CGI.escapeHTML(item.body) + "</pre>"
-                   xml.author(item.sender)
-                   xml.pubDate(item.created.xmlschema)
-                   path = url_for :only_path => false, :controller => 'messages', :action => "show", :id => item.id
-                   xml.link path
-                   xml.guid path
-                end
-              end
-            end
-          end
+        lastid = params[:last_id]
+        # it's much faster to only select the ids at first and query the details with those ids
+        if lastid
+          @items = StarshipMessage.find(:all, :select => :id, :order => "id ASC", :limit => 100,
+            :conditions => ["subscription_id in (?) AND id > ?", @ids, lastid.to_i] )
+        else
+          @items = StarshipMessage.find(:all, :select => :id, :order => "id DESC", :limit => 100,
+            :conditions => { :subscription_id => @ids } )
         end
+        @items = StarshipMessage.find(:all, :conditions => { :id => @items.map{|i| i.id } })
+        builder = build_rdf @title, @items
         render :text => builder.to_xml
       end
     end
@@ -101,11 +91,29 @@ class FeedsController < ApplicationController
 
   private
 
-  def render_feed
-    respond_to do |format|
-      format.html  { render :template => 'feeds/show' }
-      format.rdf  { render :template => 'feeds/show', :layout => false }
-      #format.atom  { render :layout => false }
+
+  def build_rdf title, items
+    builder = Nokogiri::XML::Builder.new do |xml|
+      xml.rss(:version=>"2.0") do
+        xml.channel do
+          xml.title(title)
+          xml.link url_for :only_path => false, :controller => 'feeds', :action => "index"
+          xml.description("openSUSE Hermes RSS Feed for subscription: #{@title}")
+          xml.language('en-us')
+          items.each do |item|
+            xml.item do
+              xml.title(item.subject)
+              xml.description "<pre>#{item.body[0,10000]} #{"\n[...]" if( item.body.length >= 10000 )}</pre>"
+              xml.author(item.sender)
+              xml.pubDate(item.created.xmlschema)
+              path = url_for :only_path => false, :controller => 'messages', :action => "show", :id => item.id
+              xml.link path
+              xml.guid path
+            end
+          end
+        end
+      end
     end
+    builder
   end
 end

@@ -1,0 +1,43 @@
+<% content_for :content_for_head do %>
+  <%= javascript_include_tag "jquery.flot.min.js" %>
+<% end %>
+<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/javascripts/excanvas.min.js"></script><![endif]-->
+
+<%
+@title = "Statistics - openSUSE Hermes"
+@crumb_list = []
+@crumb_list << link_to( "Statistics", :action => :index )
+@crumb_list << "Message type"
+%>
+
+<h3>Statistics for message type</h3>
+
+<p>Hermes message traffic in the last <%= @timespan/24 %> days (values are per hour): </p>
+
+<p><div id="type_graph" style="margin-left: 20px; width:900px;height:300px"></div></p>
+
+<script type="text/javascript">
+  $(function () {
+
+
+    <% @notifications_in_by_type.each do |n| -%>
+    var notifications_in_<%= n.first %> = [<%= n.last.map{|time, n| "[#{time}, #{n}]" }.join(",") -%>];
+    <% end -%>
+
+
+    $.plot($("#type_graph"),
+    [ <%= @all_msg_types.select{|t| @msg_types.include? t.id.to_s}.map{|t| "{ data: notifications_in_#{t.id}, label: \"#{t.type_desc}\" }" }.join(',') %> ],
+    {
+      xaxis: {
+        ticks: [<%= (-@timespan).upto(-1).select{|t| t%24 == 0}.map{|t| "[#{t}, '#{pluralize(-t/24, 'day')} ago']"}.join(",") -%>]
+      },
+      yaxis: {
+      },
+      grid: {
+        backgroundColor: { colors: ["#fff", "#eee"] }
+      }
+    });
+
+
+  });
+</script>

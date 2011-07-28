@@ -16,7 +16,7 @@ require 'ostruct'
 
 options = OpenStruct.new
 options.days = 7
-options.starship_days = 30*3
+options.starship_days = 30*1
 options.env = "development"
 options.slicelength = 10000
 
@@ -78,7 +78,7 @@ notifications = Notification.find_by_sql <<-END_SQL
   LEFT OUTER JOIN generated_notifications gn
     ON n.id = gn.notification_id
   WHERE ISNULL(gn.notification_id)
-  AND n.received < '#{delete_time}'
+  AND n.received < '#{delete_time.to_s(:db)}'
 END_SQL
 notifications.map! {|n| n.id}
 @ncount = @npcount = 0
