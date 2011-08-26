@@ -117,15 +117,25 @@ if( $opt_m ) {
     exit;
 }
 
+my $lastMinutely = 0;
+my $lastHourly = 0;
+my $lastDaily = 0;
+my $lastWeekly = 0;
+
+my %digeststosend;
+
 while( 1 ) {
     # First, send out the messages that were marked with sendImmediately.
     $t0 = [gettimeofday];
     $cnt = sendImmediateMessages();
     $elapsed = tv_interval ($t0);
-    log 'info', "Sent due messages: $cnt in $elapsed sec.\n";
+    log 'info', "Sent due messages: $cnt in $elapsed sec.";
     print "Sent immediate due messages: $cnt in $elapsed sec.\n" if( $opt_c );
 
     exit if( $opt_o );
+
+    my @ids = keys %digeststosend;
+    log 'info', @ids . " digests left to send";
 
     # lets have a check for new stuff every 15 seconds
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -135,49 +145,67 @@ while( 1 ) {
     $interval = 45-$sec if( $sec >=30 && $sec < 45 );
     $interval = 60-$sec if( $sec >=45 && $sec < 60 );
 
-    log( 'info', "Sleeping for $interval seconds" );
-    print "Now sleeping for $interval seconds, current second is $sec.\n" if( $opt_c );
+    if (@ids) {
+      my $cid = shift @ids;
+      my $ret = sendOneMessageDigest($cid);
+      log 'info', "sendOneMessageDigest $cid return $ret";
+      delete $digeststosend{$cid} if ($ret);
+    } else {
+      log( 'info', "Sleeping for $interval seconds" );
+      print "Now sleeping for $interval seconds, current second is $sec.\n" if( $opt_c );
 
-    sleep( $interval );
+      sleep( $interval );
+    }
 
     ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    my $ctime = time;
 
-    if( 0+$sec >= 0 && 0+$sec < 10) {
+    my $dtime = $ctime - $lastMinutely;
+    if( (0+$sec >= 0 && 0+$sec < 10 && $dtime > 10 ) || ($dtime > 65)) {
 	$t0 = [gettimeofday];
-	my $notificationIdsRef = sendMessageDigest( SendMinutely() );
-	$cnt = @{$notificationIdsRef};
-
+	my $notificationIdsRef = getDigestSubscribtions( SendMinutely() );
+        $cnt = @{$notificationIdsRef};
+	foreach my $id (@{$notificationIdsRef}) { $digeststosend{$id} = 1; }
 	$elapsed = tv_interval( $t0 );
-	log 'info', "nt <$min/$sec>: $cnt in $elapsed sec.";
-	print "Sent Minute digest at <$min/$sec>: $cnt in $elapsed sec.\n" if( $opt_c );
+	log 'info', "Checked Minute digests at <$min/$sec>: $cnt in $elapsed sec.";
+        $lastMinutely = $ctime;
+    }
 
-	if( 0+$min == 0 ) {
-	    log 'info', "Send Hour digest at <$hour/$min/$sec>\n";
-	    $t0 = [gettimeofday];
-	    my $notificationIdsRef = sendMessageDigest( SendHourly() );
-	    $cnt = @{$notificationIdsRef};
-	    $elapsed = tv_interval($t0);
-	    log 'info', "Sent Hourly digest at <$min/$sec>: $cnt in $elapsed sec.";
-	    print "Sent Hourly digest at <$min/$sec>: $cnt in $elapsed sec.\n" if( $opt_c );
-	}
+    $dtime = $ctime - $lastHourly;
+    if ( ( 0+$sec >= 0 && 0+$sec < 10 && 0+$min == 0 && $dtime > 10) || ($dtime > 3700))  {
+	$t0 = [gettimeofday];
+	my $notificationIdsRef = getDigestSubscribtions( SendHourly() );
+	$cnt = @{$notificationIdsRef};
+        foreach my $id (@{$notificationIdsRef}) { $digeststosend{$id} = 1; }
+	$elapsed = tv_interval($t0);
+	log 'info', "Checked Hourly digest at <$min/$sec>: $cnt in $elapsed sec.";
+        $lastHourly = $ctime;
+    }
 
-	if( 0+$hour == $dailyHour && 0+$min == $dailyMin ) {
-	    $t0 = [gettimeofday];
-	    my $notificationIdsRef = sendMessageDigest( SendDaily() );
-	    $cnt = @{$notificationIdsRef};
-	    $elapsed = tv_interval($t0);
-	    log 'info', "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
-	    print "Send Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n" if( $opt_c );
+    $dtime = $ctime - $lastDaily;
+    if ( ( 0+$sec >= 0 && 0+$sec < 10 && 0+$hour == $dailyHour && 0+$min == $dailyMin && $dtime > 10) 
+        || ($dtime > 3600 * 24 + 100)) 
+    {
+        $t0 = [gettimeofday];
+        my $notificationIdsRef = getDigestSubscribtions( SendDaily() );
+        $cnt = @{$notificationIdsRef};
+        foreach my $id (@{$notificationIdsRef}) { $digeststosend{$id} = 1; }
+        $elapsed = tv_interval($t0);
+        log 'info', "Checked Daily Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
+        $lastDaily = $ctime;
+    }
 
-	    if( 0+$weekDay == 0+$wday ) { # it's sunday and we send the weekly digest
-	      $t0 = [gettimeofday];
-	      $notificationIdsRef = sendMessageDigest( SendWeekly() );
-	      $cnt = @{$notificationIdsRef};
-	      $elapsed = tv_interval($t0);
-	      log 'info', "Send Weekly Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
-	      print "Send Weekly Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.\n" if( $opt_c );
-	    }
-	}
+    $dtime = $ctime - $lastWeekly;
+    if( ( 0+$sec >= 0 && 0+$sec < 10 && 0+$hour == $dailyHour && 0+$min == $dailyMin && 0+$weekDay == 0+$wday && $dtime > 10 )
+         || ($dtime > 3600 * 24 * 7 + 100)) 
+    { # it's sunday and we send the weekly digest
+	$t0 = [gettimeofday];
+	my $notificationIdsRef = getDigestSubscribtions( SendWeekly() );
+	$cnt = @{$notificationIdsRef};
+        foreach my $id (@{$notificationIdsRef}) { $digeststosend{$id} = 1; }
+	$elapsed = tv_interval($t0);
+	log 'info', "Checked Weekly Digest at <$hour/$min/$sec>: $cnt in $elapsed sec.";
+        $lastWeekly = $ctime;
     }
 
     if( $gotTermSignal ) {
