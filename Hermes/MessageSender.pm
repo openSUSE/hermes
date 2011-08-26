@@ -84,7 +84,7 @@ sub markSent( $ )
       } else {
 	$res += $sth->execute( $id );
       }
-      log( 'info', $logMsg );
+      log( 'debug', $logMsg );
     }
   } else { # Assume that it is a scalar id from sendImmediate
     my $logMsg = "set generated_notification id <$notiIds> to sent!";
@@ -287,7 +287,7 @@ sub deliverMessage( $$ )
   unless( $deliveryString ) {
     log('warning', "Problem: Delivery <$delivery> seems to be unknown!" );
   } else {
-    log( 'info', "Delivering this message: <$msgRef->{body}> with <$delivery> => $deliveryString" );
+    log( 'debug', "Delivering this message: <$msgRef->{body}> with <$delivery> => $deliveryString" );
 
     # FIXME: Better detection of the delivery type
     if( $deliveryString =~ /mail/i ) {
