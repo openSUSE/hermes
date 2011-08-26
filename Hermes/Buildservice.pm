@@ -465,7 +465,7 @@ sub requestDiff( $ )
   if( $diff ) {
     log( 'info', "Got reqdiff for id <$id> from cache!" );
   } else {
-    log( 'info', "Calling OBS API to generate req diff for id <$id>!" );
+    log( 'debug', "Calling OBS API to generate req diff for id <$id>!" );
     $diff = callOBSAPI( 'reqdiff', ( $id ) );
     $cache->put( $cacheKey, $diff ) if( $diff );
   }
@@ -539,7 +539,7 @@ sub callOBSAPI( $$ )
   
   if( $Hermes::Config::OBSMaxResponseSize ) {
     $ua->max_size( $Hermes::Config::OBSMaxResponseSize );
-    log( 'info', "Limiting response size to <$Hermes::Config::OBSMaxResponseSize> byte" );
+    log( 'debug', "Limiting response size to <$Hermes::Config::OBSMaxResponseSize> byte" );
   }
   
   my $res = $ua->request( $req );
