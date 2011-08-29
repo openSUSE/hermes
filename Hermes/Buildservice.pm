@@ -112,10 +112,10 @@ sub expandNotification( $$ )
     foreach my $filterRef ( @filters ) {
       $filterOk = applyFilter( $paramRef, $filterRef );
       if( ! $filterOk ) {
-	log( 'info', "Filter $filterRef->{filterlog} failed!" );
+	log( 'debug', "Filter $filterRef->{filterlog} failed!" );
 	last;
       }
-      log( 'info', $filterRef->{filterlog} . " adds user to to-line: $personString ($personId)." );
+      log( 'debug', $filterRef->{filterlog} . " adds user to to-line: $personString ($personId)." );
     }
     if( $filterOk ) {
       log('info', "Subscription $subscriptId wants this notification!" );
@@ -302,7 +302,7 @@ sub userHasFunction( $$$ )
       log( 'info', "User exists, but NOT in the required function" );
     }
   } else {
-    log( 'info', "User not existing in user hash." );
+    log( 'debug', "User not existing in user hash." );
   }
   return $res;
 }
@@ -349,7 +349,7 @@ sub usersOfPackage( $;$ )
   my $userHashRef = $cache->get( $cacheKey );
   
   if( defined $userHashRef ) {
-    log( 'info', "Using userdata for package $project/$package from cache" );
+    log( 'debug', "Using userdata for package $project/$package from cache" );
     return $userHashRef; 
   }
 
