@@ -34,7 +34,7 @@ use Hermes::Util;
 use Hermes::Delivery::Mail;
 use Hermes::Delivery::RSS;
 use Hermes::Delivery::Http;
-# use Hermes::Delivery::Twitter;
+use Hermes::Delivery::Twitter;
 # use Hermes::Delivery::Jabber;
 use Hermes::Person;
 use Hermes::Message;

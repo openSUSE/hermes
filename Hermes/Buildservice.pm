@@ -214,7 +214,7 @@ sub applyFilter( $$ )
       my $tPrj = $paramHash->{targetproject};
       my $tPack = $paramHash->{targetpackage};
       if( $tPrj ) {
-        log( 'info', "Checking if <$user> is interested in request <$paramHash->{id}> ".
+        log( 'debug', "Checking if <$user> is interested in request <$paramHash->{id}> ".
                      "with target project <$tPrj>");
 	# userOfPackage returns both the project- and pack users.
 	my $tPackUsers = usersOfPackage( $tPrj, $tPack );
@@ -239,7 +239,7 @@ sub applyFilter( $$ )
 
       my @possibleValues = split( /\s*,\s*/, $str );
       my $success = isInArray( $searchStr, \@possibleValues );
-      log( 'info', "Filtering oneof <$searchStr> in [" . join( "|", @possibleValues ) . "]: " . $success );
+      log( 'debug', "Filtering oneof <$searchStr> in [" . join( "|", @possibleValues ) . "]: " . $success );
 
       if( $success ) {
 	$res = 1;
