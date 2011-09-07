@@ -20,6 +20,10 @@ class Subscription < ActiveRecord::Base
   end
 
 
+  def has_starship_messages?
+    return (self.starship_messages.find(:first, :select => :id) != nil)
+  end
+
   def subscription_desc
     if (description)
       return description

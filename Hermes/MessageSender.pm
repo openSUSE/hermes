@@ -25,6 +25,7 @@ use strict;
 use Exporter;
 
 use Data::Dumper;
+use Email::Date::Format qw(email_date);
 
 use Hermes::Config;
 use Hermes::DB;
@@ -49,15 +50,26 @@ use vars qw(@ISA @EXPORT $query );
 # stored in a module global variable, which only causes trouble if its used multiple 
 # times.
 #
-use constant SQL => scalar "SELECT gn.id, gn.notification_id, gn.created_at, subs.id, \
- subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
+use constant SQL => scalar "SELECT gn.id, gn.notification_id, UNIX_TIMESTAMP(gn.created_at), \
+ subs.id, subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
  generated_notifications gn\
  JOIN subscriptions subs ON subs.id = gn.subscription_id\
  WHERE gn.sent = 0 AND subs.enabled=1 AND subs.delay_id=?\
  ORDER BY subs.id, gn.created_at DESC LIMIT ?";
 
+use constant QUERY_SUBS => scalar "SELECT distinct subs.id FROM generated_notifications gn \
+  JOIN subscriptions subs ON subs.id = gn.subscription_id WHERE gn.sent = 0 AND subs.enabled=1 \
+  AND subs.delay_id=?";
+
+use constant QUERY_DIGEST => scalar "SELECT gn.id, gn.notification_id, gn.created_at, \
+ subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
+ generated_notifications gn\
+ JOIN subscriptions subs ON subs.id = gn.subscription_id\
+ WHERE gn.sent = 0 AND subs.enabled=1 AND subs.id=?\
+ ORDER BY gn.created_at DESC LIMIT ?";
+
 @ISA	    = qw(Exporter);
-@EXPORT	    = qw( sendMessageDigest sendImmediateMessages );
+@EXPORT	    = qw( sendOneMessageDigest sendImmediateMessages getDigestSubscribtions );
 
 
 ######################################################################
@@ -84,7 +96,7 @@ sub markSent( $ )
       } else {
 	$res += $sth->execute( $id );
       }
-      log( 'info', $logMsg );
+      log( 'debug', $logMsg );
     }
   } else { # Assume that it is a scalar id from sendImmediate
     my $logMsg = "set generated_notification id <$notiIds> to sent!";
@@ -102,21 +114,21 @@ sub markSent( $ )
 
 =head1 NAME
 
-sendMessageDigest() - sends a digest of queued messages
+getDigestSubscribtions - return a list of subscribtions for a specific delay
 
 =head1 SYNOPSIS
 
     use Hermes::MessageSender;
 
-    my $delay = SEND_HOURLY;	# Send messages queued for hourly distribution.
-    my $type = 'test';		# Send messages of the 'test' type.
+    my $delay = SEND_HOURLY;    # Send messages queued for hourly distribution.
 
-    my $count = sendMessageDigest($delay, $type);
+    my $list = getDigestSubscribtions($delay);
 
 =head1 DESCRIPTION
 
-sendMessageDigest() sends a digest of similarly-typed messages in the 
-system queue.  Each message is marked according to its distribution frequency
+getDigestSubscribtions() gives you a list of ids that you can pass to
+sendOneMessageDigest.
+Each message is marked according to its distribution frequency
 (e.g. hourly, daily, weekly, monthly) and its type.  Messages with the same
 type will have their message bodies grouped into a single digested mail.
 
@@ -124,10 +136,47 @@ type will have their message bodies grouped into a single digested mail.
 
 Parameter 1 indicates the frequency of this digest run.
 
-Parameter 2 is an optional parameter that specifies the message type for
-this mailing.
+=head1 RETURN VALUE
 
-Parameter 3 is an optional debug flag.
+Returns a reference to an array of ids
+
+=cut
+
+sub getDigestSubscribtions($)
+{
+  my ($delay) = @_;
+
+  # Find all messages of the same type and delay that haven't been sent.
+  log('notice', "Fetching subscribtions of all types with delay $delay");
+
+  my $query = dbh()->prepare( QUERY_SUBS );
+  $query->execute( $delay );
+  my @ret = ();
+  foreach my $row (@{$query->fetchall_arrayref([0])}) {
+    push(@ret, shift @$row);
+  }
+  return \@ret;
+}
+
+
+=head1 NAME
+
+sendOneMessageDigest() - sends a digest of queued messages
+
+=head1 SYNOPSIS
+
+    use Hermes::MessageSender;
+
+    my $count = sendOneMessageDigest($subscribtion);
+
+=head1 DESCRIPTION
+
+sendMessageDigest() sends a digest of similarly-typed messages in the 
+system queue. It requires to know the subscribtion id
+
+=head1 PARAMETERS
+
+Parameter 1 subscribtion id
 
 =head1 RETURN VALUE
 
@@ -135,9 +184,9 @@ Returns the number of messages sent in this digest run.
 
 =cut
 
-sub sendMessageDigest($;)
+sub sendOneMessageDigest($;)
 {
-  my ($delay, $subject) = @_;
+  my ($subscription) = @_;
 
   # Find all messages of the same type and delay that haven't been sent.
   my $sth;
@@ -146,58 +195,27 @@ sub sendMessageDigest($;)
   my @handledIds;
   my @msg;
 
-  log('notice', "Fetching messages of all types with delay $delay");
+  $query = dbh()->prepare( QUERY_DIGEST );
+  $query->execute( $subscription, 300 );
 
-  $query = dbh()->prepare( SQL ) unless( $query );
-  $query->execute( $delay, 1000 );
-
-  my $currentPerson;
+  my $delayString = "";
   my $currentDelivery;
-  my $currentType;
-
-  my $delayString = delayIdToString( $delay );
   my $renderedRef;
   my $summedBody = "";
   my @genNotiIds;
   my @toc;
   my $cnt = 1;
 
-  while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId, $personId,
+  while( my( $genNotiId, $notiId, $genNotiCreated, $msgTypeId, $personId,
 	     $delayId, $deliveryId ) = $query->fetchrow_array() ) {
 
-    # set sensible start values if the current- values are undefined.
-    $currentPerson   = $personId unless( $currentPerson );
-    $currentDelivery = $deliveryId unless( $currentDelivery );
-    $currentType     = $msgTypeId unless( $currentType );
+    $delayString = delayIdToString( $delayId );
+    $currentDelivery = $deliveryId;
 
-    log( 'info', "Current Person $personId <=> $currentPerson" );
-    log( 'info', "Current Delivery $deliveryId <=> $currentDelivery" );
-    log( 'info', "Current Type $msgTypeId <=> $currentType" );
-
-    if( $currentPerson   != $personId  ||
-	$currentType     != $msgTypeId ||
-	$currentDelivery != $deliveryId ) {
-      # This means that the collected content needs to be sent because
-      # the receiver changed or the receiver is the same but the delivery
-      # is different or the message type has changed.
-      my $s = $renderedRef->{subject};
-      $renderedRef->{subject} = sprintf( "[digest %s] %d messages", $delayString, $cnt  );
-      $renderedRef->{subject} .= ", eg. $s" if( $s );
-
-      if( sendSummedMessage( $renderedRef, $summedBody, $currentDelivery ) ) {
-	markSent( \@genNotiIds );
-	@genNotiIds = ();
-      }
-      $summedBody = "";
-      @toc = ();
-      $cnt = 1;
-    } else {
-      # all parameters are still fine, we continue to collect gen_notification details
-    }
     # query the parameter hash
     my $paramHash = getGeneratedNotificationParameters( $notiId );
     # render the message and get the digest text out.
-    $renderedRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
+    $renderedRef = renderMessage( $msgTypeId, $notiId, $subscription, $personId,
 				  $delayId, $deliveryId, $paramHash );
 
     unless( $renderedRef->{body} ) {
@@ -205,7 +223,7 @@ sub sendMessageDigest($;)
       next;
     }
 
-    my $subject = sprintf("[%2d. %s] ", $cnt, $genNotiCreated );
+    my $subject = sprintf("[%2d. %s] ", $cnt, email_date( $genNotiCreated ) );
     $subject .= ($renderedRef->{subject} || "no subject set");
 
     push @toc, $subject;
@@ -221,12 +239,9 @@ sub sendMessageDigest($;)
       # no digest sektion, append the whole text without signature
       my $sumBody = $renderedRef->{body};
       $sumBody =~ s/^-- \R.*$//sm;
-      log('info', "Add to summed up body: $sumBody" );
+      log('debug', "Add to summed up body: $sumBody" );
       $summedBody .= $sumBody;
     }
-    $currentPerson = $personId;
-    $currentDelivery = $deliveryId;
-    $currentType = $msgTypeId;
     push @genNotiIds, $genNotiId; # Needed to mark the notifications sent
     push @handledIds, $notiId;
     $cnt++;
@@ -244,7 +259,7 @@ sub sendMessageDigest($;)
       markSent( \@genNotiIds );
     }
   }
-  return \@handledIds;
+  return $query->rows > 299 ? 0 : 1 ;
 }
 
 sub sendSummedMessage( $$$$ )
@@ -287,7 +302,7 @@ sub deliverMessage( $$ )
   unless( $deliveryString ) {
     log('warning', "Problem: Delivery <$delivery> seems to be unknown!" );
   } else {
-    log( 'info', "Delivering this message: <$msgRef->{body}> with <$delivery> => $deliveryString" );
+    log( 'debug', "Delivering this message: <$msgRef->{body}> with <$delivery> => $deliveryString" );
 
     # FIXME: Better detection of the delivery type
     if( $deliveryString =~ /mail/i ) {
@@ -438,8 +453,8 @@ sub sendImmediateMessages(;$)
   my ($type) = @_;
 
   my $cnt = 0;
-  $query = dbh()->prepare(SQL) unless( $query );
-  $query->execute( SendNow(), 1000 );
+  $query = dbh()->prepare(SQL);
+  $query->execute( SendNow(), 300 );
 
   while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId,
 	     $personId, $delayId, $deliveryId ) = $query->fetchrow_array() ) {
@@ -462,7 +477,9 @@ sub sendImmediateMessages(;$)
 
     $renderedMsgRef = renderMessage( $msgTypeId, $notiId, $subscriptId, $personId,
 				     $delayId, $deliveryId, $paramHash );
-
+    # Store the date in the param hash when the message was delivered to hermes.
+    $renderedMsgRef->{_date} = $genNotiCreated;
+    
     if( deliverMessage( $deliveryId, $renderedMsgRef ) ) {
       # Successfully sent!
       markSent( $genNotiId );

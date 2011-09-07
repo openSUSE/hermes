@@ -2,11 +2,11 @@
 
 @global_count = 0
 
-def create_notifications(count,msgtype)
+def create_notifications(count, msgtype)
   return unless count > 0
   Notification.transaction do
     notification_ids = Array.new
-    puts "Creating notifications..."
+    puts "Creating #{count} notifications of type #{msgtype}..."
     1.upto count do |i|
       n = Notification.create :msg_type => msgtype, :generated => (Time.now + @options.offset), :sender => "test"
       notification_ids << n.id
@@ -22,6 +22,23 @@ def create_notifications(count,msgtype)
     ActiveRecord::Base.connection.execute param_sql
   end
 end
+
+def create_messages count, msg_type, subscription
+  return unless count > 0
+  notification = Notification.first
+  person = Person.first
+  StarshipMessage.transaction do
+    1.upto count do |i|
+      StarshipMessage.create :notification_id => notification.id, :sender => "starship", :person_id => person.id,
+        :subject => "[obs del] Package AOLserver-4.5.1 from home:Ibraima deleted",
+        :body => "Package AOLserver-4.5.1 from project home:Ibraima was deleted ",
+        :msg_type_id => msg_type.id, :msg_state_id => 1, :subscription_id => subscription.id, :created => DateTime.now
+      @global_count += 1
+      puts "#{@global_count}/#{@options.count}"
+    end
+  end
+end
+
 
 require 'optparse'
 require 'ostruct'
@@ -48,6 +65,11 @@ OptionParser.new do |opts|
     @options.offset = offset.to_i*60*60*24
   end
 
+  opts.on( "--messages", "generate starship messages") do
+    puts "generating starship messages"
+    @options.messages = true
+  end
+
   opts.on_tail("-h", "--help", "show this message") do
     puts opts
     exit
@@ -60,16 +82,27 @@ require File.dirname(__FILE__) + '/../config/boot'
 require RAILS_ROOT+"/config/environment"
 RAILS_DEFAULT_LOGGER.silence do
 
-mt = MsgType.find_by_msgtype "OBS_SRCSRV_REQUEST_CREATE"
+  mt = MsgType.find_by_msgtype "OBS_SRCSRV_REQUEST_CREATE"
 
-# create notifications in blocks of 1000
-# active record chokes if the notification parameter insert gets too long
+  # create notifications in blocks of 1000
+  # active record chokes if the notification parameter insert gets too long
 
-block_length = 1000
-1.upto(@options.count / block_length) do
-  create_notifications(block_length,mt)
-end
-create_notifications(@options.count % block_length, mt)
+  block_length = 1000
+  unless @options.messages
+    1.upto(@options.count / block_length) do
+      create_notifications(block_length,mt)
+    end
+    create_notifications(@options.count % block_length, mt)
+  else
+    # create subscription
+    sub = Subscription.create( :msg_type_id => mt.id, :person_id => Person.first.id )
+    create_notifications(1, mt)
+    1.upto(@options.count / block_length) do
+      create_messages( block_length, mt, sub )
+    end
+    create_messages( @options.count % block_length, mt, sub )
+    puts "Created messages for subscription #{sub.id}: /feeds/#{sub.id}"
+  end
 
-puts "Finished."
+  puts "Finished."
 end

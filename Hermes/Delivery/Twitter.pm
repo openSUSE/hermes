@@ -75,7 +75,7 @@ sub tweet( $$ )
   $twit->access_token_secret( $access_token_secret );
 
   # set twitter status.
-  
+  $text = substr( $text, 0, 139 ) if( length( $text ) > 139 );
   my $tweet = $twit->update( $text );
   
   if( !$tweet ){

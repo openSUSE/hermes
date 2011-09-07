@@ -82,13 +82,4 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def rescue_action_locally( exception )
-    rescue_action_in_public( exception )
-  end
-
-  def rescue_action_in_public( exception )
-    logger.error "rescue_action: caught #{exception.class}: #{exception.message}"
-    render :template => 'error', :status => 500, :locals => {:exception => exception }
-  end
-
 end

@@ -112,10 +112,10 @@ sub expandNotification( $$ )
     foreach my $filterRef ( @filters ) {
       $filterOk = applyFilter( $paramRef, $filterRef );
       if( ! $filterOk ) {
-	log( 'info', "Filter $filterRef->{filterlog} failed!" );
+	log( 'debug', "Filter $filterRef->{filterlog} failed!" );
 	last;
       }
-      log( 'info', $filterRef->{filterlog} . " adds user to to-line: $personString ($personId)." );
+      log( 'debug', $filterRef->{filterlog} . " adds user to to-line: $personString ($personId)." );
     }
     if( $filterOk ) {
       log('info', "Subscription $subscriptId wants this notification!" );
@@ -214,7 +214,7 @@ sub applyFilter( $$ )
       my $tPrj = $paramHash->{targetproject};
       my $tPack = $paramHash->{targetpackage};
       if( $tPrj ) {
-        log( 'info', "Checking if <$user> is interested in request <$paramHash->{id}> ".
+        log( 'debug', "Checking if <$user> is interested in request <$paramHash->{id}> ".
                      "with target project <$tPrj>");
 	# userOfPackage returns both the project- and pack users.
 	my $tPackUsers = usersOfPackage( $tPrj, $tPack );
@@ -239,7 +239,7 @@ sub applyFilter( $$ )
 
       my @possibleValues = split( /\s*,\s*/, $str );
       my $success = isInArray( $searchStr, \@possibleValues );
-      log( 'info', "Filtering oneof <$searchStr> in [" . join( "|", @possibleValues ) . "]: " . $success );
+      log( 'debug', "Filtering oneof <$searchStr> in [" . join( "|", @possibleValues ) . "]: " . $success );
 
       if( $success ) {
 	$res = 1;
@@ -302,7 +302,7 @@ sub userHasFunction( $$$ )
       log( 'info', "User exists, but NOT in the required function" );
     }
   } else {
-    log( 'info', "User not existing in user hash." );
+    log( 'debug', "User not existing in user hash." );
   }
   return $res;
 }
@@ -349,7 +349,7 @@ sub usersOfPackage( $;$ )
   my $userHashRef = $cache->get( $cacheKey );
   
   if( defined $userHashRef ) {
-    log( 'info', "Using userdata for package $project/$package from cache" );
+    log( 'debug', "Using userdata for package $project/$package from cache" );
     return $userHashRef; 
   }
 
@@ -465,7 +465,7 @@ sub requestDiff( $ )
   if( $diff ) {
     log( 'info', "Got reqdiff for id <$id> from cache!" );
   } else {
-    log( 'info', "Calling OBS API to generate req diff for id <$id>!" );
+    log( 'debug', "Calling OBS API to generate req diff for id <$id>!" );
     $diff = callOBSAPI( 'reqdiff', ( $id ) );
     $cache->put( $cacheKey, $diff ) if( $diff );
   }
@@ -533,13 +533,13 @@ sub callOBSAPI( $$ )
   my $user = $Hermes::Config::OBSAPIUser || '' ;
   my $pwd  = $Hermes::Config::OBSAPIPwd || '';
   
-  $req->header( 'Accept' => 'text/xml' );
+  $req->header( 'Accept' => 'text/xml', 'X-Username' => $user );
   $req->authorization_basic( $user, $pwd );
   $ua->credentials( $OBSAPIUrl, "iChain", "$user" => "$pwd" );
   
   if( $Hermes::Config::OBSMaxResponseSize ) {
     $ua->max_size( $Hermes::Config::OBSMaxResponseSize );
-    log( 'info', "Limiting response size to <$Hermes::Config::OBSMaxResponseSize> byte" );
+    log( 'debug', "Limiting response size to <$Hermes::Config::OBSMaxResponseSize> byte" );
   }
   
   my $res = $ua->request( $req );

@@ -54,8 +54,11 @@ sub logLevelNumeric( ;$ )
   my ($level) = @_;
   
   return 0 unless( $level );
-  return 1 if( $level eq 'warning' );
-  return 2 if( $level eq 'error' );
+  return 1 if( $level eq 'debug' );
+  return 2 if( $level eq 'info' );
+  return 3 if( $level eq 'notice' );
+  return 4 if( $level eq 'warning' );
+  return 5 if( $level eq 'error' );
   
   return 0;
 }
