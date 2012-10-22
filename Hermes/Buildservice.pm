@@ -440,7 +440,7 @@ sub userWatchList( $ )
 sub packageDiff( $$$ )
 {
   my ( $project, $package, $orev ) = @_;
-  my $cacheKey = 'diff_' . $project . '_' . $package . '_' . $orev;
+  my $cacheKey = 'diff_' . $project . '_' . $package . '_' . (defined($orev) ? $orev : '');
   my $diff = $cache->get( $cacheKey );
   if( $diff ) {
     log( 'info', "Got diff for <$package>, <$project> from cache!" );
