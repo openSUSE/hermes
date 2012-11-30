@@ -275,7 +275,7 @@ sub applyFilter( $$ )
 
       log( 'info', "Filtering regexp <$regexp> on <$searchStr>?" );
 
-      unless( $searchStr && $regexp && $searchStr =~ /$regexp/ ) {
+      unless( $searchStr && $regexp && $regexp ne '*' && $searchStr =~ /$regexp/ ) {
 	$res = 0;
       }
     } else {
