@@ -71,7 +71,7 @@ sub unsentMessages()
 
 sub unsentMessagesDetail()
 {
-  my $sql = "SELECT delays.name as delayString, s.delay_id as delayId, \
+  my $sql = "SELECT delays.name as delayString, subs.delay_id as delayId, \
   d.name as deliveryName, count(gn.id) as count \
   FROM generated_notifications gn \
   JOIN subscriptions subs ON subs.id = gn.subscription_id \
