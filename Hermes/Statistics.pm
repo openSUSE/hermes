@@ -69,6 +69,20 @@ sub unsentMessages()
   return dbh()->selectall_arrayref( $sql, { Slice => {} });
 }
 
+sub unsentMessagesDetail()
+{
+  my $sql = "SELECT delays.name as delayString, s.delay_id as delayId, \
+  d.name as deliveryName, count(gn.id) as count \
+  FROM generated_notifications gn \
+  JOIN subscriptions subs ON subs.id = gn.subscription_id \
+  JOIN deliveries d on(d.id = subs.delivery_id ) \
+  JOIN delays ON(subs.delay_id = delays.id) \
+  WHERE gn.sent = 0 AND subs.enabled=1 \
+  GROUP BY subs.delay_id, delivery_id;"
+
+  return dbh()->selectall_arrayref( $sql, { Slice => {} });
+}
+
 sub latestNMessages( ;$ )
 {
   my ($cnt) = @_;
