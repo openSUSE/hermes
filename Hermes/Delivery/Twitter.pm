@@ -46,6 +46,8 @@ sub tweet( $$ )
 
   my $t0 = [gettimeofday];
 
+  log('debug', "tweet it");
+
   unless( $attribRef && $attribRef->{access_token} ) {
     log( 'info', "Error: No valid attribute basket for Twitter" );
     return 0;

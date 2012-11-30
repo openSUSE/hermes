@@ -326,6 +326,7 @@ sub deliverMessage( $$ )
     } elsif( $Hermes::Config::DeliverTwitter && $deliveryString =~/Twitter/i ) {
       my $attribRef = deliveryAttribs( $delivery );
       $res = tweet( $attribRef, $msgRef->{body} );
+      log('debug', "tweet returned $res");
     } else {
       log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
     }
@@ -484,9 +485,10 @@ sub sendImmediateMessages(;$)
       # Successfully sent!
       markSent( $genNotiId );
       $cnt ++;
-      # log( 'info', "Successfully sent generated notification <$genNotiId>: ". 
-      #  	   Dumper( $renderedMsgRef ) );
+      log( 'debug', "Successfully sent generated notification <$genNotiId>: ". 
+        	   Dumper( $renderedMsgRef ) );
     } else {
+      log( 'debug', "Failed to send " . Dumper( $renderedMsgRef ) );
       # FIXME: In case the second renderMessage went wrong, the starship-Message
       # needs to be wiped out.
     }
