@@ -194,7 +194,7 @@ sub saveDebugMail( $$$ )
 {
   my ($id, $rec, $msg) = @_;
 
-  my $path = "./debugmails/";
+  my $path = "/tmp/debugmails/";
   return unless( $rec );
 
   mkdir( $path, 0777 ) unless( -e $path );
