@@ -33,7 +33,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( latestNMessages countMessages latestNRawNotifications countRawNotificationsInHours
-                  unsentMessages );
+                  unsentMessages unsentMessagesDetail );
 
 sub countRawNotificationsInHours( ;$ )
 {
