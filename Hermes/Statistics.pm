@@ -78,7 +78,7 @@ sub unsentMessagesDetail()
   JOIN deliveries d on(d.id = subs.delivery_id ) \
   JOIN delays ON(subs.delay_id = delays.id) \
   WHERE gn.sent = 0 AND subs.enabled=1 \
-  GROUP BY subs.delay_id, delivery_id;"
+  GROUP BY subs.delay_id, delivery_id;";
 
   return dbh()->selectall_arrayref( $sql, { Slice => {} });
 }
