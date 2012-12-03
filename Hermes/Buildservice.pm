@@ -551,8 +551,9 @@ sub callOBSAPI( $$ )
     }
     return $answer;
   } else {
-    log( 'error', "API Call Error: " . $res->status_line . "\n" );
-    log( 'error', "API Call Error: " . $res->as_string );
+    log( 'error', "API Call Error: " . $res->status_line );
+    log( 'error', "API request was: " . $req->as_string );
+    log( 'error', "API response: " . $res->as_string );
     return undef;
   }
 }
