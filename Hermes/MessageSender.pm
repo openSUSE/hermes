@@ -63,7 +63,7 @@ use constant QUERY_SUBS => scalar "SELECT distinct subs.id FROM generated_notifi
   JOIN subscriptions subs ON subs.id = gn.subscription_id WHERE gn.sent = 0 AND subs.enabled=1 \
   AND subs.delay_id=?";
 
-use constant QUERY_DIGEST => scalar "SELECT gn.id, gn.notification_id, gn.created_at, \
+use constant QUERY_DIGEST => scalar "SELECT gn.id, gn.notification_id, UNIX_TIMESTAMP(gn.created_at), \
  subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
  generated_notifications gn\
  JOIN subscriptions subs ON subs.id = gn.subscription_id\
