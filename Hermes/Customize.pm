@@ -78,10 +78,14 @@ sub expandMessageTemplateParams( $$ )
   
   if( isInArray( "diff", \@paramNames ) &&
       $paramHash->{project} && $paramHash->{package} ) {
-    $paramHash->{diff} = packageDiff( $paramHash->{project}, $paramHash->{package}, $paramHash->{rev} );
+  
+    $paramHash->{diff} = packageDiff( $paramHash->{project}, $paramHash->{package}, $paramHash->{sourcerevision} );
+    # do only switch on the following line if you really need it. I can blow your logfile
+    # log('debug', "Result diff: " . $paramHash->{diff} );
   } elsif( isInArray("reqdiff", \@paramNames ) && $paramHash->{id} ) {
     $paramHash->{reqdiff} = requestDiff( $paramHash->{id} );
-#    log( 'info', "Resulting request Diff: " . $paramHash->{reqdiff} );
+    # do only switch on the following line if you really need it. I can blow your logfile
+    # log( 'info', "Resulting request Diff: " . $paramHash->{reqdiff} );
   }
   return $paramHash;
 }

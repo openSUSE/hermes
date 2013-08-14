@@ -27,6 +27,12 @@ Dependencies:
    JSON::Any                perl-JSON-Any
    Cache::Memcached         perl-Cache-Memcached
    Cache::Memcached::Fast   perl-Cache-Memcached-Fast
+   LWP::UserAgent           perl-libwww-perl
+   HTTP::Request            perl-libwww-perl
+   URI::Escape              perl-URI
+   Email::Date::Format      perl-Email-Date-Format
+
+All these should be the OBS project openSUSE::Tools
 
 The Hermes Server Herminator
 ============================

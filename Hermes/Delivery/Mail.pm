@@ -157,7 +157,7 @@ sub sendMail( $ )
     my $pReplyTo = $msg->{replyto};
     unless( $msg->{_skip_user_check} ) {
       my $pReplyToRef = personInfo( $msg->{replyto} );
-      $pReplyTo = $pReplyToRef->{email} || 'hermes\@opensuse.org';
+      $pReplyTo = $pReplyToRef->{email} || 'hermes@opensuse.org';
     }
     $mime_msg->add('reply-to' => $pReplyTo ) ;
   }
@@ -194,7 +194,7 @@ sub saveDebugMail( $$$ )
 {
   my ($id, $rec, $msg) = @_;
 
-  my $path = "./debugmails/";
+  my $path = "/tmp/debugmails/";
   return unless( $rec );
 
   mkdir( $path, 0777 ) unless( -e $path );

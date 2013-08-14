@@ -275,7 +275,7 @@ sub applyFilter( $$ )
 
       log( 'info', "Filtering regexp <$regexp> on <$searchStr>?" );
 
-      unless( $searchStr && $regexp && $searchStr =~ /$regexp/ ) {
+      unless( $searchStr && $regexp && $regexp ne '*' && $searchStr =~ /$regexp/ ) {
 	$res = 0;
       }
     } else {
@@ -533,7 +533,8 @@ sub callOBSAPI( $$ )
   my $user = $Hermes::Config::OBSAPIUser || '' ;
   my $pwd  = $Hermes::Config::OBSAPIPwd || '';
   
-  $req->header( 'Accept' => 'text/xml', 'X-Username' => $user );
+  $req->header( 'Accept' => 'text/xml', 'X-Username' => $user,
+		'Content-Type' => 'application/x-www-form-urlencoded' );
   $req->authorization_basic( $user, $pwd );
   $ua->credentials( $OBSAPIUrl, "iChain", "$user" => "$pwd" );
   
@@ -551,8 +552,9 @@ sub callOBSAPI( $$ )
     }
     return $answer;
   } else {
-    log( 'error', "API Call Error: " . $res->status_line . "\n" );
-    log( 'error', "API Call Error: " . $res->as_string );
+    log( 'error', "API Call Error: " . $res->status_line );
+    log( 'error', "API request was: " . $req->as_string );
+    log( 'error', "API response: " . $res->as_string );
     return undef;
   }
 }

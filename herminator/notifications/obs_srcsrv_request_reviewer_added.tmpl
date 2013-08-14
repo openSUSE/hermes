@@ -1,6 +1,7 @@
 @subject: [review of <TMPL_VAR NAME="type">-request <TMPL_VAR NAME="id">] requested
 <TMPL_IF NAME="sourceproject">
    <TMPL_VAR NAME="sourceproject">/<TMPL_VAR NAME="sourcepackage"> -> <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
+</TMPL_IF>
 
    https://build.opensuse.org/request/show/<TMPL_VAR NAME="id">
 <TMPL_IF NAME="description">
@@ -15,7 +16,6 @@ To ACCEPT the review:
 To DECLINE the review:
    osc review decline <TMPL_VAR NAME="id"> --message="declined for reason xyz (see ... for background / policy / ...)."
 
-</TMPL_IF>
 -- 
 Hermes messaging (http://hermes.opensuse.org)
 openSUSE Build Service (https://build.opensuse.org/)

@@ -1,8 +1,11 @@
 @subject: [obs <TMPL_VAR NAME="type">-request <TMPL_VAR NAME="id">] <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">: created by <TMPL_VAR NAME="who">
 <TMPL_IF NAME="sourceproject">
    <TMPL_VAR NAME="sourceproject">/<TMPL_VAR NAME="sourcepackage"> -> <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
+<TMPL_ELSE>
+   <TMPL_VAR NAME="targetproject">/<TMPL_VAR NAME="targetpackage">
+</TMPL_IF>
 
-   https://build.opensuse.org/request/diff/<TMPL_VAR NAME="id">
+   https://build.opensuse.org/request/show/<TMPL_VAR NAME="id">
 <TMPL_IF NAME="description">
    Description: <TMPL_VAR NAME="description"></TMPL_IF>
 <TMPL_VAR NAME="reqdiff">
@@ -18,7 +21,6 @@ To DECLINE the request:
 
 To REVOKE the request:
    osc request revoke <TMPL_VAR NAME="id"> --message="retracted because ..., sorry / thx / see better version ..."
-</TMPL_IF>
 -- 
 Hermes messaging (http://hermes.opensuse.org)
 openSUSE Build Service (https://build.opensuse.org/)

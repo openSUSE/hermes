@@ -52,16 +52,18 @@ use vars qw(@ISA @EXPORT $query );
 #
 use constant SQL => scalar "SELECT gn.id, gn.notification_id, UNIX_TIMESTAMP(gn.created_at), \
  subs.id, subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
- generated_notifications gn\
- JOIN subscriptions subs ON subs.id = gn.subscription_id\
- WHERE gn.sent = 0 AND subs.enabled=1 AND subs.delay_id=?\
+ generated_notifications gn \
+ JOIN subscriptions subs ON subs.id = gn.subscription_id \
+ JOIN deliveries ON subs.delivery_id = deliveries.id \
+ WHERE gn.sent = 0 AND subs.enabled=1 AND subs.delay_id=? \
+ AND ( ? OR deliveries.name NOT LIKE '%Twitter%') \
  ORDER BY subs.id, gn.created_at DESC LIMIT ?";
 
 use constant QUERY_SUBS => scalar "SELECT distinct subs.id FROM generated_notifications gn \
   JOIN subscriptions subs ON subs.id = gn.subscription_id WHERE gn.sent = 0 AND subs.enabled=1 \
   AND subs.delay_id=?";
 
-use constant QUERY_DIGEST => scalar "SELECT gn.id, gn.notification_id, gn.created_at, \
+use constant QUERY_DIGEST => scalar "SELECT gn.id, gn.notification_id, UNIX_TIMESTAMP(gn.created_at), \
  subs.msg_type_id, subs.person_id, subs.delay_id, subs.delivery_id FROM \
  generated_notifications gn\
  JOIN subscriptions subs ON subs.id = gn.subscription_id\
@@ -323,11 +325,16 @@ sub deliverMessage( $$ )
 	log( 'error', "No URL defined for delivery-ID <$delivery>" );
 	$res = 0;
       }
-    } elsif( $Hermes::Config::DeliverTwitter && $deliveryString =~/Twitter/i ) {
-      my $attribRef = deliveryAttribs( $delivery );
-      $res = tweet( $attribRef, $msgRef->{body} );
+    } elsif( $deliveryString =~/Twitter/i ) {
+      if( $Hermes::Config::DeliverTwitter ) {
+        my $attribRef = deliveryAttribs( $delivery );
+        $res = tweet( $attribRef, $msgRef->{body} );
+        log('debug', "tweet returned $res");
+      } else {
+        log('info', "Twitter delivery disabled by config");
+      }
     } else {
-      log ( 'error', "No idea how to delivery message with delivery <$deliveryString>" );
+      log ( 'error', "No idea how to deliver message with delivery <$deliveryString>" );
     }
   }
 
@@ -454,7 +461,7 @@ sub sendImmediateMessages(;$)
 
   my $cnt = 0;
   $query = dbh()->prepare(SQL);
-  $query->execute( SendNow(), 300 );
+  $query->execute( SendNow(), $Hermes::Config::DeliverTwitter ? 1 : 0, 300 );
 
   while( my( $genNotiId, $notiId, $genNotiCreated, $subscriptId, $msgTypeId,
 	     $personId, $delayId, $deliveryId ) = $query->fetchrow_array() ) {
@@ -484,9 +491,10 @@ sub sendImmediateMessages(;$)
       # Successfully sent!
       markSent( $genNotiId );
       $cnt ++;
-      # log( 'info', "Successfully sent generated notification <$genNotiId>: ". 
-      #  	   Dumper( $renderedMsgRef ) );
+      log( 'debug', "Successfully sent generated notification <$genNotiId>: ". 
+        	   Dumper( $renderedMsgRef ) );
     } else {
+      log( 'debug', "Failed to send " . Dumper( $renderedMsgRef ) );
       # FIXME: In case the second renderMessage went wrong, the starship-Message
       # needs to be wiped out.
     }
@@ -494,9 +502,7 @@ sub sendImmediateMessages(;$)
   return $cnt;
 }
 
-#
-
-log( 'info', "MessageSender Base Query: " . SQL );
+log( 'debug', "MessageSender Base Query: " . SQL );
 
 1;
 

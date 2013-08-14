@@ -33,7 +33,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %delayHash);
 
 @ISA	    = qw(Exporter);
 @EXPORT	    = qw( latestNMessages countMessages latestNRawNotifications countRawNotificationsInHours
-                  unsentMessages );
+                  unsentMessages unsentMessagesDetail );
 
 sub countRawNotificationsInHours( ;$ )
 {
@@ -65,6 +65,20 @@ sub unsentMessages()
   $sql .= "FROM generated_notifications gn, delays d, subscriptions s ";
   $sql .= "WHERE gn.sent=0 AND gn.subscription_id = s.id AND s.delay_id=d.id ";
   $sql .= "GROUP BY s.delay_id";
+
+  return dbh()->selectall_arrayref( $sql, { Slice => {} });
+}
+
+sub unsentMessagesDetail()
+{
+  my $sql = "SELECT delays.name as delayString, subs.delay_id as delayId, \
+  d.name as deliveryString, count(gn.id) as count \
+  FROM generated_notifications gn \
+  JOIN subscriptions subs ON subs.id = gn.subscription_id \
+  JOIN deliveries d on(d.id = subs.delivery_id ) \
+  JOIN delays ON(subs.delay_id = delays.id) \
+  WHERE gn.sent = 0 AND subs.enabled=1 \
+  GROUP BY subs.delay_id, delivery_id;";
 
   return dbh()->selectall_arrayref( $sql, { Slice => {} });
 }
