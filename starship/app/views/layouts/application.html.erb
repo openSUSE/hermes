@@ -15,10 +15,8 @@
 
     <%= stylesheet_link_tag "https://static.opensuse.org/themes/bento/css/style.css", :media => "screen", :title => "All" %>
     <%= stylesheet_link_tag "hermes" %>
-    <%= javascript_include_tag 'https://static.opensuse.org/themes/bento/js/jquery.js' %>
-    <%= javascript_include_tag 'https://static.opensuse.org/themes/bento/js/script' %>
-
-    <%= javascript_include_tag "jrails", "application" %>
+    <%= javascript_include_tag "application" %>
+    <%= csrf_meta_tags %>
 
     <%= yield :content_for_head %>
 

@@ -7,6 +7,7 @@ Starship::Application.routes.draw do
   resources :msg_types
   resources :subscriptions do
     post :modify_simple_subscriptions, :on => :collection
+    post :toggle_enabled, :on => :collection
   end
  
   get '/feeds/personal', :to => 'feeds#personal'

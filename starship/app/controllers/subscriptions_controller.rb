@@ -181,8 +181,16 @@ class SubscriptionsController < ApplicationController
       @curr_sub.enabled = true
       @status = "Enabled"
     end
+    debugger
     @curr_sub.save
-    render :text => @status
+    respond_to do |format|
+     format.html {
+       redirect_to subscriptions_path
+      }
+     format.js {
+        render
+     }
+    end
   end
 
 

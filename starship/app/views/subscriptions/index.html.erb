@@ -33,10 +33,10 @@
   </thead>
 
   <tbody>
-    <% @subscribedMsgs.each_with_index  { |subs,i| %>
-      <tr id="filter_<%=i%>" >
-        <td><%= (subs.description.blank? ? '<i>No description</i>' : subs.description) %></td>
-        <td id="edit_link_<%=i%>">
+    <% @subscribedMsgs.each  { |subs| %>
+      <tr id="filter_<%=subs.id%>" >
+        <td><%= (subs.description.blank? ? '<i>No description</i>'.html_safe : subs.description) %></td>
+        <td id="edit_link_<%=subs.id%>">
           <tt><%= subs.msg_type.type_desc %></tt></td>
         <td><%= subs.delay.name %></td>
         <td>
@@ -47,16 +47,16 @@
             desc.gsub! "RSS", link_to( 'RSS', {:action => "show", :controller => "feeds", :id => subs.id, :format => 'rdf'} )
           end
           -%>
-          <%= desc %>
+          <%= desc.html_safe %>
         </td>
         <% if subs.filters.count > 0 %>
           <td><a href="#" onmouseover="Tip('<%=@filter_tooltips[subs.id]%>')" onmouseout="UnTip()"><%= subs.filters.count %></a></td>
         <% else %>
           <td><%= subs.filters.count %></td>
         <% end %>
-        <td><div id="filter_<%=i%>_enabled">
+        <td><div id="filter_<%=subs.id%>_enabled">
             <% enabled_txt = subs.enabled ? "Enabled" : "Disabled" %>
-            <%= link_to enabled_txt, :url => { :action => :toggle_enabled, :subs => subs }, :update => "filter_#{i}_enabled"  %>
+            <%= link_to enabled_txt, toggle_enabled_subscriptions_path(:subs => subs), :method => :post, :remote => true %>
           </div></td>
         <td style="white-space: nowrap; ">
           [<%= link_to "edit", edit_subscription_path(subs) %>]
