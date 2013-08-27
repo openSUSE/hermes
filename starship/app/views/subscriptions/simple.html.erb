@@ -15,7 +15,7 @@
 
 <% if (@abstraction_groups.length > 0) %>    
 
-  <% form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
+  <%= form_for :subscription, :url => { :action => :modify_simple_subscriptions } do |form| %>
     <table class="noborder">
       <% for group_id in @abstraction_groups.keys %>
 

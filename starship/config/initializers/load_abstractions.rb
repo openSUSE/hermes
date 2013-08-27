@@ -8,8 +8,8 @@ filterabstractions = Hash.new
 abstractiongroups = Hash.new
 
 ## skip automatically in rake db:migrate
-if (ENV['RAILS_ENV'])
-  Dir["#{RAILS_ROOT}/config/guiabstractions/*.xml"].each { |file|
+if (Rails.env)
+  Dir["#{Rails.root}/config/guiabstractions/*.xml"].each { |file|
     begin 
       
       parser = XML::Parser.file( file )

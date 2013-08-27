@@ -1,21 +1,23 @@
-ActionController::Routing::Routes.draw do |map|
+Starship::Application.routes.draw do
   
-  map.connect '', :controller => 'subscriptions', :action => 'simple'
+  #connect '', :controller => 'subscriptions', :action => 'simple'
+  root "subscriptions#simple"
   
-  map.resources :messages
-  map.resources :msg_types
-  map.resources :subscriptions
-
-  map.connect '/feeds/personal', :controller => 'feeds', :action => 'personal'
-  map.connect '/feeds/:id.:format', :controller => 'feeds', :action => 'show', :id => /[\d,]+/
-  map.connect '/feeds/:person.:format', :controller => 'feeds', :action => 'person'
+  resources :messages
+  resources :msg_types
+  resources :subscriptions do
+    post :modify_simple_subscriptions, :on => :collection
+  end
+ 
+  get '/feeds/personal', :to => 'feeds#personal'
+  get '/feeds', :to => 'feeds#index'
+  get '/feeds/:id.:format', :to => 'feeds#show' ##, :constraints => { /[\d,]+/ }
+  get '/feeds/:person.:format', :to => 'feeds#person'
 
   # TODO: add route for named feeds
  
-  map.connect '/login',   :controller => 'account', :action => 'login'
-  map.connect '/logout',  :controller => 'account', :action => 'logout'
-  
-  map.connect ':controller/:action/:id'
-  map.connect ':controller/:action/:id.:format'
-  
+  get '/login', :to => 'account#login'
+  get '/logout',  :to => 'account#logout'
+
+  match ':controller(/:action(/:id))(.:format)', :via => [:get, :post] 
 end

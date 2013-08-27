@@ -1,3 +1,4 @@
+
 # Filters added to this controller apply to all controllers in the application.
 # Likewise, all the methods added will be available for all controllers.
 
@@ -6,7 +7,7 @@ require 'ichain_auth'
 class ApplicationController < ActionController::Base
   helper :all # include all helpers, all the time
   before_filter :set_return_to, :authenticate, :require_auth
-  protect_from_forgery
+  protect_from_forgery with: :exception
 
   class InvalidHttpMethodError < Exception; end
   $OPERATORS = %w{ oneof containsitem regexp}
@@ -68,18 +69,10 @@ class ApplicationController < ActionController::Base
   
   
   def set_return_to
-    session[:return_to] = request.request_uri
+    session[:return_to] = request.original_url
   end
 
   def ichain_mode?
     return AUTHENTICATION.to_s == 'ichain' || AUTHENTICATION.to_s == 'simulate'
   end
-
-  def valid_http_methods(*methods)
-    methods.map {|x| x.to_s.downcase.to_s}
-    unless methods.include? request.method
-      raise InvalidHttpMethodError, "Invalid HTTP Method: #{request.method.to_s.upcase}"
-    end
-  end
-
 end

@@ -6,8 +6,9 @@
 
       <div id="header-content" class="container_12">
 
-        <%= link_to image_tag( "https://static.opensuse.org/themes/bento/images/header-logo.png", :size => "46x26" ) , { :controller => 'main',
-              :action => :index }, { :id => "header-logo"} -%>
+        <%= link_to image_tag(
+        "https://static.opensuse.org/themes/bento/images/header-logo.png",
+        :size => "46x26" ), root_path, { :id => "header-logo"} -%>
 
       <ul id="global-navigation">
         <!-- change link to en.o.o after transition -->

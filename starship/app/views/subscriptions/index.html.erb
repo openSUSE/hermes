@@ -56,7 +56,7 @@
         <% end %>
         <td><div id="filter_<%=i%>_enabled">
             <% enabled_txt = subs.enabled ? "Enabled" : "Disabled" %>
-            <%= link_to_remote enabled_txt, :url => { :action => :toggle_enabled, :subs => subs }, :update => "filter_#{i}_enabled"  %>
+            <%= link_to enabled_txt, :url => { :action => :toggle_enabled, :subs => subs }, :update => "filter_#{i}_enabled"  %>
           </div></td>
         <td style="white-space: nowrap; ">
           [<%= link_to "edit", edit_subscription_path(subs) %>]

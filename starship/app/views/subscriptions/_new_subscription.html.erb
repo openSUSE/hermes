@@ -26,7 +26,7 @@
 
 <h2>Add a Subscription: </h2>
 
-<% form_for :subscr do |f| %>
+<%= form_for :subscr do |f| %>
 <p>Pick a notification type to subscribe to: <%= collection_select('subscr', 'msg_type_id', @avail_types, 'id', 'type_desc') %></p>
 <p><%= submit_tag "Create Subscription" %> and continue to edit.</p>
 

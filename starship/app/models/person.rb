@@ -1,7 +1,7 @@
 require 'digest/sha1'
 
 class Person < ActiveRecord::Base
-  set_table_name "persons"
+  self.table_name = "persons"
   has_and_belongs_to_many :messages
   has_many :msg_types, :through => :subscriptions
   has_many :filters, :through => :subscriptions
@@ -19,13 +19,16 @@ class Person < ActiveRecord::Base
     abstraction = SUBSCRIPTIONABSTRACTIONS[group_id][abstraction_id]
 
     # use the first subscription of the user that matches all criteria from the abstraction (msgtype, filters)
-    subscriptions.find(:all, :conditions => [ "subscriptions.enabled = 1 and msg_types.msgtype = ?", abstraction.msg_type],
-      :include => [:msg_type] ).each do | subscription | 
+    
+    subscriptions.includes(:msg_type).where("subscriptions.enabled" => true, "msg_types.msgtype" => abstraction.msg_type).
+      references(:msg_type).to_a.each do | subscription | 
+    #subscriptions.all(:conditions => [ "subscriptions.enabled = 1 and msg_types.msgtype = ?", abstraction.msg_type],
+    #  :include => [:msg_type] ).each do | subscription | 
         hits = 0
         abstraction.filterabstracts[filter_abstraction_id].filters.each do | filter |
           #logger.debug "Checking for filter #{filter.inspect} in user subscription : #{subscription.filters.inspect}" 
           
-          if ( not subscription.filters.find(:first, :conditions => {:parameter_id => filter.parameter_id, 
+          if ( not subscription.filters.first(:conditions => {:parameter_id => filter.parameter_id, 
             :operator => filter.operator, :filterstring => SubscriptionFilter.replaced_filterstring(filter.filterstring, stringid)}).nil? )
             hits += 1
           end
@@ -40,7 +43,7 @@ class Person < ActiveRecord::Base
 
 
   def self.authenticate(login, pass)
-    u=find(:first, :conditions=>["stringid = ?", login])
+    u=first(:conditions=>["stringid = ?", login])
     return nil if u.nil?
     return u if Person.encrypt(pass, u.salt)==u.hashed_password
     nil

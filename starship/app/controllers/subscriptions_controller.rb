@@ -6,10 +6,10 @@ class SubscriptionsController < ApplicationController
     @hermestitle = "Subscriptions for #{@person.stringid} (#{@person.email})"
     @abstraction_groups = ABSTRACTIONGROUPS
     @abstractions = SUBSCRIPTIONABSTRACTIONS
-    @subscribedMsgs = @person.subscriptions.find(:all)
+    @subscribedMsgs = @person.subscriptions.all()
 
     @avail_deliveries = valid_deliveries;
-    @avail_delays = Delay.find(:all, :order => 'id').map {|d| [d.description, d.id]}
+    @avail_delays = Delay.all(:order => 'id').map {|d| [d.description, d.id]}
   end
 
   
@@ -17,12 +17,12 @@ class SubscriptionsController < ApplicationController
     @person = Person.find session[:userid]
     @hermestitle = "Subscriptions for #{@person.stringid} (#{@person.email})"
   
-    @subscribedMsgs = @person.subscriptions.find( :all, :include => [:msg_type,:delay,:delivery])
-    #@latestMsgs = @person.messages.find(:all, :include => :msg_type, :order => "created DESC", :limit => 10)
+    @subscribedMsgs = @person.subscriptions.all( :include => [:msg_type,:delay,:delivery])
+    #@latestMsgs = @person.messages.all( :include => :msg_type, :order => "created DESC", :limit => 10)
   
-    @avail_types = MsgType.find(:all, :order => 'description, msgtype DESC')
+    @avail_types = MsgType.all( :order => 'description, msgtype DESC')
     @avail_deliveries = valid_deliveries
-    @avail_delays = Delay.find(:all)
+    @avail_delays = Delay.all()
   
     # Tooltip for the filters of a subscription, to view in the expert overview
     @filter_tooltips = Hash.new
@@ -39,7 +39,6 @@ class SubscriptionsController < ApplicationController
 
 
   def create
-    valid_http_methods :post
     sub_param = params[:subscr]
     sub_param[:person_id] = session[:userid]
     sub = Subscription.new(sub_param)
@@ -53,7 +52,7 @@ class SubscriptionsController < ApplicationController
   
   
   def modify_simple_subscriptions
-    valid_http_methods :post
+    #valid_http_methods :post
     flash[:success] = ""
     flash[:error] = ""
     user = Person.find session[:userid]
@@ -66,7 +65,7 @@ class SubscriptionsController < ApplicationController
             if (!subscription)
               logger.debug "Adding subscription for filterabstraction #{abstraction.id}||#{filterabstract.id}"
                 
-              subscription = Subscription.new(:msg_type_id => MsgType.find(:first, :conditions => "msgtype =  '#{abstraction.msg_type}'").id,
+              subscription = Subscription.new(:msg_type_id => MsgType.first(:conditions => "msgtype =  '#{abstraction.msg_type}'").id,
                 :person_id => user.id, :delay_id => params["#{abstraction.id}||#{filterabstract.id}||delay"].to_i,
                 :delivery_id => params["#{abstraction.id}||#{filterabstract.id}||delivery"].to_i,
                 :description => "#{abstraction.summary} / #{filterabstract.summary}")
@@ -108,9 +107,9 @@ class SubscriptionsController < ApplicationController
   
   
   def destroy
-    valid_http_methods :delete
+    #valid_http_methods :delete
     user = Person.find session[:userid]
-    curr_subscr = user.subscriptions.find(:first, :conditions => {:id => params[:id]})
+    curr_subscr = user.subscriptions.first(:conditions => {:id => params[:id]})
     if curr_subscr
       curr_subscr.destroy
       redirect_to_index "Subscription for #{curr_subscr.msg_type.msgtype} deleted"
@@ -123,7 +122,7 @@ class SubscriptionsController < ApplicationController
   def edit
     user = Person.find session[:userid]
     @subscr = user.subscriptions.find(params[:id])
-    @availDelay = Delay.find(:all)
+    @availDelay = Delay.all()
     @availDeliveries = valid_deliveries
     @avail_params = @subscr.msg_type.parameters
     # pick out the abstraction filters
@@ -132,7 +131,7 @@ class SubscriptionsController < ApplicationController
   
   
   def update
-    valid_http_methods :put
+    #valid_http_methods :put
     user = Person.find session[:userid]
     @subscr = user.subscriptions.find(params[:id])
     if @subscr.update_attributes params[:subscr]
@@ -145,7 +144,7 @@ class SubscriptionsController < ApplicationController
       # set abstraction filters
       if params[:abstraction_filter]
         params[:abstraction_filter].each do |filter|
-          afilters = @subscr.abstraction_filter_templates.select{|f| f.first == filter}.first.last.filters
+          afilters = @subscr.abstraction_filter_templates.select{|k,v| k == filter}.first.last.filters
           afilters.each do |afilter|
             @subscr.add_filter afilter.parameter_id, afilter.operator, afilter.filterstring, user.stringid
           end
@@ -192,9 +191,9 @@ class SubscriptionsController < ApplicationController
   def valid_deliveries
     person = Person.find session[:userid]
     if person && person.admin
-      deliver = Delivery.find(:all, :order => 'id')
+      deliver = Delivery.all(:order => 'id')
     else
-      deliver = Delivery.find(:all, :conditions => ["public = 1"], :order => 'id')
+      deliver = Delivery.all(:conditions => ["public = 1"], :order => 'id')
     end
     return deliver
   end

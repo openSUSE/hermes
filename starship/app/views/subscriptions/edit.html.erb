@@ -31,7 +31,7 @@
   /* ]]> */
 </script>
 
-<% form_for @subscr do |f| %>
+<%= form_for @subscr do |f| %>
 
   <p>
     <label>Description:</label><%= text_field_tag('subscr[description]', @subscr.description, :size => 50 ) %>

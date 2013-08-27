@@ -11,6 +11,7 @@ class Subscription < ActiveRecord::Base
   validates_presence_of :delay
   validates_presence_of :delivery
 
+  attr_accessible :msg_type_id, :person_id, :delay_id, :delivery_id, :description
 
   def initialize(attribs={})
     super(attribs)
@@ -38,7 +39,7 @@ class Subscription < ActiveRecord::Base
 
 
   def uses_abstraction_filter? id, username
-    afilters = abstraction_filter_templates.select{|f| f.first == id}.first.last.filters
+    afilters = abstraction_filter_templates.select{|k,v| k == id}.first.last.filters
     uses_abstraction_filter = !afilters.blank?
     afilters.each do |afilter|
       if filters.select{|f| f.parameter_id == afilter.parameter_id &&

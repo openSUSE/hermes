@@ -13,7 +13,7 @@
 
     <title><%= @pagetitle || @title || 'Hermes - openSUSE Notification Client' %></title>
 
-    <%= stylesheet_link_tag "https://static.opensuse.org/themes/bento/css/style", :media => "screen", :title => "All" %>
+    <%= stylesheet_link_tag "https://static.opensuse.org/themes/bento/css/style.css", :media => "screen", :title => "All" %>
     <%= stylesheet_link_tag "hermes" %>
     <%= javascript_include_tag 'https://static.opensuse.org/themes/bento/js/jquery.js' %>
     <%= javascript_include_tag 'https://static.opensuse.org/themes/bento/js/script' %>
@@ -79,10 +79,10 @@
     <!-- Start: Main Content Area -->
     <div id="content" class="container_16 content-wrapper">
       <% if @layouttype == "custom" %>
-        <%= @content_for_layout %>
+        <%= yield %>
       <% else %>
         <div class="grid_16 box box-shadow alpha omega">
-          <%= @content_for_layout %>
+          <%= yield %>
         </div>
       <% end %>
     </div>

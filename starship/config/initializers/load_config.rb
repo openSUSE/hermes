@@ -1,3 +1,3 @@
-CONFIG = YAML.load_file("#{RAILS_ROOT}/config/starship.yml")
+CONFIG = YAML.load_file("#{Rails.root}/config/starship.yml")
 
 puts "Loaded starship config from config/starship.yml" 
