@@ -63,7 +63,7 @@
   $(function () {
 
     $.plot($("#pie_subscription_types"),
-    [ <%= @subscription_stats.map{|s| "{label: \"#{@msg_types.select{|m| m.id.to_s == s.first}.first.type_desc}\", data: #{s.last}}" }.join(',') %> ],
+    [ <%= @subscription_stats.map{|s| "{label: \"#{@msg_types.select{|m| m.id == s.first}.first.type_desc}\", data: #{s.last}}" }.join(',') %> ],
     {
       series: {
         pie: {
