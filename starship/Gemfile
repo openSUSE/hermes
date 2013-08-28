@@ -8,6 +8,7 @@ gem 'nokogiri'
 gem 'libxml-ruby'
 gem 'protected_attributes'
 gem 'will_paginate', '~> 3.0.0'
+gem 'mime-types', '~> 1.23'
 
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 4.0.0'

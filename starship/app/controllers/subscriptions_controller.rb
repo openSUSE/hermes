@@ -181,7 +181,6 @@ class SubscriptionsController < ApplicationController
       @curr_sub.enabled = true
       @status = "Enabled"
     end
-    debugger
     @curr_sub.save
     respond_to do |format|
      format.html {
