@@ -21,15 +21,14 @@ class Person < ActiveRecord::Base
     # use the first subscription of the user that matches all criteria from the abstraction (msgtype, filters)
     
     subscriptions.includes(:msg_type).where("subscriptions.enabled" => true, "msg_types.msgtype" => abstraction.msg_type).
-      references(:msg_type).to_a.each do | subscription | 
+      references(:msg_type).each do | subscription | 
     #subscriptions.all(:conditions => [ "subscriptions.enabled = 1 and msg_types.msgtype = ?", abstraction.msg_type],
     #  :include => [:msg_type] ).each do | subscription | 
         hits = 0
         abstraction.filterabstracts[filter_abstraction_id].filters.each do | filter |
           #logger.debug "Checking for filter #{filter.inspect} in user subscription : #{subscription.filters.inspect}" 
-          
-          if ( not subscription.filters.first(:conditions => {:parameter_id => filter.parameter_id, 
-            :operator => filter.operator, :filterstring => SubscriptionFilter.replaced_filterstring(filter.filterstring, stringid)}).nil? )
+          if ( not subscription.filters.where(:parameter_id => filter.parameter_id, 
+            :operator => filter.operator, :filterstring => SubscriptionFilter.replaced_filterstring(filter.filterstring, stringid)).first.nil? )
             hits += 1
           end
         end
@@ -43,7 +42,7 @@ class Person < ActiveRecord::Base
 
 
   def self.authenticate(login, pass)
-    u=first(:conditions=>["stringid = ?", login])
+    u=self.where(:stringid => login).first
     return nil if u.nil?
     return u if Person.encrypt(pass, u.salt)==u.hashed_password
     nil

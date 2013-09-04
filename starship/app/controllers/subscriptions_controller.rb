@@ -6,10 +6,10 @@ class SubscriptionsController < ApplicationController
     @hermestitle = "Subscriptions for #{@person.stringid} (#{@person.email})"
     @abstraction_groups = ABSTRACTIONGROUPS
     @abstractions = SUBSCRIPTIONABSTRACTIONS
-    @subscribedMsgs = @person.subscriptions.all()
+    @subscribedMsgs = @person.subscriptions
 
     @avail_deliveries = valid_deliveries;
-    @avail_delays = Delay.all(:order => 'id').map {|d| [d.description, d.id]}
+    @avail_delays = Delay.order('id').map {|d| [d.description, d.id]}
   end
 
   
@@ -17,10 +17,10 @@ class SubscriptionsController < ApplicationController
     @person = Person.find session[:userid]
     @hermestitle = "Subscriptions for #{@person.stringid} (#{@person.email})"
   
-    @subscribedMsgs = @person.subscriptions.all( :include => [:msg_type,:delay,:delivery])
-    #@latestMsgs = @person.messages.all( :include => :msg_type, :order => "created DESC", :limit => 10)
+    @subscribedMsgs = @person.subscriptions.includes(:msg_type, :delay, :delivery)
+    #@latestMsgs = @person.messages.includes(:msg_type).order('created DESC').limit(10)
   
-    @avail_types = MsgType.all( :order => 'description, msgtype DESC')
+    @avail_types = MsgType.order('description, msgtype DESC')
     @avail_deliveries = valid_deliveries
     @avail_delays = Delay.all()
   
@@ -198,9 +198,9 @@ class SubscriptionsController < ApplicationController
   def valid_deliveries
     person = Person.find session[:userid]
     if person && person.admin
-      deliver = Delivery.all(:order => 'id')
+      deliver = Delivery.order('id')
     else
-      deliver = Delivery.all(:conditions => ["public = 1"], :order => 'id')
+      deliver = Delivery.where(:public => 1).order('id')
     end
     return deliver
   end
