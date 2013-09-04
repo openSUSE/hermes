@@ -162,6 +162,27 @@ sub sendMail( $ )
     $mime_msg->add('reply-to' => $pReplyTo ) ;
   }
 
+  # Vincent's patch from bnc#693869
+  # It breaks the plugin concept of Hermes, but it works.
+  # Should be refactored, of course #FIXME
+  if( $msg->{type} =~ /obs_srcsrv_request_/ ) {
+    my $type = $msg->{type};
+    my $id = $msg->{_msgTypeId};
+    my $OBSAPIUrl = $Hermes::Config::OBSAPIBase ||  "http://api.opensuse.org/";
+    $OBSAPIUrl =~ s/\s*$//; # Wipe whitespace at end.
+    $OBSAPIUrl =~ s/\W/./g; # Replace any non-alphanumeric with .
+    $OBSAPIUrl =~ s/\.\.+/./g; # Do not have more than one consecutive .
+    my $messageid = "<$type-request-$id\@$OBSAPIUrl>";
+
+    if( $msg->{type} == 'obs_srcsrv_request_create' ) {
+      $mime_msg->replace('Message-ID' => $messageid);
+    } else {
+      $mime_msg->add('In-Reply-To' => $messageid);
+      $mime_msg->add('References' => $messageid);
+    }
+  }
+  # end of patch
+
   $mime_msg->add( 'X-hermes-msg-type' => $msg->{type} ) if( $msg->{type} );
   $mime_msg->replace( 'Precedence' => 'bulk');
   $mime_msg->replace( 'X-Mailer' => 'openSUSE Notification System');
